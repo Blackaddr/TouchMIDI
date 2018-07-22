@@ -26,17 +26,12 @@
 #include "Bounce.h"
 #include "Encoder.h"
 
-#include "Sdcard.h"
 #include "Screens.h"
 #include "Preset.h"
 
 /////////////////////
 // SD CARD
 /////////////////////
-// set up variables using the SD utility library functions:
-//Sd2Card card;
-//SdVolume volume;
-//SdFile root;
 File file;
 #define SDCARD_CS 3
 
@@ -59,18 +54,7 @@ ILI9341_t3 tft = ILI9341_t3(TFT_CS, TFT_DC);
 bool needUpdate = true;
 Bounce sw0 = Bounce(23, 10);
 Encoder knob0 = Encoder(19, 22);
-//
-//char jsonPreset[]   = "{\
-//  \"presetName\":\"Default\",\
-//  \"presetIndex\":0,\
-//  \"numControls\":4,\
-//  \"controls\": [\
-//    {\"name\":\"BassVolume\", \"params\":[20,2,40]},\
-//    {\"name\":\"GuitarVolume\", \"params\":[21,2,55]},\
-//    {\"name\":\"GtrDist\", \"params\":[16,0,0]},\
-//    {\"name\":\"BassLPF\", \"params\":[17,0,255]}\
-//  ]\
-//}";
+
 char jsonTextBuffer[1024];
 StaticJsonBuffer<1024> jsonBuffer;
 JsonObject *jsonObj;
@@ -121,9 +105,9 @@ void setup(void) {
       }
   }
   digitalWrite(SDCARD_CS,1);
-  Serial.end();
-  Serial.begin(57600);
-  while (!Serial) {}
+//  Serial.end();
+//  Serial.begin(57600);
+//  while (!Serial) {}
   
   tft.begin();
   tft.setRotation(3);
@@ -136,11 +120,7 @@ void setup(void) {
   Serial.println(String("Height is ") + tft.height() + String(", width is ") + tft.width());
   
   tft.fillScreen(ILI9341_BLACK);
-
-//  jsonObj = &jsonBuffer.parseObject(jsonPreset);
-//  if (!jsonObj->success()) {
-//    Serial.println("Parsing JSON object failed");
-//  }
+  
   Serial.println("FINISHED: setup()");
 
 }
