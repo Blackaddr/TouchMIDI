@@ -18,13 +18,27 @@
 #include <Wire.h>      // this is needed even tho we aren't using it
 #include <ILI9341_t3.h>
 #include <XPT2046_Touchscreen.h>
+#include <SD.h>
+#include <SPI.h>
+
 //#include <Adafruit_GFX.h>
-//#include "ArduinoJson.h"
+#include "ArduinoJson.h"
 #include "Bounce.h"
 #include "Encoder.h"
 
+#include "Sdcard.h"
 #include "Screens.h"
 #include "Preset.h"
+
+/////////////////////
+// SD CARD
+/////////////////////
+// set up variables using the SD utility library functions:
+//Sd2Card card;
+//SdVolume volume;
+//SdFile root;
+File file;
+#define SDCARD_CS 3
 
 // This is calibration data for the raw touch data to the screen coordinates
 #define TS_MINX 150
@@ -33,7 +47,7 @@
 #define TS_MAXY 4000
 
 // The STMPE610 uses hardware SPI on the shield, and #8
-#define STMPE_CS 8
+#define STMPE_CS 6
 //Adafruit_STMPE610 ts = Adafruit_STMPE610(STMPE_CS);
 XPT2046_Touchscreen ts(STMPE_CS, 2);
 
@@ -45,17 +59,71 @@ ILI9341_t3 tft = ILI9341_t3(TFT_CS, TFT_DC);
 bool needUpdate = true;
 Bounce sw0 = Bounce(23, 10);
 Encoder knob0 = Encoder(19, 22);
-
-char jsonPreset[] = "{\"presetName\":\"Cumbersome\",\"presetIndex\":0,\"numControls\":1,\"controlName\":\"Volume\",\"params\":[69,0,40]}";
-StaticJsonBuffer<200> jsonBuffer;
+//
+//char jsonPreset[]   = "{\
+//  \"presetName\":\"Default\",\
+//  \"presetIndex\":0,\
+//  \"numControls\":4,\
+//  \"controls\": [\
+//    {\"name\":\"BassVolume\", \"params\":[20,2,40]},\
+//    {\"name\":\"GuitarVolume\", \"params\":[21,2,55]},\
+//    {\"name\":\"GtrDist\", \"params\":[16,0,0]},\
+//    {\"name\":\"BassLPF\", \"params\":[17,0,255]}\
+//  ]\
+//}";
+char jsonTextBuffer[1024];
+StaticJsonBuffer<1024> jsonBuffer;
 JsonObject *jsonObj;
 
-Preset preset;
+constexpr unsigned MAX_PRESETS = 32;
+constexpr unsigned PRESET_ID_INDEX = 6;
+char presetFilename[] = "PRESET0.JSN";
+Preset presetArray[MAX_PRESETS];
 
 void setup(void) {
 
-  Serial.begin(9600);
+  Serial.begin(57600);
+  while (!Serial) {}
   pinMode(23,INPUT);
+
+  pinMode(SDCARD_CS, OUTPUT);
+  digitalWrite(SDCARD_CS, 1); // disable the SD CARD
+  pinMode(STMPE_CS, OUTPUT);
+  digitalWrite(STMPE_CS, 1); // disable the Touch interface
+  pinMode(TFT_CS, OUTPUT);
+  digitalWrite(TFT_CS, 1); // disable the TFT interface
+
+  // Check the SD Card
+  if (!SD.begin(SDCARD_CS)) {
+    Serial.println("SD Card init seems to fail");
+  } else {
+      for (unsigned i=0; i<MAX_PRESETS; i++) {
+        presetFilename[PRESET_ID_INDEX] = i + 0x30;
+        file = SD.open(presetFilename);
+        if (!file) {
+          //Serial.println(String("Can't open ") + presetFilename);
+        } else {
+          // Read the file contents
+          Serial.println(String("Processing ") + presetFilename);
+          size_t availableBytes = file.available();
+          Serial.println(String("Reading ") + availableBytes + String(" bytes"));
+          if (availableBytes > 0) {
+            file.read(jsonTextBuffer, availableBytes);
+            jsonObj = &jsonBuffer.parseObject(jsonTextBuffer);
+              if (!jsonObj->success()) {
+                Serial.println("Parsing JSON object failed");
+              } else {
+                jsonToPreset(*jsonObj, presetArray[i]);
+              }
+          }
+          
+        }
+      }
+  }
+  digitalWrite(SDCARD_CS,1);
+  Serial.end();
+  Serial.begin(57600);
+  while (!Serial) {}
   
   tft.begin();
   tft.setRotation(3);
@@ -69,7 +137,12 @@ void setup(void) {
   
   tft.fillScreen(ILI9341_BLACK);
 
-  jsonObj = &jsonBuffer.parseObject(jsonPreset);
+//  jsonObj = &jsonBuffer.parseObject(jsonPreset);
+//  if (!jsonObj->success()) {
+//    Serial.println("Parsing JSON object failed");
+//  }
+  Serial.println("FINISHED: setup()");
+
 }
 
 
@@ -114,20 +187,11 @@ void loop()
     if (sw0.fallingEdge()) {
       //DrawPresetNavigation(tft);
       Serial.println("Button pressed");
-      jsonToPreset(*jsonObj, preset);
+      //jsonToPreset(*jsonObj, preset);
       Serial.println("Printing preset");
-      PrintPreset(tft, preset);
+      PrintPreset(tft, presetArray[1]);
     }
   }
-//
-//  if (needUpdate) {
-//    DrawPresetNavigation(tft);
-//    needUpdate = false;
-//  }
-  //Serial.println(".");
-//  delay(1000);
-//  DrawPresetEdit(tft);
-//  delay(1000);
   delay(100);
 
 }

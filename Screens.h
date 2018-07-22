@@ -1,6 +1,8 @@
 #ifndef __SCREENS_H
 #define __SCREENS_H
 
+#include <vector>
+
 #include "ILI9341_t3.h"
 #include "ArduinoJson.h"
 
@@ -36,8 +38,32 @@ void DrawPresetEdit(ILI9341_t3 &tft)
 
 void PrintPreset(ILI9341_t3 &tft, const Preset &preset)
 {
-  tft.println(preset.name);
-  tft.println(preset.name);
+  tft.println(String("Name: ") + preset.name);
+  tft.println(String("Index: ") + preset.index);
+  tft.println("");
+
+  for (int i=0; i<preset.numControls; i++) {
+    tft.println(preset.controls[i].name + String(":"));
+    tft.print(String("CC:") + preset.controls[i].cc + String("   "));
+    tft.print(String("Type: "));
+    
+    switch(preset.controls[i].type) {
+      case ControlType::SWITCH_MOMENTARY :
+          tft.print("MOM");
+          break;
+      case ControlType::SWITCH_LATCHING :
+          tft.print("LAT");
+          break;
+      case ControlType::ROTARY_KNOB :
+          tft.print("KNOB");
+          break;
+      default :
+          break;
+    }
+
+    tft.println(String("   Value: ") + preset.controls[i].value);
+    
+  }
   
 }
 
