@@ -59,10 +59,11 @@ char jsonTextBuffer[1024];
 StaticJsonBuffer<1024> jsonBuffer;
 JsonObject *jsonObj;
 
-constexpr unsigned MAX_PRESETS = 32;
+
 constexpr unsigned PRESET_ID_INDEX = 6;
 char presetFilename[] = "PRESET0.JSN";
-Preset presetArray[MAX_PRESETS];
+//Preset presetArray[MAX_PRESETS];
+PresetArray *presetArray = nullptr;
 
 void setup(void) {
 
@@ -76,6 +77,10 @@ void setup(void) {
   digitalWrite(STMPE_CS, 1); // disable the Touch interface
   pinMode(TFT_CS, OUTPUT);
   digitalWrite(TFT_CS, 1); // disable the TFT interface
+
+  Serial.println("Creating Preset Array");
+  presetArray = createPresetArray();
+  //createDefaultPresets(presetArray, 2, 2);
 
   // Check the SD Card
   if (!SD.begin(SDCARD_CS)) {
@@ -97,7 +102,9 @@ void setup(void) {
               if (!jsonObj->success()) {
                 Serial.println("Parsing JSON object failed");
               } else {
-                jsonToPreset(*jsonObj, presetArray[i]);
+                Preset newPreset;
+                jsonToPreset(*jsonObj, newPreset);
+                addToVector(*presetArray, newPreset, i);
               }
           }
           
@@ -122,6 +129,8 @@ void setup(void) {
   tft.fillScreen(ILI9341_BLACK);
   
   Serial.println("FINISHED: setup()");
+
+  DrawPresetNavigation(tft, presetArray);
 
 }
 
@@ -168,8 +177,13 @@ void loop()
       //DrawPresetNavigation(tft);
       Serial.println("Button pressed");
       //jsonToPreset(*jsonObj, preset);
-      Serial.println("Printing preset");
-      PrintPreset(tft, presetArray[1]);
+      Serial.println(String("Printing ") + presetArray->size() + String(" presets"));
+      unsigned count = 0;
+      for (auto it=presetArray->begin(); it < presetArray->end(); ++it) {
+        Serial.println(String("printing preset ") + count); count++;
+        PrintPreset(tft, *it);
+      }
+      
     }
   }
   delay(100);

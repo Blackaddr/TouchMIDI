@@ -13,17 +13,29 @@ enum class Screens : unsigned {
   PRESET_EDIT
 };
 
-void DrawPresetNavigation(ILI9341_t3 &tft)
+void DrawPresetNavigation(ILI9341_t3 &tft, const PresetArray *presetArray)
 {
+  int activePreset = 0;
+  int16_t x,y;
+  int textSize = 2;
   // Draw the Screen title
-  char title[] = "Preset Navigation";
-  int16_t titleLength = tft.strPixelLen(&title[0]);
-  Serial.println(String("Title length is ") + titleLength);
-
+  tft.setTextSize(textSize);
+  const char *title = "Preset Navigation";
+  int16_t titleLength = tft.strPixelLen(const_cast<char *>(title));
+  //Serial.println(String("Title length is ") + titleLength);
+  
   tft.fillScreen(ILI9341_BLACK);
-  //tft.setCursor(tft.width() - titleLength/2, 0);
-  tft.setCursor(50,10);
+  tft.setCursor(tft.width()/2 - titleLength/2, 10);
   tft.println(title);
+  tft.println("");
+
+  for (auto it = presetArray->begin(); it != presetArray->end(); ++it) {
+    if (activePreset == (*it).index) {
+      tft.getCursor(&x,&y);
+      tft.fillRect(x,y,160,6*textSize, ILI9341_DARKCYAN);
+    }
+    tft.println((*it).index + String(" ") + (*it).name);
+  }
 }
 
 void DrawPresetEdit(ILI9341_t3 &tft)
@@ -42,7 +54,7 @@ void PrintPreset(ILI9341_t3 &tft, const Preset &preset)
   tft.println(String("Index: ") + preset.index);
   tft.println("");
 
-  for (int i=0; i<preset.numControls; i++) {
+  for (unsigned i=0; i<preset.numControls; i++) {
     tft.println(preset.controls[i].name + String(":"));
     tft.print(String("CC:") + preset.controls[i].cc + String("   "));
     tft.print(String("Type: "));
