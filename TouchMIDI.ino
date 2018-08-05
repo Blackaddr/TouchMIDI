@@ -24,8 +24,9 @@
 //#include <Adafruit_GFX.h>
 #include "ArduinoJson.h"
 #include "Bounce.h"
-#include "Encoder.h"
 
+#include "Misc.h"
+#include "RotaryEncoder.h"
 #include "Screens.h"
 #include "Preset.h"
 
@@ -41,11 +42,17 @@ File file;
 #define TS_MAXX 3800
 #define TS_MAXY 4000
 
+/////////////////////
+// TOUCH
+/////////////////////
 // The STMPE610 uses hardware SPI on the shield, and #8
 #define STMPE_CS 6
 //Adafruit_STMPE610 ts = Adafruit_STMPE610(STMPE_CS);
 XPT2046_Touchscreen ts(STMPE_CS, 2);
 
+/////////////////////
+// TFT DISPLAY
+/////////////////////
 // The display also uses hardware SPI, plus #9 & #10
 #define TFT_CS 10
 #define TFT_DC  9
@@ -53,7 +60,7 @@ ILI9341_t3 tft = ILI9341_t3(TFT_CS, TFT_DC);
 
 bool needUpdate = true;
 Bounce sw0 = Bounce(23, 10);
-Encoder knob0 = Encoder(19, 22);
+RotaryEncoder knob0(19, 22, SWAP, 3); // SWAP based on encoder orientation, use count divider=3
 
 char jsonTextBuffer[1024];
 StaticJsonBuffer<1024> jsonBuffer;
@@ -64,6 +71,8 @@ constexpr unsigned PRESET_ID_INDEX = 6;
 char presetFilename[] = "PRESET0.JSN";
 //Preset presetArray[MAX_PRESETS];
 PresetArray *presetArray = nullptr;
+unsigned activePreset = 0;
+unsigned selectedPreset = 0;
 
 void setup(void) {
 
@@ -130,7 +139,11 @@ void setup(void) {
   
   Serial.println("FINISHED: setup()");
 
-  DrawPresetNavigation(tft, presetArray);
+  DrawPresetNavigation(tft, presetArray, activePreset, selectedPreset);
+
+//  while (true) {
+//    StringEdit(tft, (*presetArray)[0].name, knob0, sw0);
+//  }
 
 }
 
@@ -172,20 +185,20 @@ void loop()
   Serial.println(")");
   */
 
-  if (sw0.update()) {
-    if (sw0.fallingEdge()) {
-      //DrawPresetNavigation(tft);
-      Serial.println("Button pressed");
-      //jsonToPreset(*jsonObj, preset);
-      Serial.println(String("Printing ") + presetArray->size() + String(" presets"));
-      unsigned count = 0;
-      for (auto it=presetArray->begin(); it < presetArray->end(); ++it) {
-        Serial.println(String("printing preset ") + count); count++;
-        PrintPreset(tft, *it);
-      }
-      
-    }
+  int knobAdjust = knob0.getChange();
+  if (knobAdjust != 0) {
+    int adjust = (knobAdjust > 0) ? 1 : -1;
+    selectedPreset = adjustWithWrap(selectedPreset, adjust, presetArray->size()-1);
+    DrawPresetNavigation(tft, presetArray, activePreset, selectedPreset);
+    Serial.println(String("Knob adjusted by ") + knobAdjust + String(", selectedPreset is now ") + selectedPreset);
   }
+
+  if (sw0.update() && sw0.fallingEdge()) {
+    Serial.println(String("Setting activePreset to ") + selectedPreset);
+    activePreset = selectedPreset;
+    DrawPresetNavigation(tft, presetArray, activePreset, selectedPreset);
+  }
+
   delay(100);
 
 }

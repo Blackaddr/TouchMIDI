@@ -9,6 +9,7 @@ using std::vector;
 
 constexpr int MAX_NUM_CONTROLS = 6;
 constexpr unsigned MAX_PRESETS = 32;
+constexpr unsigned MAX_NAME_SIZE = 32;
 
 // These calls must be define in order to get vector to work on arduino
 namespace std {
@@ -35,9 +36,9 @@ struct MidiControl {
   unsigned value; ///<  the current assigned value to the MIDI parameter
 
   /// Construct with values initialzed as specified
-  MidiControl(String name, int cc, ControlType type, unsigned value) : name(name), cc(cc), type(type), value(value) {}
+  MidiControl(String name, int cc, ControlType type, unsigned value) : name(name), cc(cc), type(type), value(value) { name.reserve(MAX_NAME_SIZE); }
   /// Construct with default values
-  MidiControl() : name(""), cc(0), type(ControlType::SWITCH_MOMENTARY), value(0) {}
+  MidiControl() : name(""), cc(0), type(ControlType::SWITCH_MOMENTARY), value(0) { name.reserve(MAX_NAME_SIZE); }
 };
 
 /// Contains the necessary information for a single Preset
@@ -46,6 +47,7 @@ struct Preset {
   unsigned index; ///< the index of the preset
   unsigned numControls; ///< the number of MIDI controls for this preset
   vector<MidiControl> controls; ///< a vector of MidiControls
+  Preset() { name.reserve(MAX_NAME_SIZE); }
 };
 
 using PresetArray = std::vector<Preset>;
