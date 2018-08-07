@@ -17,11 +17,10 @@
 #include <SPI.h>
 #include <Wire.h>      // this is needed even tho we aren't using it
 #include <ILI9341_t3.h>
-#include <XPT2046_Touchscreen.h>
 #include <SD.h>
 #include <SPI.h>
 
-//#include <Adafruit_GFX.h>
+
 #include "ArduinoJson.h"
 #include "Bounce.h"
 
@@ -37,19 +36,12 @@
 File file;
 #define SDCARD_CS 3
 
-// This is calibration data for the raw touch data to the screen coordinates
-#define TS_MINX 150
-#define TS_MINY 130
-#define TS_MAXX 3800
-#define TS_MAXY 4000
-
 /////////////////////
 // TOUCH
 /////////////////////
 // The STMPE610 uses hardware SPI on the shield, and #8
-#define STMPE_CS 6
-//Adafruit_STMPE610 ts = Adafruit_STMPE610(STMPE_CS);
-XPT2046_Touchscreen ts(STMPE_CS, 2);
+constexpr unsigned STMPE_CS = 6;
+constexpr unsigned STMPE_IRQ = 2;
 
 /////////////////////
 // TFT DISPLAY
@@ -63,8 +55,6 @@ ILI9341_t3 tft = ILI9341_t3(TFT_CS, TFT_DC);
 // CONTROLS
 /////////////////////
 Controls controls(1,1);
-//Bounce sw0 = Bounce(23, 10);
-//RotaryEncoder knob0(19, 22, SWAP, 3); // SWAP based on encoder orientation, use count divider=3
 
 char jsonTextBuffer[1024];
 StaticJsonBuffer<1024> jsonBuffer;
@@ -73,7 +63,6 @@ JsonObject *jsonObj;
 
 constexpr unsigned PRESET_ID_INDEX = 6;
 char presetFilename[] = "PRESET0.JSN";
-//Preset presetArray[MAX_PRESETS];
 PresetArray *presetArray = nullptr;
 unsigned activePreset = 0;
 unsigned selectedPreset = 0;
@@ -94,6 +83,7 @@ void setup(void) {
   // Setup the Controls.
   controls.addRotary(19, 22, SWAP, 3);
   controls.addSwitch(23, 10);
+  controls.addTouch(STMPE_CS, STMPE_IRQ, tft.height(), tft.width());
 
   Serial.println("Creating Preset Array");
   presetArray = createPresetArray();
@@ -129,21 +119,10 @@ void setup(void) {
       }
   }
   digitalWrite(SDCARD_CS,1);
-//  Serial.end();
-//  Serial.begin(57600);
-//  while (!Serial) {}
   
   tft.begin();
   tft.setRotation(3);
-
-  if (!ts.begin()) {
-    Serial.println("Couldn't start touchscreen controller");
-    while (1);
-  }
-  Serial.println("Touchscreen started");
-  Serial.println(String("Height is ") + tft.height() + String(", width is ") + tft.width());
-  
-  tft.fillScreen(ILI9341_BLACK);
+  Serial.println(String("Height is ") + tft.height() + String(", width is ") + tft.width());  
   
   Serial.println("FINISHED: setup()");
 
@@ -158,42 +137,8 @@ void setup(void) {
 
 void loop()
 {
-  // See if there's any  touch data for us
-  if (ts.bufferEmpty()) {
-    return;
-  }
-  /*
-  // You can also wait for a touch
-  if (! ts.touched()) {
-    return;
-  }
-  */
+  controls.getTouchPoint();
 
-  // Retrieve a point  
-  TS_Point p = ts.getPoint();
-  TS_Point tmp = p;
-  p.x = tmp.y;
-  p.y = TS_MAXY - tmp.x;
-  
-
-  if (ts.touched()) {
-  Serial.print("X = "); Serial.print(p.x);
-  Serial.print("\tY = "); Serial.print(p.y);
-  Serial.print("\tPressure = "); Serial.println(p.z);  
-  }
- 
- 
-  // Scale from ~0->4000 to tft.width using the calibration #'s
-  p.x = map(p.x, TS_MINX, TS_MAXX, 0, tft.width());
-  p.y = map(p.y, TS_MINY, TS_MAXY, 0, tft.height());
-
-  /*
-  Serial.print("("); Serial.print(p.x);
-  Serial.print(", "); Serial.print(p.y);
-  Serial.println(")");
-  */
-
-  //int knobAdjust = knob0.getChange();
   int knobAdjust = controls.getRotaryAdjustUnit(0);
   if (knobAdjust != 0) {
     selectedPreset = adjustWithWrap(selectedPreset, knobAdjust, presetArray->size()-1);
@@ -201,7 +146,6 @@ void loop()
     Serial.println(String("Knob adjusted by ") + knobAdjust + String(", selectedPreset is now ") + selectedPreset);
   }
 
-  //if (sw0.update() && sw0.fallingEdge()) {
   if (controls.isSwitchToggled(0)) {
     Serial.println(String("Setting activePreset to ") + selectedPreset);
     activePreset = selectedPreset;
