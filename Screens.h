@@ -16,38 +16,65 @@ enum class Screens : unsigned {
   PRESET_EDIT        ///< screen for editing a preset
 };
 
-void DrawPresetNavigation(ILI9341_t3 &tft, const PresetArray *presetArray, unsigned activePreset, unsigned selectedPreset)
+Screens DrawPresetNavigation(ILI9341_t3 &tft, Controls &controls, const PresetArray *presetArray, unsigned &activePreset, unsigned &selectedPreset)
 {
-  int16_t x,y;
+    int16_t x,y;
+    bool updateRequired = true;
   
-  // Draw the Screen title
-  clearScreen(tft);  
-  const char *title = "Preset Navigation";
-  tft.setCursor(0,MARGIN);
-  printCentered(tft, const_cast<char*>(title));
-  tft.println("");
+    while(true) {
+        if (updateRequired) {
+            // Draw the Screen title
+            clearScreen(tft);  
+            const char *title = "Preset Navigation";
+            tft.setCursor(0,MARGIN);
+            printCentered(tft, const_cast<char*>(title));
+            tft.println("");
+          
+            for (auto it = presetArray->begin(); it != presetArray->end(); ++it) {
+              
+                if (selectedPreset == (*it).index) {
+                    tft.getCursor(&x,&y);
+                    // TODO Fix rect width here
+                    tft.fillRect(x,y,160,DEFAULT_TEXT_HEIGHT, ILI9341_DARKCYAN);      
+                }
+            
+                if (activePreset == (*it).index) {
+                    tft.setTextColor(ILI9341_RED);
+                    tft.println(String("*") + (*it).index + String("* ") + (*it).name);
+                    tft.setTextColor(ILI9341_WHITE);
+                } else {      
+                   tft.println((*it).index + String(" ") + (*it).name);
+                }
+            }
+            updateRequired = false;
+        }
 
-  for (auto it = presetArray->begin(); it != presetArray->end(); ++it) {
-    
-    if (selectedPreset == (*it).index) {
-      tft.getCursor(&x,&y);
-      // TODO Fix rect width here
-      tft.fillRect(x,y,160,DEFAULT_TEXT_HEIGHT, ILI9341_DARKCYAN);      
-    }
+        controls.getTouchPoint();
+        
+        int knobAdjust = controls.getRotaryAdjustUnit(0);
+        if (knobAdjust != 0) {
+          selectedPreset = adjustWithWrap(selectedPreset, knobAdjust, presetArray->size()-1);
+          Serial.println(String("Knob adjusted by ") + knobAdjust + String(", selectedPreset is now ") + selectedPreset);
+          updateRequired = true;
+        }
+        
+        if (controls.isSwitchToggled(0)) {
+          Serial.println(String("Setting activePreset to ") + selectedPreset);
+          if (activePreset == selectedPreset) {
+              // goto to edit screen
+              return Screens::PRESET_EDIT;
+          } else {
+              activePreset = selectedPreset;
+              updateRequired = true;
+          }
+        }
 
-    if (activePreset == (*it).index) {
-      tft.setTextColor(ILI9341_RED);
-      tft.println(String("*") + (*it).index + String("* ") + (*it).name);
-      tft.setTextColor(ILI9341_WHITE);
-    } else {      
-      tft.println((*it).index + String(" ") + (*it).name);
-    }
-    
-  }
+        delay(100);
+    } // end while loop
 
 }
 
-void DrawPresetEdit(ILI9341_t3 &tft, Preset &preset)
+Screens DrawPresetEdit(ILI9341_t3 &tft, Controls &controls, Preset &preset)
 {
   int16_t x,y;
   
@@ -59,8 +86,7 @@ void DrawPresetEdit(ILI9341_t3 &tft, Preset &preset)
   tft.println("");
 
   // TODO: DRAW THE CONTROLS
-  
-
+  while(true) {}
 }
 
 enum class StringEditSymbols : uint8_t {

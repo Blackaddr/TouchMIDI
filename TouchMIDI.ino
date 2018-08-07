@@ -26,7 +26,6 @@
 
 #include "Misc.h"
 #include "Controls.h"
-//#include "RotaryEncoder.h"
 #include "Screens.h"
 #include "Preset.h"
 
@@ -55,6 +54,7 @@ ILI9341_t3 tft = ILI9341_t3(TFT_CS, TFT_DC);
 // CONTROLS
 /////////////////////
 Controls controls(1,1);
+Screens nextScreen;
 
 char jsonTextBuffer[1024];
 StaticJsonBuffer<1024> jsonBuffer;
@@ -122,11 +122,13 @@ void setup(void) {
   
   tft.begin();
   tft.setRotation(3);
-  Serial.println(String("Height is ") + tft.height() + String(", width is ") + tft.width());  
+  Serial.println(String("Height is ") + tft.height() + String(", width is ") + tft.width());    
   
   Serial.println("FINISHED: setup()");
 
-  DrawPresetNavigation(tft, presetArray, activePreset, selectedPreset);
+  nextScreen = Screens::PRESET_NAVIGATION;
+
+  //DrawPresetNavigation(tft, controls, presetArray, activePreset, selectedPreset);
 
 //  while (true) {
 //    StringEdit(tft, (*presetArray)[0].name, knob0, sw0);
@@ -137,21 +139,20 @@ void setup(void) {
 
 void loop()
 {
-  controls.getTouchPoint();
 
-  int knobAdjust = controls.getRotaryAdjustUnit(0);
-  if (knobAdjust != 0) {
-    selectedPreset = adjustWithWrap(selectedPreset, knobAdjust, presetArray->size()-1);
-    DrawPresetNavigation(tft, presetArray, activePreset, selectedPreset);
-    Serial.println(String("Knob adjusted by ") + knobAdjust + String(", selectedPreset is now ") + selectedPreset);
-  }
-
-  if (controls.isSwitchToggled(0)) {
-    Serial.println(String("Setting activePreset to ") + selectedPreset);
-    activePreset = selectedPreset;
-    DrawPresetNavigation(tft, presetArray, activePreset, selectedPreset);
-  }
-
+  while(true) {
+    switch(nextScreen) {
+      case Screens::PRESET_NAVIGATION :
+        nextScreen = DrawPresetNavigation(tft, controls, presetArray, activePreset, selectedPreset);
+        break;
+      case Screens::PRESET_EDIT :
+        nextScreen = DrawPresetEdit(tft, controls, (*presetArray)[activePreset]);
+        break;
+      default:
+        nextScreen = DrawPresetNavigation(tft, controls, presetArray, activePreset, selectedPreset);
+    }
+      
+  }     
   delay(100);
 
 }
