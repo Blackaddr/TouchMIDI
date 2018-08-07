@@ -5,6 +5,8 @@
 #include <array>
 
 #include "ArduinoJson.h"
+#include "Misc.h"
+#include "Controls.h"
 using std::vector;
 
 constexpr int MAX_NUM_CONTROLS = 6;
@@ -20,13 +22,6 @@ void __throw_length_error( char const*e ) {
   Serial.print("Length Error :"); Serial.println(e);
 }
 }
-
-/// Specifies the type of MIDI control
-enum class ControlType : unsigned {
-  SWITCH_MOMENTARY = 0, ///< a momentary switch, which is only on when pressed.
-  SWITCH_LATCHING = 1,  ///< a latching switch, which toggles between on and off with each press and release
-  ROTARY_KNOB = 2       ///< a rotary encoder knob
-};
 
 /// Contains the necessary information for a single MIDI control parameter
 struct MidiControl {
@@ -67,21 +62,6 @@ PresetArray *createPresetArray(void)
 void destroyPresetArray(PresetArray *presetArray)
 {
   delete presetArray;
-}
-
-/// Add a new element to a vector.
-/// @details if the index does not yet exist, add it at the back. Otherwise, index it directly.
-/// @param vec reference to the vector that you want to add an element to
-/// @param element the element to be added to the specified vector
-/// @param the index in the vector to set the element to
-template<typename T>
-void addToVector(std::vector<T> &vec, T element, unsigned index)
-{
-  if (index >= vec.size()) {
-    vec.emplace_back(element);
-  } else {
-    vec[index] = element;
-  }
 }
 
 /// convert a JSON object containing a single preset into a preset structure

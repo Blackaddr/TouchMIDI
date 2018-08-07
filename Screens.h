@@ -7,11 +7,8 @@
 #include "ILI9341_t3.h"
 #include "ArduinoJson.h"
 
+#include "ScreensUtil.h"
 #include "Preset.h"
-
-// Prototypes for helper functions
-void setCursorX(ILI9341_t3 &tft, int16_t xPos);
-void setCursorY(ILI9341_t3 &tft, int16_t yPos);
 
 /// Enumerations for each screen
 enum class Screens : unsigned {
@@ -22,18 +19,12 @@ enum class Screens : unsigned {
 void DrawPresetNavigation(ILI9341_t3 &tft, const PresetArray *presetArray, unsigned activePreset, unsigned selectedPreset)
 {
   int16_t x,y;
-  int textSize = 2;
-  // Draw the Screen title
-  tft.setTextColor(ILI9341_WHITE);
-  tft.setTextSize(textSize);
-  const char *title = "Preset Navigation";
-  int16_t titleLength = tft.strPixelLen(const_cast<char *>(title));
-  //Serial.println(String("Title length is ") + titleLength);
-  const unsigned CHAR_HEIGHT = 8*textSize;
   
-  tft.fillScreen(ILI9341_BLACK);
-  tft.setCursor(tft.width()/2 - titleLength/2, 10);
-  tft.println(title);
+  // Draw the Screen title
+  clearScreen(tft);  
+  const char *title = "Preset Navigation";
+  tft.setCursor(0,MARGIN);
+  printCentered(tft, const_cast<char*>(title));
   tft.println("");
 
   for (auto it = presetArray->begin(); it != presetArray->end(); ++it) {
@@ -41,7 +32,7 @@ void DrawPresetNavigation(ILI9341_t3 &tft, const PresetArray *presetArray, unsig
     if (selectedPreset == (*it).index) {
       tft.getCursor(&x,&y);
       // TODO Fix rect width here
-      tft.fillRect(x,y,160,CHAR_HEIGHT, ILI9341_DARKCYAN);      
+      tft.fillRect(x,y,160,DEFAULT_TEXT_HEIGHT, ILI9341_DARKCYAN);      
     }
 
     if (activePreset == (*it).index) {
@@ -53,16 +44,23 @@ void DrawPresetNavigation(ILI9341_t3 &tft, const PresetArray *presetArray, unsig
     }
     
   }
+
 }
 
-void DrawPresetEdit(ILI9341_t3 &tft)
+void DrawPresetEdit(ILI9341_t3 &tft, Preset &preset)
 {
-  // Draw the Screen title
-  constexpr char title[] = "Preset Name";
-  //int16_t titleLength = tft.strPixelLen(const_cast<char *>(title));
+  int16_t x,y;
+  
+  // Draw the Preset Edit Screen
+  clearScreen(tft);
+  tft.setCursor(0,MARGIN);
+  char *presetName = const_cast<char*>(preset.name.c_str());
+  printCentered(tft, const_cast<char*>(presetName));
+  tft.println("");
 
-  //tft.setCursor(tft.width() - titleLength/2, 0);
-  tft.print(title);
+  // TODO: DRAW THE CONTROLS
+  
+
 }
 
 enum class StringEditSymbols : uint8_t {
@@ -303,19 +301,5 @@ void DrawPresetInfo(ILI9341_t3 &tft, JsonObject &root)
   
 }
 
-void setCursorX(ILI9341_t3 &tft, int16_t xPos)
-{
-  int16_t x,y;
-  tft.getCursor(&x, &y);
-  x = xPos;
-  tft.setCursor(x,y);
-}
 
-void setCursorY(ILI9341_t3 &tft, int16_t yPos)
-{
-  int16_t x,y;
-  tft.getCursor(&x,&y);
-  y = yPos;
-  tft.setCursor(x,y);
-}
 #endif

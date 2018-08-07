@@ -26,7 +26,8 @@
 #include "Bounce.h"
 
 #include "Misc.h"
-#include "RotaryEncoder.h"
+#include "Controls.h"
+//#include "RotaryEncoder.h"
 #include "Screens.h"
 #include "Preset.h"
 
@@ -58,9 +59,12 @@ XPT2046_Touchscreen ts(STMPE_CS, 2);
 #define TFT_DC  9
 ILI9341_t3 tft = ILI9341_t3(TFT_CS, TFT_DC);
 
-bool needUpdate = true;
-Bounce sw0 = Bounce(23, 10);
-RotaryEncoder knob0(19, 22, SWAP, 3); // SWAP based on encoder orientation, use count divider=3
+/////////////////////
+// CONTROLS
+/////////////////////
+Controls controls(1,1);
+//Bounce sw0 = Bounce(23, 10);
+//RotaryEncoder knob0(19, 22, SWAP, 3); // SWAP based on encoder orientation, use count divider=3
 
 char jsonTextBuffer[1024];
 StaticJsonBuffer<1024> jsonBuffer;
@@ -86,6 +90,10 @@ void setup(void) {
   digitalWrite(STMPE_CS, 1); // disable the Touch interface
   pinMode(TFT_CS, OUTPUT);
   digitalWrite(TFT_CS, 1); // disable the TFT interface
+
+  // Setup the Controls.
+  controls.addRotary(19, 22, SWAP, 3);
+  controls.addSwitch(23, 10);
 
   Serial.println("Creating Preset Array");
   presetArray = createPresetArray();
@@ -185,15 +193,16 @@ void loop()
   Serial.println(")");
   */
 
-  int knobAdjust = knob0.getChange();
+  //int knobAdjust = knob0.getChange();
+  int knobAdjust = controls.getRotaryAdjustUnit(0);
   if (knobAdjust != 0) {
-    int adjust = (knobAdjust > 0) ? 1 : -1;
-    selectedPreset = adjustWithWrap(selectedPreset, adjust, presetArray->size()-1);
+    selectedPreset = adjustWithWrap(selectedPreset, knobAdjust, presetArray->size()-1);
     DrawPresetNavigation(tft, presetArray, activePreset, selectedPreset);
     Serial.println(String("Knob adjusted by ") + knobAdjust + String(", selectedPreset is now ") + selectedPreset);
   }
 
-  if (sw0.update() && sw0.fallingEdge()) {
+  //if (sw0.update() && sw0.fallingEdge()) {
+  if (controls.isSwitchToggled(0)) {
     Serial.println(String("Setting activePreset to ") + selectedPreset);
     activePreset = selectedPreset;
     DrawPresetNavigation(tft, presetArray, activePreset, selectedPreset);
