@@ -63,6 +63,7 @@ JsonObject *jsonObj;
 
 constexpr unsigned PRESET_ID_INDEX = 6;
 char presetFilename[] = "PRESET0.JSN";
+char calibFilename[] = "TCALIB.BIN";
 PresetArray *presetArray = nullptr;
 unsigned activePreset = 0;
 unsigned selectedPreset = 0;
@@ -114,7 +115,7 @@ void setup(void) {
                 addToVector(*presetArray, newPreset, i);
               }
           }
-          
+          file.close();
         }
       }
   }
@@ -128,7 +129,16 @@ void setup(void) {
 
   nextScreen = Screens::PRESET_NAVIGATION;
 
-  //DrawPresetNavigation(tft, controls, presetArray, activePreset, selectedPreset);
+  file = SD.open(calibFilename);
+  if (file) {
+    TouchCalibration touchCalib;
+    file.read(reinterpret_cast<uint8_t*>(&touchCalib), sizeof(touchCalib));
+    file.close();
+    controls.setCalib(touchCalib);
+    Serial.println("Calibration data loaded");
+  } else {
+    Serial.println("Failed to load calibration data");
+  }
 
 //  while (true) {
 //    StringEdit(tft, (*presetArray)[0].name, knob0, sw0);
@@ -147,6 +157,20 @@ void loop()
         break;
       case Screens::PRESET_EDIT :
         nextScreen = DrawPresetEdit(tft, controls, (*presetArray)[activePreset]);
+        break;
+      case Screens::TOUCH_CALIBRATE :
+        nextScreen = TouchCalib(tft, controls);
+        {
+          TouchCalibration touchCalib = controls.getCalib();        
+          file = SD.open(calibFilename, FILE_WRITE);
+          if (file) {
+            file.write(reinterpret_cast<uint8_t*>(&touchCalib), sizeof(touchCalib));
+            file.close();
+            Serial.println("Calibration data saved");
+          } else {
+            Serial.println("Failed to save calib data");
+          }
+        }
         break;
       default:
         nextScreen = DrawPresetNavigation(tft, controls, presetArray, activePreset, selectedPreset);

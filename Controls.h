@@ -4,12 +4,13 @@
 #include <vector>
 #include <XPT2046_Touchscreen.h>
 #include "RotaryEncoder.h"
+#include <Bounce.h>
 
 // This is calibration data for the raw touch data to the screen coordinates
-#define TS_MINX 150
-#define TS_MINY 130
-#define TS_MAXX 3800
-#define TS_MAXY 4000
+#define TS_MINX 360
+#define TS_MINY 380
+#define TS_MAXX 3700
+#define TS_MAXY 3700
 
 /// Specifies the type of MIDI control
 enum class ControlType : unsigned {
@@ -19,6 +20,13 @@ enum class ControlType : unsigned {
   UNDEFINED        = 255     ///< undefined or uninitialized
 };
 
+struct TouchCalibration {
+  unsigned xMin;
+  unsigned xMax;
+  unsigned yMin;
+  unsigned yMax;
+};
+  
 class Controls {
 public:
   Controls() = delete;
@@ -55,24 +63,47 @@ public:
     }
   }
 
+  TS_Point getTouchRawPoint() {
+    return touch->getPoint();
+  }
+
   TS_Point getTouchPoint() {
       // Retrieve a point  
       TS_Point p = touch->getPoint();
       TS_Point tmp = p;
-      p.x = tmp.y;
-      p.y = TS_MAXY - tmp.x;
-      
+
       if (touch->touched()) {
-        Serial.print("X = "); Serial.print(p.x);
-        Serial.print("\tY = "); Serial.print(p.y);
-        Serial.print("\tPressure = "); Serial.println(p.z);
+        Serial.print("RawX = "); Serial.print(p.x);
+        Serial.print("\tRawY = "); Serial.print(p.y);
+        Serial.print("\tRawPressure = "); Serial.print(p.z);
       }
+      
+      //p.x = tmp.y;
+      //p.y = m_TouchCalibration.yMax - tmp.x;
  
       // Scale from ~0->4000 to tft.width using the calibration #'s
-      p.x = map(p.x, TS_MINX, TS_MAXX, 0, m_touchWidth);
-      p.y = map(p.y, TS_MINY, TS_MAXY, 0, m_touchHeight);
+      p.x = map(p.x, m_TouchCalibration.xMin, m_TouchCalibration.xMax, 0, m_touchWidth);
+      p.y = map(p.y, m_TouchCalibration.yMin, m_TouchCalibration.yMax, 0, m_touchHeight);
+
+      if (touch->touched()) {
+        Serial.print("\tX = "); Serial.print(p.x);
+        Serial.print("\tY = "); Serial.println(p.y);
+      }
+
       return p;
   }
+
+  void setCalib(unsigned xMin, unsigned xMax, unsigned yMin, unsigned yMax)
+  {
+    m_TouchCalibration.xMin = xMin;
+    m_TouchCalibration.xMax = xMax;
+    m_TouchCalibration.yMin = yMin;
+    m_TouchCalibration.yMax = yMax;
+  }
+
+  void setCalib(TouchCalibration TouchCalibration) { m_TouchCalibration = TouchCalibration; }
+
+  TouchCalibration getCalib() { return m_TouchCalibration; }
 
   int getRotaryAdjustUnit(unsigned index) {
     if (index >= m_encoders.size()) { return 0; } // index is greater than number of encoders
@@ -100,8 +131,10 @@ public:
   std::vector<RotaryEncoder> m_encoders;
   std::vector<Bounce>  m_switches;
 private:
+  
   unsigned m_touchHeight = 0;
   unsigned m_touchWidth  = 0;
+  TouchCalibration m_TouchCalibration = {300, 3800, 300, 3800};
 };
 
 
