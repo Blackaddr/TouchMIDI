@@ -1,19 +1,3 @@
-/***************************************************
-  This is our touchscreen painting example for the Adafruit ILI9341 Shield
-  ----> http://www.adafruit.com/products/1651
-
-  Check out the links above for our tutorials and wiring diagrams
-  These displays use SPI to communicate, 4 or 5 pins are required to
-  interface (RST is optional)
-  Adafruit invests time and resources providing this open source code,
-  please support Adafruit and open-source hardware by purchasing
-  products from Adafruit!
-
-  Written by Limor Fried/Ladyada for Adafruit Industries.
-  MIT license, all text above must be included in any redistribution
- ****************************************************/
-
-
 #include <SPI.h>
 #include <Wire.h>      // this is needed even tho we aren't using it
 #include <ILI9341_t3.h>
@@ -81,11 +65,6 @@ void setup(void) {
   pinMode(TFT_CS, OUTPUT);
   digitalWrite(TFT_CS, 1); // disable the TFT interface
 
-  // Setup the Controls.
-  controls.addRotary(19, 22, SWAP, 3);
-  controls.addSwitch(23, 10);
-  controls.addTouch(STMPE_CS, STMPE_IRQ, tft.height(), tft.width());
-
   Serial.println("Creating Preset Array");
   presetArray = createPresetArray();
   //createDefaultPresets(presetArray, 2, 2);
@@ -123,7 +102,12 @@ void setup(void) {
   
   tft.begin();
   tft.setRotation(3);
-  Serial.println(String("Height is ") + tft.height() + String(", width is ") + tft.width());    
+  Serial.println(String("Height is ") + tft.height() + String(", width is ") + tft.width());
+
+    // Setup the Controls.
+  controls.addRotary(19, 22, SWAP, 3);
+  controls.addSwitch(23, 10);
+  controls.addTouch(STMPE_CS, STMPE_IRQ, tft.height(), tft.width());
   
   Serial.println("FINISHED: setup()");
 
@@ -134,10 +118,12 @@ void setup(void) {
     TouchCalibration touchCalib;
     file.read(reinterpret_cast<uint8_t*>(&touchCalib), sizeof(touchCalib));
     file.close();
-    controls.setCalib(touchCalib);
+    //controls.setCalib(touchCalib);
+    controls.setCalib(410,3900,300,3800);
     Serial.println("Calibration data loaded");
   } else {
     Serial.println("Failed to load calibration data");
+    nextScreen = TouchCalib(tft, controls);
   }
 
 //  while (true) {

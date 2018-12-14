@@ -33,6 +33,8 @@ public:
   Controls(unsigned numEncoders, unsigned numSwitches) {
     m_encoders.reserve(numEncoders);
     m_switches.reserve(numSwitches);
+    m_numSwitches = numSwitches;
+    m_numEncoders = numEncoders;
   }
   ~Controls() {
     delete touch;
@@ -63,6 +65,10 @@ public:
     }
   }
 
+  bool isTouched() {
+      return touch->touched();
+  }
+
   TS_Point getTouchRawPoint() {
     return touch->getPoint();
   }
@@ -70,7 +76,7 @@ public:
   TS_Point getTouchPoint() {
       // Retrieve a point  
       TS_Point p = touch->getPoint();
-      TS_Point tmp = p;
+      //TS_Point tmp = p;
 
       if (touch->touched()) {
         Serial.print("RawX = "); Serial.print(p.x);
@@ -127,6 +133,11 @@ public:
     }
   }
 
+  // TODO add function to check for control change
+
+  unsigned getNumSwitches() { return m_numSwitches; }
+  unsigned getNumEncoders() { return m_numEncoders; }
+
   XPT2046_Touchscreen *touch = nullptr;
   std::vector<RotaryEncoder> m_encoders;
   std::vector<Bounce>  m_switches;
@@ -135,6 +146,8 @@ private:
   unsigned m_touchHeight = 0;
   unsigned m_touchWidth  = 0;
   TouchCalibration m_TouchCalibration = {300, 3800, 300, 3800};
+  unsigned m_numEncoders;
+  unsigned m_numSwitches;
 };
 
 

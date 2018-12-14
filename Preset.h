@@ -12,6 +12,7 @@ using std::vector;
 constexpr int MAX_NUM_CONTROLS = 6;
 constexpr unsigned MAX_PRESETS = 32;
 constexpr unsigned MAX_NAME_SIZE = 32;
+constexpr unsigned MAX_SHORT_NAME_SIZE = 4;
 
 // These calls must be define in order to get vector to work on arduino
 namespace std {
@@ -26,14 +27,23 @@ void __throw_length_error( char const*e ) {
 /// Contains the necessary information for a single MIDI control parameter
 struct MidiControl {
   String name; ///< the name of the parameter
+  String shortName; ///< the short name for the parameter
   unsigned cc; ///< the CC assigned to the parameter
   ControlType type; ///< the type of control, usually a switch or encoder
   unsigned value; ///<  the current assigned value to the MIDI parameter
 
   /// Construct with values initialzed as specified
-  MidiControl(String name, int cc, ControlType type, unsigned value) : name(name), cc(cc), type(type), value(value) { name.reserve(MAX_NAME_SIZE); }
+  MidiControl(String name, String shortName, int cc, ControlType type, unsigned value)
+      : name(name), shortName(shortName), cc(cc), type(type), value(value) {
+      name.reserve(MAX_NAME_SIZE);
+      shortName.reserve(MAX_SHORT_NAME_SIZE);
+  }
   /// Construct with default values
-  MidiControl() : name(""), cc(0), type(ControlType::SWITCH_MOMENTARY), value(0) { name.reserve(MAX_NAME_SIZE); }
+  MidiControl()
+      : name(""), shortName(""), cc(0), type(ControlType::SWITCH_MOMENTARY), value(0) {
+      name.reserve(MAX_NAME_SIZE);
+      shortName.reserve(MAX_SHORT_NAME_SIZE);
+  }
 };
 
 /// Contains the necessary information for a single Preset
@@ -81,15 +91,17 @@ void jsonToPreset(JsonObject &jsonObj, Preset &preset)
 
     MidiControl newControl = MidiControl(
 
-      String(static_cast<const char *>(jsonObj["controls"][i]["name"])),      
-      static_cast<unsigned>(jsonObj["controls"][i]["params"][0]),
-      static_cast<ControlType>(static_cast<unsigned>(jsonObj["controls"][i]["params"][1])),
-      static_cast<unsigned>(jsonObj["controls"][i]["params"][2])
+        String(static_cast<const char *>(jsonObj["controls"][i]["name"])),
+        String(static_cast<const char *>(jsonObj["controls"][i]["shortName"])),
+        static_cast<unsigned>(jsonObj["controls"][i]["params"][0]),
+        static_cast<ControlType>(static_cast<unsigned>(jsonObj["controls"][i]["params"][1])),
+        static_cast<unsigned>(jsonObj["controls"][i]["params"][2])
       );
     addToVector(preset.controls, newControl, i);
 
 #ifdef DEBUG
       Serial.println(String("controlName: ") + preset.controls[i].name);
+      Serial.println(String("controlShortName: ") + preset.controls[i].shortName);
       Serial.println(String("CC: ") + preset.controls[i].cc);
       Serial.println(String("Type: ") + static_cast<unsigned>(preset.controls[i].type));
       Serial.println(String("value: ") + preset.controls[i].value);
@@ -110,8 +122,8 @@ Preset createDefaultPreset(unsigned index, unsigned numControls)
   for (unsigned i=0; i<preset.numControls; i++) {
     //Serial.println("Creating a control");
     MidiControl newControl = MidiControl(
-      String(String("Control")+i), 16, ControlType::ROTARY_KNOB, 0);
-    addToVector(preset.controls, newControl, i);
+      String(String("Control")+i), String(String("Ctl")+i), 16, ControlType::ROTARY_KNOB, 0);
+      addToVector(preset.controls, newControl, i);
   }
   return preset;
 }
