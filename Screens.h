@@ -7,6 +7,7 @@
 #include "ILI9341_t3.h"
 #include "ArduinoJson.h"
 
+#include "Bitmap.h"
 #include "Graphics.h"
 #include "Controls.h"
 #include "ScreensUtil.h"
@@ -16,10 +17,18 @@
 enum class Screens : unsigned {
   PRESET_NAVIGATION, ///< screen for navigating between and selecting a preset
   PRESET_EDIT,       ///< screen for editing a preset
+  PRESET_CONFIG,     ///< screen for preset configuration
   TOUCH_CALIBRATE,   ///< calibrate the touch screen
 };
 
 constexpr unsigned TOUCH_CONTROL_HALFSIZE = 20;
+
+constexpr unsigned ICON_SIZE = 48;
+constexpr unsigned ICON_SPACING = 5;
+
+constexpr unsigned BACK_BUTTON_X_POS = 255;
+constexpr unsigned SETTINGS_BUTTON_X_POS = BACK_BUTTON_X_POS-ICON_SIZE-ICON_SPACING;
+
 
 struct Coordinate {
     Coordinate() : x(0), y(0), control(nullptr) {}
@@ -37,6 +46,16 @@ struct Coordinate {
     }
 };
 
+void DrawPresetConfig(ILI9341_t3 &tft, Controls &controls, Preset &preset)
+{
+    // Draw the Screen title
+    clearScreen(tft);
+    const char *title = "Preset Configuration";
+    tft.setCursor(0,MARGIN);
+    printCentered(tft, const_cast<char*>(title));
+
+    while (true) {}
+}
 
 Screens DrawPresetNavigation(ILI9341_t3 &tft, Controls &controls, const PresetArray *presetArray, unsigned &activePreset, unsigned &selectedPreset)
 {
@@ -144,34 +163,39 @@ Screens DrawPresetEdit(ILI9341_t3 &tft, Controls &controls, Preset &preset)
       }
     }
 
-
     for (auto i=0; i<MAX_NUM_CONTROLS; i++) {
         if (controlLocations[i].control) {
             Serial.println(String("control ") + i + String(" x: ") + controlLocations[i].x + String(" y: ") + controlLocations[i].y);
         }
     }
 
+    // Draw the Preset Edit Screen
+    clearScreen(tft);
+    tft.setCursor(0,MARGIN);
+
+    // print the preset number in the top left
+    tft.print(preset.index);
+    char *presetName = const_cast<char*>(preset.name.c_str());
+    printCentered(tft, const_cast<char*>(presetName));
+
+    // Draw the icons
+    bmpDraw(tft, "back48.bmp", BACK_BUTTON_X_POS,0); // shifting more than 255 pixels seems to wrap the screen
+    bmpDraw(tft, "seting48.bmp", SETTINGS_BUTTON_X_POS, 0);
+
+
     while(true) {
-        // Draw the Preset Edit Screen
-        clearScreen(tft);
-        tft.setCursor(0,MARGIN);
 
-        // print the preset number in the top left
-        tft.print(preset.index);
-        char *presetName = const_cast<char*>(preset.name.c_str());
-        printCentered(tft, const_cast<char*>(presetName));
+        // Draw a light filled box behind the active control and black behind the others
 
-
-
-        // Draw a light filled box behind the active control
-        drawActiveControl(tft, controlLocations[activeControl].x, controlLocations[activeControl].y);
 
         // Draw the controls
-        for (auto i=0; i<MAX_NUM_CONTROLS; i++) {
-
+        for (unsigned i=0; i<MAX_NUM_CONTROLS; i++) {
             if (controlLocations[i].control) {
                 MidiControl &controlPtr = *controlLocations[i].control;
                 // valid pointer to control
+                uint16_t color = (activeControl == i) ? ILI9341_YELLOW : ILI9341_BLACK;
+                drawActiveControl(tft, controlLocations[i].x, controlLocations[i].y, color);
+
                 if (controlPtr.type == ControlType::ROTARY_KNOB) {
                     drawKnob(tft, controlPtr, controlLocations[i].x, controlLocations[i].y);
                 } else {
@@ -181,11 +205,24 @@ Screens DrawPresetEdit(ILI9341_t3 &tft, Controls &controls, Preset &preset)
         }
 
         while(true) {
-            // Wait for control activity
+            MidiControl &control = *controlLocations[activeControl].control;
+
+            // Check for touch activity
             if (controls.isTouched()) {
                 TS_Point touchPoint = controls.getTouchPoint();
                 Coordinate touchCoordinate(touchPoint.x, touchPoint.y, nullptr);
 
+                // Check the back button
+                if (touchPoint.x > BACK_BUTTON_X_POS && touchPoint.y < ICON_SIZE ) {
+                    return Screens::PRESET_NAVIGATION;
+                }
+
+                // Check for the settings button
+                if (touchPoint.x > SETTINGS_BUTTON_X_POS && touchPoint.y < ICON_SIZE ) {
+                    DrawPresetConfig(tft, controls, preset);
+                }
+
+                // Check for controls
                 for (auto i=0; i<MAX_NUM_CONTROLS; i++) {
                     if ( controlLocations[i].checkCoordinateRange(touchCoordinate, TOUCH_CONTROL_HALFSIZE) ) {
                         activeControl = i;
@@ -193,8 +230,32 @@ Screens DrawPresetEdit(ILI9341_t3 &tft, Controls &controls, Preset &preset)
                 }
                 break;
             }
-        }
 
+            // Check for rotary activity
+            int adjust = controls.getRotaryAdjustUnit(0);
+            if (adjust != 0) {
+                // primary encoder
+                Serial.println(String("Adjust by ") + adjust);
+
+                if (control.type == ControlType::ROTARY_KNOB) {
+                    control.value = adjustWithSaturation(control.value, adjust, 0, 127);
+                    control.updated = true;
+                    break;
+                }
+            }
+
+            // Check for pushbutton control
+            if (controls.isSwitchToggled(0)) {
+                Serial.println("Toggled!");
+                if (control.type == ControlType::SWITCH_MOMENTARY) {
+                    control.value = static_cast<unsigned>(toggleValue(control.value, 127));
+                    control.updated = true;
+                    break;
+                }
+            }
+
+            delay(100); // this is needed for control sampling to work
+        } // end while loop to process control inputs
 
     } // end outer while loop
 }

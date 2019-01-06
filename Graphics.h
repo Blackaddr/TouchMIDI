@@ -99,7 +99,7 @@ void drawSwitch(ILI9341_t3 &tft, MidiControl &control, int16_t xPos, int16_t yPo
 
 }
 
-void drawActiveControl(ILI9341_t3 &tft, int16_t xPos, int16_t yPos)
+void drawActiveControl(ILI9341_t3 &tft, int16_t xPos, int16_t yPos, uint16_t color)
 {
     unsigned size;
     if (tft.height() < tft.width()) {
@@ -110,8 +110,9 @@ void drawActiveControl(ILI9341_t3 &tft, int16_t xPos, int16_t yPos)
         size = static_cast<unsigned>(tft.width() * ACTIVE_SIZE_F + 0.5f); // includes rounding
     }
     //tft.fillRoundRect(xPos, yPos, size, size, 4, ILI9341_YELLOW);
-    tft.fillRoundRect(xPos-size, yPos-size, 2*size, 2*size, 4, ILI9341_YELLOW);
+    tft.fillRoundRect(xPos-size, yPos-size, 2*size, 2*size, 4, color);
 }
+
 
 
 #endif

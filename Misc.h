@@ -49,4 +49,20 @@ int adjustWithWrap(int currentValue, int adjust, int maxVal, int minVal = 0)
   return newValue;
 }
 
+int adjustWithSaturation(int input, int adj, int min, int max) {
+    int temp = input + adj;
+    if (temp < min) return min;
+    if (temp > max) return max;
+    return temp;
+}
+
+int toggleValue(int input, int onValue, int offValue=0)
+{
+    if (input == offValue) {
+        return onValue;
+    } else {
+        return offValue;
+    }
+}
+
 #endif

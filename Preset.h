@@ -31,6 +31,7 @@ struct MidiControl {
   unsigned cc; ///< the CC assigned to the parameter
   ControlType type; ///< the type of control, usually a switch or encoder
   unsigned value; ///<  the current assigned value to the MIDI parameter
+  bool updated = false; ///< when true the value has been updated
 
   /// Construct with values initialzed as specified
   MidiControl(String name, String shortName, int cc, ControlType type, unsigned value)
