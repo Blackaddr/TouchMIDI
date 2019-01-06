@@ -101,13 +101,15 @@ void setup(void) {
   digitalWrite(SDCARD_CS,1);
   
   tft.begin();
-  tft.setRotation(3);
+  tft.setRotation(3); // left-handed
+  //tft.setRotation(1);  // right-handed
   Serial.println(String("Height is ") + tft.height() + String(", width is ") + tft.width());
 
     // Setup the Controls.
   controls.addRotary(19, 22, SWAP, 3);
   controls.addSwitch(23, 10);
   controls.addTouch(STMPE_CS, STMPE_IRQ, tft.height(), tft.width());
+  //controls.touchFlipAxis(true, true);
   
   Serial.println("FINISHED: setup()");
 
@@ -141,8 +143,8 @@ void loop()
       case Screens::PRESET_NAVIGATION :
         nextScreen = DrawPresetNavigation(tft, controls, presetArray, activePreset, selectedPreset);
         break;
-      case Screens::PRESET_EDIT :
-        nextScreen = DrawPresetEdit(tft, controls, (*presetArray)[activePreset]);
+      case Screens::PRESET_CONTROL :
+        nextScreen = DrawPresetControl(tft, controls, (*presetArray)[activePreset]);
         break;
       case Screens::TOUCH_CALIBRATE :
         nextScreen = TouchCalib(tft, controls);

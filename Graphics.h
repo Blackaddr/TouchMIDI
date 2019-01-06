@@ -21,7 +21,7 @@ constexpr float DEG2RAD = 0.0174532925f;
 // w  = width (thickness) of arc in pixels
 // colour = 16 bit colour value
 // Note if rx and ry are the same an arc of a circle is drawn
-int fillArc(ILI9341_t3 &tft, int x, int y, int start_angle, int seg_count, int rx, int ry, int w, unsigned int colour)
+void fillArc(ILI9341_t3 &tft, int x, int y, int start_angle, int seg_count, int rx, int ry, int w, unsigned int colour)
 {
     byte seg = 3; // Segments are 3 degrees wide = 120 segments for 360 degrees
     byte inc = 3; // Draw segments every 3 degrees, increase to 6 for segmented ring
