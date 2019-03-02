@@ -26,7 +26,9 @@ struct TouchCalibration {
   unsigned yMin;
   unsigned yMax;
 };
-  
+
+using TouchPoint = TS_Point;
+
 class Controls {
 public:
   Controls() = delete;
@@ -69,11 +71,11 @@ public:
       return touch->touched();
   }
 
-  TS_Point getTouchRawPoint() {
+  TouchPoint getTouchRawPoint() {
     return touch->getPoint();
   }
 
-  TS_Point getTouchPoint() {
+  TouchPoint getTouchPoint() {
       // Retrieve a point  
       TS_Point p = touch->getPoint();
       //TS_Point tmp = p;

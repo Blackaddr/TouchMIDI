@@ -6,6 +6,8 @@
  */
 #include "Screens.h"
 
+constexpr int SELECTED_TEXT_WIDTH = 160;
+
 Screens DrawPresetNavigation(ILI9341_t3 &tft, Controls &controls, const PresetArray *presetArray, unsigned &activePreset, unsigned &selectedPreset)
 {
     int16_t x,y;
@@ -25,7 +27,7 @@ Screens DrawPresetNavigation(ILI9341_t3 &tft, Controls &controls, const PresetAr
                 if (selectedPreset == (*it).index) {
                     tft.getCursor(&x,&y);
                     // TODO Fix rect width here
-                    tft.fillRect(x,y,160,DEFAULT_TEXT_HEIGHT, ILI9341_DARKCYAN);
+                    tft.fillRect(x,y,SELECTED_TEXT_WIDTH,DEFAULT_TEXT_HEIGHT, ILI9341_DARKCYAN);
                 }
 
                 if (activePreset == (*it).index) {

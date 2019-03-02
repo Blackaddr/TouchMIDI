@@ -28,6 +28,8 @@ constexpr unsigned ICON_SPACING = 5;
 constexpr unsigned BACK_BUTTON_X_POS = 255;
 constexpr unsigned SETTINGS_BUTTON_X_POS = BACK_BUTTON_X_POS-ICON_SIZE-ICON_SPACING;
 
+//using Coordinate = TS_Point;
+
 
 struct Coordinate {
     Coordinate() : x(0), y(0), control(nullptr) {}
@@ -37,13 +39,44 @@ struct Coordinate {
     MidiControl *control;
 
     // Check if the "check" point is within the specified threshold of the center
-    bool checkCoordinateRange(Coordinate &coordinateCheck, unsigned threshold)
+    bool checkCoordinateRange(TouchPoint &coordinateCheck, unsigned threshold)
     {
         if (abs(x - coordinateCheck.x) > threshold) return false;
         if (abs(y - coordinateCheck.y) > threshold) return false;
         return true;
     }
 };
+
+
+struct TouchArea {
+public:
+    TouchArea() :
+        xStart(-1), xEnd(-1), yStart(-1), yEnd(-1) {}
+    TouchArea(int16_t xStart, int16_t xEnd, int16_t yStart, int16_t yEnd) :
+        xStart(xStart), xEnd(xEnd), yStart(yStart), yEnd(yEnd) {}
+    int16_t xStart;
+    int16_t xEnd;
+    int16_t yStart;
+    int16_t yEnd;
+
+    void setArea(int16_t xStartIn, int16_t xEndIn, int16_t yStartIn, int16_t yEndIn) {
+        xStart = xStartIn;
+        xEnd   = xEndIn;
+        yStart = yStartIn;
+        yEnd   = yEndIn;
+    }
+
+    bool checkArea(TouchPoint &coord) const {
+        if (coord.x < xStart) return false;
+        if (coord.x > xEnd)   return false;
+        if (coord.y < yStart) return false;
+        if (coord.y > yEnd)   return false;
+        return true;
+    }
+
+};
+
+
 
 void DrawPresetConfig(ILI9341_t3 &tft, Controls &controls, Preset &preset);
 Screens DrawPresetNavigation(ILI9341_t3 &tft, Controls &controls, const PresetArray *presetArray, unsigned &activePreset, unsigned &selectedPreset);

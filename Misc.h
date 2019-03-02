@@ -24,4 +24,12 @@ int adjustWithWrap(int currentValue, int adjust, int maxVal, int minVal = 0);
 int adjustWithSaturation(int input, int adj, int min, int max);
 int toggleValue(int input, int onValue, int offValue=0);
 
+
+//template <class Container, class Iterator>
+//auto nextIterator(Container& cont, Iterator &it) -> decltype (cont.begin()) {
+//    if (it != cont.end()) {
+//        ++it;
+//    }
+//}
+
 #endif
