@@ -1,7 +1,8 @@
 #ifndef __MISC_H
 #define __MISC_H
 
-#include <vector>
+#include "Arduino.h"
+#include "VectorSupport.h"
 
 /// Add a new element to a vector.
 /// @details if the index does not yet exist, add it at the back. Otherwise, index it directly.
@@ -19,50 +20,8 @@ void addToVector(std::vector<T> &vec, T element, unsigned index)
 }
 
 
-int adjustWithWrap(int currentValue, int adjust, int maxVal, int minVal = 0)
-{
-  // check to make sure the adjust doesn't exceed the difference between min and max
-  // if so modulo it.
-  int range = maxVal + 1 - minVal;
-  int modifiedAdjust = adjust;
-  int absAdjust = abs(adjust);
-  if (absAdjust > range) {
-    // We need to modulo the value
-    if (adjust > 0) {
-      modifiedAdjust = adjust % range;
-    } else {
-      modifiedAdjust = -(adjust % range);
-    }    
-  }
-  
-  int newValue = currentValue + modifiedAdjust;
-  if (newValue > maxVal) {
-    // wrap if exceeds max value
-    newValue =  minVal + (newValue - maxVal) - 1;
-  } else if (newValue < minVal) {
-    // wrap if below min value
-    Serial.printf("newValue1 is %d\n",newValue);
-    Serial.printf("maxValue is %d\n", maxVal);
-    newValue = maxVal - (minVal - newValue - 1);
-    Serial.printf("newValue2 is %d\n",newValue);
-  }
-  return newValue;
-}
-
-int adjustWithSaturation(int input, int adj, int min, int max) {
-    int temp = input + adj;
-    if (temp < min) return min;
-    if (temp > max) return max;
-    return temp;
-}
-
-int toggleValue(int input, int onValue, int offValue=0)
-{
-    if (input == offValue) {
-        return onValue;
-    } else {
-        return offValue;
-    }
-}
+int adjustWithWrap(int currentValue, int adjust, int maxVal, int minVal = 0);
+int adjustWithSaturation(int input, int adj, int min, int max);
+int toggleValue(int input, int onValue, int offValue=0);
 
 #endif

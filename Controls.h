@@ -91,12 +91,21 @@ public:
       p.x = map(p.x, m_TouchCalibration.xMin, m_TouchCalibration.xMax, 0, m_touchWidth);
       p.y = map(p.y, m_TouchCalibration.yMin, m_TouchCalibration.yMax, 0, m_touchHeight);
 
+      // Check for flips
+      if (m_isVerticalFlipped)   { p.y = m_touchHeight - p.y; }
+      if (m_isHorizontalFlipped) { p.x = m_touchWidth - p.x; }
+
       if (touch->touched()) {
         Serial.print("\tX = "); Serial.print(p.x);
         Serial.print("\tY = "); Serial.println(p.y);
       }
 
       return p;
+  }
+
+  void touchFlipAxis(bool isVerticalFlipped, bool isHorizontalFlipped) {
+      m_isVerticalFlipped   = isVerticalFlipped;
+      m_isHorizontalFlipped = isHorizontalFlipped;
   }
 
   void setCalib(unsigned xMin, unsigned xMax, unsigned yMin, unsigned yMax)
@@ -148,6 +157,8 @@ private:
   TouchCalibration m_TouchCalibration = {300, 3800, 300, 3800};
   unsigned m_numEncoders;
   unsigned m_numSwitches;
+  bool     m_isVerticalFlipped = false;
+  bool     m_isHorizontalFlipped = false;
 };
 
 
