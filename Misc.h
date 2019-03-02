@@ -21,9 +21,7 @@ void addToVector(std::vector<T> &vec, T element, unsigned index)
 
 
 int adjustWithWrap(int currentValue, int adjust, int maxVal, int minVal = 0);
-
 int adjustWithSaturation(int input, int adj, int min, int max);
-
 int toggleValue(int input, int onValue, int offValue=0);
 
 #endif

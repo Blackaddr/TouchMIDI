@@ -14,6 +14,13 @@
 #include "Controls.h"
 #include "ScreensUtil.h"
 
+enum class StringEditSymbols : uint8_t {
+  DONE = 1,
+  BACKSPACE = 2,
+  SHIFT = 3,
+  NUM_SYMBOLS
+};
+
 void StringEdit(ILI9341_t3 &tft, String &inputString, XPT2046_Touchscreen &touch, RotaryEncoder &encoder, Bounce &selButton);
 
 #endif /* STRINGEDIT_H_ */

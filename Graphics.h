@@ -9,6 +9,4 @@ void drawKnob(ILI9341_t3 &tft, MidiControl &control, int16_t xPos, int16_t yPos)
 void drawSwitch(ILI9341_t3 &tft, MidiControl &control, int16_t xPos, int16_t yPos);
 void drawActiveControl(ILI9341_t3 &tft, int16_t xPos, int16_t yPos, uint16_t color);
 
-
-
 #endif
