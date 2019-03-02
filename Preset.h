@@ -1,7 +1,8 @@
 #ifndef __PRESET_H
 #define __PRESET_H
 
-#include <vector>
+#include "VectorSupport.h"
+//#include <vector>
 #include <array>
 
 #include "ArduinoJson.h"
@@ -13,16 +14,6 @@ constexpr int MAX_NUM_CONTROLS = 6;
 constexpr unsigned MAX_PRESETS = 32;
 constexpr unsigned MAX_NAME_SIZE = 32;
 constexpr unsigned MAX_SHORT_NAME_SIZE = 4;
-
-// These calls must be define in order to get vector to work on arduino
-namespace std {
-void __throw_bad_alloc() {
-  Serial.println("Unable to allocate memory");
-}
-void __throw_length_error( char const*e ) {
-  Serial.print("Length Error :"); Serial.println(e);
-}
-}
 
 /// Contains the necessary information for a single MIDI control parameter
 struct MidiControl {
