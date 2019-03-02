@@ -7,6 +7,7 @@
 #include "ILI9341_t3.h"
 #include "ArduinoJson.h"
 
+#include "StringEdit.h"
 #include "Bitmap.h"
 #include "Graphics.h"
 #include "Controls.h"
@@ -14,7 +15,7 @@
 #include "Preset.h"
 
 // Prototypes
-void StringEdit(ILI9341_t3 &tft, String &inputString, RotaryEncoder &encoder, Bounce &selButton);
+void StringEdit(ILI9341_t3 &tft, String &inputString, XPT2046_Touchscreen &touch, RotaryEncoder &encoder, Bounce &selButton);
 
 /// Enumerations for each screen
 enum class Screens : unsigned {
@@ -94,7 +95,8 @@ void DrawPresetConfig(ILI9341_t3 &tft, Controls &controls, Preset &preset)
                 while (controls.isTouched()) {}
 
                 // call the string edit screen
-                StringEdit(tft, preset.name, controls.m_encoders[0], controls.m_switches[0]);
+                //StringEdit(tft, preset.name, controls.m_encoders[0], controls.m_switches[0]);
+                StringEdit(tft, preset.name, *controls.touch, controls.m_encoders[0], controls.m_switches[0]);
                 redrawScreen = true;
             }
 
