@@ -6,6 +6,73 @@
  */
 #include "Screens.h"
 
+bool saveConfirmation(ILI9341_t3 &tft, Controls &controls)
+{
+    unsigned width = tft.width();
+    unsigned height = tft.height();
+
+    const unsigned TEXT_HEIGHT = 7;
+
+    const unsigned BUTTON_WIDTH = width/5;
+    const unsigned BUTTON_HEIGHT = height/5;
+
+    const unsigned BOX_WIDTH = (width*6)/10;
+    const unsigned BOX_HEIGHT = (height*5)/10;
+    const unsigned BOX_X_POS = (width - BOX_WIDTH)/2;
+    const unsigned BOX_Y_POS = (height - BOX_HEIGHT)/2;
+    const unsigned BORDER_THICKNESS = width/50;
+    const unsigned BORDER_RADIUS = BORDER_THICKNESS*2;
+
+    const unsigned NO_BUTTON_X_POS = width/4 + MARGIN;
+    const unsigned NO_BUTTON_Y_POS = BOX_Y_POS + BOX_HEIGHT - MARGIN - BUTTON_HEIGHT;
+
+    const unsigned YES_BUTTON_X_POS = width - width/4 - MARGIN - BUTTON_WIDTH;
+    const unsigned YES_BUTTON_Y_POS = BOX_Y_POS + BOX_HEIGHT - MARGIN - BUTTON_HEIGHT;
+
+    const TouchArea NO_BUTTON_AREA (NO_BUTTON_X_POS,  NO_BUTTON_X_POS+BUTTON_WIDTH,  NO_BUTTON_Y_POS,  NO_BUTTON_Y_POS+BUTTON_HEIGHT);
+    const TouchArea YES_BUTTON_AREA(YES_BUTTON_X_POS, YES_BUTTON_X_POS+BUTTON_WIDTH, YES_BUTTON_Y_POS, YES_BUTTON_Y_POS+BUTTON_HEIGHT);
+
+    tft.fillRoundRect(BOX_X_POS-BORDER_THICKNESS, BOX_Y_POS - BORDER_THICKNESS,
+            BOX_WIDTH + 2*BORDER_THICKNESS, BOX_HEIGHT + 2*BORDER_THICKNESS,
+            BORDER_RADIUS, ILI9341_WHITE);
+
+    tft.fillRect(BOX_X_POS, BOX_Y_POS, BOX_WIDTH, BOX_HEIGHT, ILI9341_DARKCYAN);
+
+    // Print the prompt
+    tft.setCursor(0, BOX_Y_POS + MARGIN); // start row under icons
+    tft.setTextColor(ILI9341_WHITE);
+    printCentered(tft, "Confirm SAVE?");
+
+    // Print the NO/YES buttons
+    tft.fillRect(NO_BUTTON_X_POS, NO_BUTTON_Y_POS, BUTTON_WIDTH, BUTTON_HEIGHT, ILI9341_RED); // NO button
+    tft.fillRect(YES_BUTTON_X_POS, YES_BUTTON_Y_POS, BUTTON_WIDTH, BUTTON_HEIGHT, ILI9341_GREEN); // YES button
+
+    tft.setCursor(NO_BUTTON_X_POS, NO_BUTTON_Y_POS);
+    printCenteredJustified(tft, "NO", NO_BUTTON_X_POS + BUTTON_WIDTH/2, NO_BUTTON_Y_POS + BUTTON_HEIGHT/2 - TEXT_HEIGHT/2);
+    tft.setCursor(YES_BUTTON_X_POS, YES_BUTTON_Y_POS);
+    printCenteredJustified(tft, "YES", YES_BUTTON_X_POS + BUTTON_WIDTH/2, YES_BUTTON_Y_POS + BUTTON_HEIGHT/2 - TEXT_HEIGHT/2);
+
+    while(true) {
+        // Check for touch activity
+        if (controls.isTouched()) {
+            TouchPoint touchPoint = controls.getTouchPoint();
+
+            // Check the YES button
+            if (YES_BUTTON_AREA.checkArea(touchPoint)) {
+                while (controls.isTouched()) {} // wait for release
+                return true;
+            }
+
+            // Check the NO button
+            if (NO_BUTTON_AREA.checkArea(touchPoint)) {
+                while (controls.isTouched()) {} // wait for release
+                return false;
+            }
+        }
+        delay(100);
+    }
+}
+
 TS_Point calibPoint(ILI9341_t3 &tft, Controls &controls, int16_t x, int16_t y)
 {
   tft.drawFastHLine(x-10, y, 20, ILI9341_WHITE);

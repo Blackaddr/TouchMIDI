@@ -57,6 +57,29 @@ void jsonToPreset(JsonObject &jsonObj, Preset &preset)
   }
 }
 
+void presetToJson(Preset &preset, JsonObject &root)
+{
+    Serial.printf("Saving preset %s\n", preset.name.c_str());
+    root["presetName"] = preset.name.c_str();
+    root["presetIndex"] = preset.index;
+    root["numControls"] = preset.numControls;
+
+    JsonArray& controls = root.createNestedArray("controls");
+
+    for (unsigned i=0; i < preset.numControls; i++) {
+        JsonObject &controlItem = controls.createNestedObject();
+        controlItem["name"]      = preset.controls[i].name.c_str();
+        controlItem["shortName"] = preset.controls[i].shortName.c_str();
+        JsonArray &params = controlItem.createNestedArray("params");
+        params.add(preset.controls[i].cc);
+        params.add(static_cast<unsigned>(preset.controls[i].type));
+        params.add(preset.controls[i].value);
+    }
+
+    //root.prettyPrintTo(Serial);
+    root.printTo(Serial);
+}
+
 /// Create a new preset with defaults for the supplied index and number of controls
 /// @param index the preset will be configured for the specified index
 /// @param numControls specifies the number of controls to initialize
