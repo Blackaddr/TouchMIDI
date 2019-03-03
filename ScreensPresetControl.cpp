@@ -6,6 +6,7 @@
  */
 #include "Screens.h"
 
+// This screen presents a given presets controls for real-time use.
 Screens DrawPresetControl(ILI9341_t3 &tft, Controls &controls, Preset &preset)
 {
     unsigned activeControl = 0;
@@ -112,7 +113,7 @@ Screens DrawPresetControl(ILI9341_t3 &tft, Controls &controls, Preset &preset)
 
             // Check for touch activity
             if (controls.isTouched()) {
-                TS_Point touchPoint = controls.getTouchPoint();
+                TouchPoint touchPoint = controls.getTouchPoint();
                 Coordinate touchCoordinate(touchPoint.x, touchPoint.y, nullptr);
 
                 // wait until the screen is no longer touched before taking action
@@ -136,7 +137,7 @@ Screens DrawPresetControl(ILI9341_t3 &tft, Controls &controls, Preset &preset)
 
                 // Check for controls
                 for (auto i=0; i<MAX_NUM_CONTROLS; i++) {
-                    if ( controlLocations[i].checkCoordinateRange(touchCoordinate, TOUCH_CONTROL_HALFSIZE) ) {
+                    if ( controlLocations[i].checkCoordinateRange(touchPoint, TOUCH_CONTROL_HALFSIZE) ) {
                         activeControl = i;
                         redrawControls = true;
                         break; // break out of the for loop
