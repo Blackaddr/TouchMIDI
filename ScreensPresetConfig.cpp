@@ -10,8 +10,8 @@
 const TouchArea BACK_BUTTON_AREA(BACK_BUTTON_X_POS, BACK_BUTTON_X_POS+ICON_SIZE, 0, ICON_SIZE);
 
 constexpr int SELECTED_TEXT_WIDTH = 160;
-constexpr unsigned CONTROL_ENCODER = 0;
-constexpr unsigned CONTROL_SWITCH  = 0;
+//constexpr unsigned CONTROL_ENCODER = 0;
+//constexpr unsigned CONTROL_SWITCH  = 0;
 
 void DrawPresetConfig(ILI9341_t3 &tft, Controls &controls, Preset &preset)
 {
@@ -108,7 +108,7 @@ void DrawPresetConfig(ILI9341_t3 &tft, Controls &controls, Preset &preset)
         }
 
         if (controls.isSwitchToggled(CONTROL_SWITCH)) {
-          // TODO: Edit the preset control
+            DrawMidiControlConfig(tft, controls, (*selectedControl));
         }
 
         delay(100); // needed in order for encoder activity sampling/filteirng

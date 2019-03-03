@@ -4,6 +4,11 @@
 #include "Arduino.h"
 #include "VectorSupport.h"
 
+constexpr int MIDI_CC_MAX = 127;
+constexpr int MIDI_CC_MIN = 0;
+constexpr int MIDI_VALUE_MAX = 127;
+constexpr int MIDI_VALUE_MIN = 0;
+
 /// Add a new element to a vector.
 /// @details if the index does not yet exist, add it at the back. Otherwise, index it directly.
 /// @param vec reference to the vector that you want to add an element to

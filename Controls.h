@@ -17,6 +17,7 @@ enum class ControlType : unsigned {
   SWITCH_MOMENTARY = 0, ///< a momentary switch, which is only on when pressed.
   SWITCH_LATCHING  = 1,  ///< a latching switch, which toggles between on and off with each press and release
   ROTARY_KNOB      = 2,      ///< a rotary encoder knob
+  NUM_TYPES,                 ///< symbol name for number of types
   UNDEFINED        = 255     ///< undefined or uninitialized
 };
 
@@ -122,16 +123,21 @@ public:
 
   TouchCalibration getCalib() { return m_TouchCalibration; }
 
-  int getRotaryAdjustUnit(unsigned index) {
+  int getRotaryAdjust(unsigned index) {
     if (index >= m_encoders.size()) { return 0; } // index is greater than number of encoders
     
     int encoderAdjust = m_encoders[index].getChange();
+    return encoderAdjust;
+  }
+
+  int getRotaryAdjustUnit(unsigned index) {
+    int encoderAdjust = getRotaryAdjust(index);
     if (encoderAdjust != 0) {
-      // clip the adjust to maximum abs value of 1.
-      int encoderAdjust = (encoderAdjust > 0) ? 1 : -1;
+        // clip the adjust to maximum abs value of 1.
+        int encoderAdjust = (encoderAdjust > 0) ? 1 : -1;
     }
 
-    return encoderAdjust;
+return encoderAdjust;
   }
 
   bool isSwitchToggled(unsigned index) {
@@ -148,6 +154,19 @@ public:
 
   unsigned getNumSwitches() { return m_numSwitches; }
   unsigned getNumEncoders() { return m_numEncoders; }
+
+  static const char* ControlTypeToString(ControlType type) {
+      switch (type) {
+      case ControlType::ROTARY_KNOB :
+          return "ROTARY KNOB";
+      case ControlType::SWITCH_LATCHING :
+          return "LATCH";
+      case ControlType::SWITCH_MOMENTARY :
+          return "MOMENTARY";
+      default:
+          return "UNDEFINED";
+      }
+  }
 
   XPT2046_Touchscreen *touch = nullptr;
   std::vector<RotaryEncoder> m_encoders;

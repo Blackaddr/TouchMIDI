@@ -19,6 +19,7 @@ enum class Screens : unsigned {
   PRESET_NAVIGATION, ///< screen for navigating between and selecting a preset
   PRESET_CONTROL,       ///< screen for editing a preset
   PRESET_CONFIG,     ///< screen for preset configuration
+  MIDI_CONTROL_CONFIG, ///< screen for editing a MIDI control
   TOUCH_CALIBRATE,   ///< calibrate the touch screen
 };
 
@@ -27,6 +28,9 @@ constexpr unsigned ICON_SIZE = 48;
 constexpr unsigned ICON_SPACING = 5;
 constexpr unsigned BACK_BUTTON_X_POS = 255;
 constexpr unsigned SETTINGS_BUTTON_X_POS = BACK_BUTTON_X_POS-ICON_SIZE-ICON_SPACING;
+
+constexpr unsigned CONTROL_ENCODER = 0;
+constexpr unsigned CONTROL_SWITCH  = 0;
 
 //using Coordinate = TS_Point;
 
@@ -77,10 +81,11 @@ public:
 };
 
 
-
+void DrawMidiControlConfig(ILI9341_t3 &tft, Controls &controls, MidiControl &midiControl);
 void DrawPresetConfig(ILI9341_t3 &tft, Controls &controls, Preset &preset);
 Screens DrawPresetNavigation(ILI9341_t3 &tft, Controls &controls, const PresetArray *presetArray, unsigned &activePreset, unsigned &selectedPreset);
 Screens DrawPresetControl(ILI9341_t3 &tft, Controls &controls, Preset &preset);
+
 
 TS_Point calibPoint(ILI9341_t3 &tft, Controls &controls, int16_t x, int16_t y);
 TS_Point calcCalibLimits(unsigned p1, unsigned p2, unsigned p3);
