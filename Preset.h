@@ -50,6 +50,7 @@ using PresetArray = std::vector<Preset>;
 PresetArray *createPresetArray(void);
 void destroyPresetArray(PresetArray *presetArray);
 void jsonToPreset(JsonObject &jsonObj, Preset &preset);
+void presetToJson(Preset &preset, JsonObject &root);
 Preset createDefaultPreset(unsigned index, unsigned numControls);
 void createDefaultPresets(PresetArray *presetArray, unsigned numPresets, unsigned numControls);
 

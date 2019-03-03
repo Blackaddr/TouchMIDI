@@ -37,7 +37,7 @@ void DrawMidiControlConfig(ILI9341_t3 &tft, Controls &controls, MidiControl &mid
 
             // 2) Draw the icons
 
-            // BACK button
+            // BACK
             bmpDraw(tft, "back48.bmp", BACK_BUTTON_X_POS,0); // shifting more than 255 pixels seems to wrap the screen
 
             // NAME EDIT button

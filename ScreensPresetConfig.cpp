@@ -4,10 +4,14 @@
  *  Created on: Mar. 2, 2019
  *      Author: blackaddr
  */
+#include "FileAccess.h"
 #include "Screens.h"
 
 // This screen provides a way for editing a preset.
+constexpr unsigned SAVE_BUTTON_X_POS = BACK_BUTTON_X_POS-ICON_SIZE-ICON_SPACING;
+
 const TouchArea BACK_BUTTON_AREA(BACK_BUTTON_X_POS, BACK_BUTTON_X_POS+ICON_SIZE, 0, ICON_SIZE);
+const TouchArea SAVE_BUTTON_AREA(SAVE_BUTTON_X_POS, SAVE_BUTTON_X_POS+ICON_SIZE, 0, ICON_SIZE);
 
 constexpr int SELECTED_TEXT_WIDTH = 160;
 //constexpr unsigned CONTROL_ENCODER = 0;
@@ -37,8 +41,9 @@ void DrawPresetConfig(ILI9341_t3 &tft, Controls &controls, Preset &preset)
 
             // 2) Draw the icons
 
-            // BACK button
+            // BACK and SAVE buttons
             bmpDraw(tft, "back48.bmp", BACK_BUTTON_X_POS,0); // shifting more than 255 pixels seems to wrap the screen
+            bmpDraw(tft, "seting48.bmp", SAVE_BUTTON_X_POS, 0); // TODO replace with save button
 
             // NAME EDIT button
             nameEditButtonPosition = tft.getCursorX() + MARGIN;
@@ -82,6 +87,22 @@ void DrawPresetConfig(ILI9341_t3 &tft, Controls &controls, Preset &preset)
                 return;
             }
 
+            // Check the save button
+            if (SAVE_BUTTON_AREA.checkArea(touchPoint)) {
+                while (controls.isTouched()) {} // wait for release
+                if (saveConfirmation(tft, controls)) {
+                    StaticJsonBuffer<1024> jsonBuffer; // stack buffer
+                    JsonObject& root = jsonBuffer.createObject();
+                    presetToJson(preset, root);
+
+                    char presetFilename[] = "PRESETX.JSN";
+                    constexpr unsigned PRESET_ID_INDEX = 6;
+                    presetFilename[PRESET_ID_INDEX] = preset.index + 0x30;
+                    writePresetToFile(presetFilename, root); // Write to the SD card
+                }
+                redrawScreen = true;
+            }
+
             // Check the name edit button button
             if (editNameArea.checkArea(touchPoint)) {
                 while (controls.isTouched()) {} // wait for release
@@ -109,6 +130,7 @@ void DrawPresetConfig(ILI9341_t3 &tft, Controls &controls, Preset &preset)
 
         if (controls.isSwitchToggled(CONTROL_SWITCH)) {
             DrawMidiControlConfig(tft, controls, (*selectedControl));
+            redrawScreen = true;
         }
 
         delay(100); // needed in order for encoder activity sampling/filteirng

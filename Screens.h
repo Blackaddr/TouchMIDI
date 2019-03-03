@@ -85,7 +85,7 @@ void DrawMidiControlConfig(ILI9341_t3 &tft, Controls &controls, MidiControl &mid
 void DrawPresetConfig(ILI9341_t3 &tft, Controls &controls, Preset &preset);
 Screens DrawPresetNavigation(ILI9341_t3 &tft, Controls &controls, const PresetArray *presetArray, unsigned &activePreset, unsigned &selectedPreset);
 Screens DrawPresetControl(ILI9341_t3 &tft, Controls &controls, Preset &preset);
-
+bool saveConfirmation(ILI9341_t3 &tft, Controls &controls);
 
 TS_Point calibPoint(ILI9341_t3 &tft, Controls &controls, int16_t x, int16_t y);
 TS_Point calcCalibLimits(unsigned p1, unsigned p2, unsigned p3);
