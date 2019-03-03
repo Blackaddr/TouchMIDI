@@ -104,9 +104,21 @@ void DrawMidiControlConfig(ILI9341_t3 &tft, Controls &controls, MidiControl &mid
             case 3:
                 // Value adjust
                 {
-                    int knobAdjust = controls.getRotaryAdjust(CONTROL_ENCODER);
-                    unsigned newValue = adjustWithSaturation(midiControl.value, knobAdjust, MIDI_VALUE_MIN, MIDI_VALUE_MAX);
-                    if (newValue != midiControl.value) { midiControl.value = newValue; redrawScreen = true; }
+                    unsigned newValue;
+                    if ((midiControl.type == ControlType::SWITCH_LATCHING) || (midiControl.type == ControlType::SWITCH_MOMENTARY)) {
+                        // switch behavior, only MIDI ON/OFF is permitted
+                        int knobAdjust = controls.getRotaryAdjustUnit(CONTROL_ENCODER);
+                        if (knobAdjust != 0) {
+                            if (midiControl.value == MIDI_ON_VALUE) { midiControl.value = MIDI_OFF_VALUE; }
+                            else { midiControl.value = MIDI_ON_VALUE; }
+                            redrawScreen = true;
+                        }
+                    } else {
+                        // knob behavior
+                        int knobAdjust = controls.getRotaryAdjust(CONTROL_ENCODER);
+                        newValue = adjustWithSaturation(midiControl.value, knobAdjust, MIDI_VALUE_MIN, MIDI_VALUE_MAX);
+                        if (newValue != midiControl.value) { midiControl.value = newValue; redrawScreen = true; }
+                    }
                     break;
                 }
             default :

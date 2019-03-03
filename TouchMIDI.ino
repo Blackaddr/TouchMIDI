@@ -55,7 +55,8 @@ unsigned selectedPreset = 0;
 void setup(void) {
 
   Serial.begin(57600);
-  while (!Serial) {}
+  delay(1000);
+  if (!Serial) { delay(1000); }
   pinMode(23,INPUT);
 
   pinMode(SDCARD_CS, OUTPUT);
