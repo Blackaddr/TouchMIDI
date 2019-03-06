@@ -59,7 +59,7 @@ void jsonToPreset(JsonObject &jsonObj, Preset &preset)
 
 void presetToJson(Preset &preset, JsonObject &root)
 {
-    Serial.printf("Saving preset %s\n", preset.name.c_str());
+    //Serial.printf("Saving preset %s\n", preset.name.c_str());
     root["presetName"] = preset.name.c_str();
     root["presetIndex"] = preset.index;
     root["numControls"] = preset.numControls;
@@ -77,7 +77,7 @@ void presetToJson(Preset &preset, JsonObject &root)
     }
 
     //root.prettyPrintTo(Serial);
-    root.printTo(Serial);
+    //root.printTo(Serial);
 }
 
 /// Create a new preset with defaults for the supplied index and number of controls

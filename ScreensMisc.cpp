@@ -6,7 +6,7 @@
  */
 #include "Screens.h"
 
-bool saveConfirmation(ILI9341_t3 &tft, Controls &controls)
+bool confirmationScreen(ILI9341_t3 &tft, Controls &controls, String message)
 {
     unsigned width = tft.width();
     unsigned height = tft.height();
@@ -16,7 +16,7 @@ bool saveConfirmation(ILI9341_t3 &tft, Controls &controls)
     const unsigned BUTTON_WIDTH = width/5;
     const unsigned BUTTON_HEIGHT = height/5;
 
-    const unsigned BOX_WIDTH = (width*6)/10;
+    const unsigned BOX_WIDTH = (width*7)/10;
     const unsigned BOX_HEIGHT = (height*5)/10;
     const unsigned BOX_X_POS = (width - BOX_WIDTH)/2;
     const unsigned BOX_Y_POS = (height - BOX_HEIGHT)/2;
@@ -41,7 +41,8 @@ bool saveConfirmation(ILI9341_t3 &tft, Controls &controls)
     // Print the prompt
     tft.setCursor(0, BOX_Y_POS + MARGIN); // start row under icons
     tft.setTextColor(ILI9341_WHITE);
-    printCentered(tft, "Confirm SAVE?");
+    //printCentered(tft, "Confirm SAVE?");
+    printCentered(tft, message.c_str());
 
     // Print the NO/YES buttons
     tft.fillRect(NO_BUTTON_X_POS, NO_BUTTON_Y_POS, BUTTON_WIDTH, BUTTON_HEIGHT, ILI9341_RED); // NO button
@@ -72,6 +73,12 @@ bool saveConfirmation(ILI9341_t3 &tft, Controls &controls)
         delay(100);
     }
 }
+
+bool saveConfirmation(ILI9341_t3 &tft, Controls &controls)
+{
+    return confirmationScreen(tft, controls, "Confirm SAVE?");
+}
+
 
 TS_Point calibPoint(ILI9341_t3 &tft, Controls &controls, int16_t x, int16_t y)
 {

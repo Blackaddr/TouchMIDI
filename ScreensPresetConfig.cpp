@@ -8,14 +8,10 @@
 #include "Screens.h"
 
 // This screen provides a way for editing a preset.
-constexpr unsigned SAVE_BUTTON_X_POS = BACK_BUTTON_X_POS-ICON_SIZE-ICON_SPACING;
-
 const TouchArea BACK_BUTTON_AREA(BACK_BUTTON_X_POS, BACK_BUTTON_X_POS+ICON_SIZE, 0, ICON_SIZE);
-const TouchArea SAVE_BUTTON_AREA(SAVE_BUTTON_X_POS, SAVE_BUTTON_X_POS+ICON_SIZE, 0, ICON_SIZE);
+
 
 constexpr int SELECTED_TEXT_WIDTH = 160;
-//constexpr unsigned CONTROL_ENCODER = 0;
-//constexpr unsigned CONTROL_SWITCH  = 0;
 
 void DrawPresetConfig(ILI9341_t3 &tft, Controls &controls, Preset &preset)
 {
@@ -25,6 +21,19 @@ void DrawPresetConfig(ILI9341_t3 &tft, Controls &controls, Preset &preset)
     TouchArea editNameArea;
     int16_t x,y;
     auto selectedControl = preset.controls.begin();
+
+    // Calculate button locations
+    const unsigned BOTTOM_ICON_ROW_Y_POS = tft.height() - ICON_SIZE;
+    const unsigned ADD_BUTTON_X_POS = BACK_BUTTON_X_POS;
+    const unsigned ADD_BUTTON_Y_POS = BOTTOM_ICON_ROW_Y_POS;
+    const unsigned REMOVE_BUTTON_X_POS = ADD_BUTTON_X_POS - ICON_SIZE - ICON_SPACING;
+    const unsigned REMOVE_BUTTON_Y_POS = BOTTOM_ICON_ROW_Y_POS;
+    const unsigned SAVE_BUTTON_X_POS = REMOVE_BUTTON_X_POS-ICON_SIZE-ICON_SPACING;
+    const unsigned SAVE_BUTTON_Y_POS = BOTTOM_ICON_ROW_Y_POS;
+
+    const TouchArea SAVE_BUTTON_AREA(SAVE_BUTTON_X_POS, SAVE_BUTTON_X_POS+ICON_SIZE, SAVE_BUTTON_Y_POS, SAVE_BUTTON_Y_POS+ICON_SIZE);
+    const TouchArea ADD_BUTTON_AREA(ADD_BUTTON_X_POS, ADD_BUTTON_X_POS+ICON_SIZE, ADD_BUTTON_Y_POS, ADD_BUTTON_Y_POS+ICON_SIZE);
+    const TouchArea REMOVE_BUTTON_AREA(REMOVE_BUTTON_X_POS, REMOVE_BUTTON_X_POS+ICON_SIZE, REMOVE_BUTTON_Y_POS, REMOVE_BUTTON_Y_POS+ICON_SIZE);
 
     while (true) {
 
@@ -40,10 +49,10 @@ void DrawPresetConfig(ILI9341_t3 &tft, Controls &controls, Preset &preset)
             tft.print(const_cast<char*>(presetName));
 
             // 2) Draw the icons
-
-            // BACK and SAVE buttons
-            bmpDraw(tft, "back48.bmp", BACK_BUTTON_X_POS,0); // shifting more than 255 pixels seems to wrap the screen
-            bmpDraw(tft, "seting48.bmp", SAVE_BUTTON_X_POS, 0); // TODO replace with save button
+            bmpDraw(tft, "back48.bmp", BACK_BUTTON_X_POS, BACK_BUTTON_Y_POS); // shifting more than 255 pixels seems to wrap the screen
+            bmpDraw(tft, "save48.bmp", SAVE_BUTTON_X_POS, SAVE_BUTTON_Y_POS);
+            bmpDraw(tft, "add48.bmp", ADD_BUTTON_X_POS, ADD_BUTTON_Y_POS);
+            bmpDraw(tft, "remove48.bmp", REMOVE_BUTTON_X_POS, REMOVE_BUTTON_Y_POS);
 
             // NAME EDIT button
             nameEditButtonPosition = tft.getCursorX() + MARGIN;
@@ -79,7 +88,6 @@ void DrawPresetConfig(ILI9341_t3 &tft, Controls &controls, Preset &preset)
         // Check for touch activity
         if (controls.isTouched()) {
             TouchPoint touchPoint = controls.getTouchPoint();
-            //Coordinate touchCoordinate(touchPoint.x, touchPoint.y, nullptr);
 
             // Check the back button
             if (BACK_BUTTON_AREA.checkArea(touchPoint)) {
@@ -87,10 +95,17 @@ void DrawPresetConfig(ILI9341_t3 &tft, Controls &controls, Preset &preset)
                 return;
             }
 
+            // Check the name edit button button
+            if (editNameArea.checkArea(touchPoint)) {
+                while (controls.isTouched()) {} // wait for release
+                StringEdit(tft, preset.name, *controls.touch, controls.m_encoders[0], controls.m_switches[0]);
+                redrawScreen = true;
+            }
+
             // Check the save button
             if (SAVE_BUTTON_AREA.checkArea(touchPoint)) {
                 while (controls.isTouched()) {} // wait for release
-                if (saveConfirmation(tft, controls)) {
+                if (confirmationScreen(tft, controls, "Confirm SAVE?")) {
                     StaticJsonBuffer<1024> jsonBuffer; // stack buffer
                     JsonObject& root = jsonBuffer.createObject();
                     presetToJson(preset, root);
@@ -103,10 +118,34 @@ void DrawPresetConfig(ILI9341_t3 &tft, Controls &controls, Preset &preset)
                 redrawScreen = true;
             }
 
-            // Check the name edit button button
-            if (editNameArea.checkArea(touchPoint)) {
+            // Check the add button
+            if (ADD_BUTTON_AREA.checkArea(touchPoint)) {
                 while (controls.isTouched()) {} // wait for release
-                StringEdit(tft, preset.name, *controls.touch, controls.m_encoders[0], controls.m_switches[0]);
+
+                if (confirmationScreen(tft, controls, "Confirm ADD?")) {
+                    MidiControl newControl = MidiControl(
+                        String("*New*"),
+                        String("shortName"),
+                        0,
+                        static_cast<ControlType>(0),
+                        0
+                      );
+                    selectedControl = preset.controls.insert(selectedControl, newControl);
+                    preset.numControls++;
+                }
+                redrawScreen = true;
+            }
+
+            // Check the remove button
+            if (REMOVE_BUTTON_AREA.checkArea(touchPoint)) {
+                while (controls.isTouched()) {} // wait for release
+                if (confirmationScreen(tft, controls, "Confirm REMOVE?")) {
+                    auto previousControl = preset.controls.begin();
+                    if (selectedControl != preset.controls.begin()) { previousControl = selectedControl-1; }
+                    preset.controls.erase(selectedControl);
+                    selectedControl = previousControl;
+                    if (preset.numControls > 1) { preset.numControls--; }
+                }
                 redrawScreen = true;
             }
 

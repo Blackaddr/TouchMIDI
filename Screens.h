@@ -27,6 +27,7 @@ constexpr unsigned TOUCH_CONTROL_HALFSIZE = 20;
 constexpr unsigned ICON_SIZE = 48;
 constexpr unsigned ICON_SPACING = 5;
 constexpr unsigned BACK_BUTTON_X_POS = 255;
+constexpr unsigned BACK_BUTTON_Y_POS = 0;
 constexpr unsigned SETTINGS_BUTTON_X_POS = BACK_BUTTON_X_POS-ICON_SIZE-ICON_SPACING;
 
 constexpr unsigned CONTROL_ENCODER = 0;
@@ -83,8 +84,9 @@ public:
 
 void DrawMidiControlConfig(ILI9341_t3 &tft, Controls &controls, MidiControl &midiControl);
 void DrawPresetConfig(ILI9341_t3 &tft, Controls &controls, Preset &preset);
-Screens DrawPresetNavigation(ILI9341_t3 &tft, Controls &controls, const PresetArray *presetArray, unsigned &activePreset, unsigned &selectedPreset);
+Screens DrawPresetNavigation(ILI9341_t3 &tft, Controls &controls, PresetArray &presetArray, unsigned &activePreset, unsigned &selectedPreset);
 Screens DrawPresetControl(ILI9341_t3 &tft, Controls &controls, Preset &preset);
+bool confirmationScreen(ILI9341_t3 &tft, Controls &controls, String message);
 bool saveConfirmation(ILI9341_t3 &tft, Controls &controls);
 
 TS_Point calibPoint(ILI9341_t3 &tft, Controls &controls, int16_t x, int16_t y);

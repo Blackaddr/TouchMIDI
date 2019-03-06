@@ -42,7 +42,10 @@ struct Preset {
   unsigned index; ///< the index of the preset
   unsigned numControls; ///< the number of MIDI controls for this preset
   vector<MidiControl> controls; ///< a vector of MidiControls
-  Preset() { name.reserve(MAX_NAME_SIZE); }
+  Preset(unsigned index = 0) : index(index), numControls(0) {
+      name.reserve(MAX_NAME_SIZE);
+      name = String("*new*");
+  }
 };
 
 using PresetArray = std::vector<Preset>;

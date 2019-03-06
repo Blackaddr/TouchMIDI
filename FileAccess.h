@@ -8,7 +8,11 @@
 #ifndef FILEACCESS_H_
 #define FILEACCESS_H_
 
+#include "SD.h"
+//#include "SdFs.h"
 #include "ArduinoJson.h"
+
+//extern SdFat SD;
 
 void writePresetToFile(const char *filename, JsonObject &jsonObject);
 
