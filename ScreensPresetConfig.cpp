@@ -28,12 +28,18 @@ void DrawPresetConfig(ILI9341_t3 &tft, Controls &controls, Preset &preset)
     const unsigned ADD_BUTTON_Y_POS = BOTTOM_ICON_ROW_Y_POS;
     const unsigned REMOVE_BUTTON_X_POS = ADD_BUTTON_X_POS - ICON_SIZE - ICON_SPACING;
     const unsigned REMOVE_BUTTON_Y_POS = BOTTOM_ICON_ROW_Y_POS;
-    const unsigned SAVE_BUTTON_X_POS = REMOVE_BUTTON_X_POS-ICON_SIZE-ICON_SPACING;
+    const unsigned MOVEUP_BUTTON_X_POS = REMOVE_BUTTON_X_POS - ICON_SIZE - ICON_SPACING;
+    const unsigned MOVEUP_BUTTON_Y_POS = BOTTOM_ICON_ROW_Y_POS;
+    const unsigned MOVEDN_BUTTON_X_POS = MOVEUP_BUTTON_X_POS - ICON_SIZE - ICON_SPACING;
+    const unsigned MOVEDN_BUTTON_Y_POS = BOTTOM_ICON_ROW_Y_POS;
+    const unsigned SAVE_BUTTON_X_POS = MOVEDN_BUTTON_X_POS-ICON_SIZE-ICON_SPACING;
     const unsigned SAVE_BUTTON_Y_POS = BOTTOM_ICON_ROW_Y_POS;
 
     const TouchArea SAVE_BUTTON_AREA(SAVE_BUTTON_X_POS, SAVE_BUTTON_X_POS+ICON_SIZE, SAVE_BUTTON_Y_POS, SAVE_BUTTON_Y_POS+ICON_SIZE);
     const TouchArea ADD_BUTTON_AREA(ADD_BUTTON_X_POS, ADD_BUTTON_X_POS+ICON_SIZE, ADD_BUTTON_Y_POS, ADD_BUTTON_Y_POS+ICON_SIZE);
     const TouchArea REMOVE_BUTTON_AREA(REMOVE_BUTTON_X_POS, REMOVE_BUTTON_X_POS+ICON_SIZE, REMOVE_BUTTON_Y_POS, REMOVE_BUTTON_Y_POS+ICON_SIZE);
+    const TouchArea MOVEUP_BUTTON_AREA(MOVEUP_BUTTON_X_POS, MOVEUP_BUTTON_X_POS+ICON_SIZE, MOVEUP_BUTTON_Y_POS, MOVEUP_BUTTON_Y_POS+ICON_SIZE);
+    const TouchArea MOVEDN_BUTTON_AREA(MOVEDN_BUTTON_X_POS, MOVEDN_BUTTON_X_POS+ICON_SIZE, MOVEDN_BUTTON_Y_POS, MOVEDN_BUTTON_Y_POS+ICON_SIZE);
 
     while (true) {
 
@@ -50,9 +56,11 @@ void DrawPresetConfig(ILI9341_t3 &tft, Controls &controls, Preset &preset)
 
             // 2) Draw the icons
             bmpDraw(tft, "back48.bmp", BACK_BUTTON_X_POS, BACK_BUTTON_Y_POS); // shifting more than 255 pixels seems to wrap the screen
-            bmpDraw(tft, "save48.bmp", SAVE_BUTTON_X_POS, SAVE_BUTTON_Y_POS);
             bmpDraw(tft, "add48.bmp", ADD_BUTTON_X_POS, ADD_BUTTON_Y_POS);
             bmpDraw(tft, "remove48.bmp", REMOVE_BUTTON_X_POS, REMOVE_BUTTON_Y_POS);
+            bmpDraw(tft, "moveup48.bmp", MOVEUP_BUTTON_X_POS, MOVEUP_BUTTON_Y_POS);
+            bmpDraw(tft, "movedn48.bmp", MOVEDN_BUTTON_X_POS, MOVEDN_BUTTON_Y_POS);
+            bmpDraw(tft, "save48.bmp", SAVE_BUTTON_X_POS, SAVE_BUTTON_Y_POS);
 
             // NAME EDIT button
             nameEditButtonPosition = tft.getCursorX() + MARGIN;
@@ -147,6 +155,39 @@ void DrawPresetConfig(ILI9341_t3 &tft, Controls &controls, Preset &preset)
                     if (preset.numControls > 1) { preset.numControls--; }
                 }
                 redrawScreen = true;
+            }
+
+            // Check the MOVEUP button
+            if (MOVEUP_BUTTON_AREA.checkArea(touchPoint)) {
+                while (controls.isTouched()) {} // wait for release
+                if (selectedControl !=  preset.controls.begin()) { // can't go above the top one
+                    // swap the preset with the previous by inserting a copy of the selected
+                    // preset before the previous, then delete the old one.
+                    auto controlToInsertBefore = selectedControl-1;
+                    preset.controls.insert(controlToInsertBefore, *selectedControl);
+
+                    auto controlToErase = selectedControl+1;
+                    preset.controls.erase(controlToErase);
+                    selectedControl--;
+
+                    redrawScreen = true;
+                }
+            }
+
+            // Check the MOVEUDN button
+            if (MOVEDN_BUTTON_AREA.checkArea(touchPoint)) {
+                while (controls.isTouched()) {} // wait for release
+                if (selectedControl < preset.controls.end()-1 ) { // can't go below the last
+                    // swap the preset with the next by inserting a copy of the selected
+                    // preset after the next, then delete the old one.
+                    auto controlToInsertBefore = selectedControl+2;
+                    preset.controls.insert(controlToInsertBefore, *selectedControl);
+
+                    auto controlToErase = selectedControl;
+                    preset.controls.erase(controlToErase);
+                    selectedControl++;
+                    redrawScreen = true;
+                }
             }
 
             // wait for touch release
