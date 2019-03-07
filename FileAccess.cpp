@@ -5,8 +5,9 @@
  *      Author: blackaddr
  */
 #include <cstring>
-#include <SD.h>
 #include "FileAccess.h"
+
+//SdFat SD;
 
 void writePresetToFile(const char *filename, JsonObject &jsonObject)
 {
@@ -24,13 +25,14 @@ void writePresetToFile(const char *filename, JsonObject &jsonObject)
         // file already exists
         SD.remove(filename);
     }
-    File file = SD.open(filename, FILE_WRITE);
+    File file = SD.open(filename, O_WRITE | O_CREAT); // was FILE_WRITE
     if (!file) {
         Serial.println(String("writePresetToFille(): ERROR cannot create ") + filename);
         return;
     }
+    elapsedMillis timeElapsed = 0;
     file.write(buffer, length);
-    Serial.println(String("writePresetToFille():: successfully written bytes: ") + length);
+    Serial.println(String("writePresetToFille():: successfully written bytes: ") + length + String(" millis: ") + timeElapsed);
     file.close();
 }
 

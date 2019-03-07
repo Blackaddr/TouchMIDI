@@ -1,10 +1,10 @@
 #include <SPI.h>
 #include <Wire.h>      // this is needed even tho we aren't using it
 #include <ILI9341_t3.h>
-#include <SD.h>
 #include <SPI.h>
 
 
+#include "FileAccess.h"
 #include "ArduinoJson.h"
 #include "Bounce.h"
 
@@ -142,7 +142,7 @@ void loop()
   while(true) {
     switch(nextScreen) {
       case Screens::PRESET_NAVIGATION :
-        nextScreen = DrawPresetNavigation(tft, controls, presetArray, activePreset, selectedPreset);
+        nextScreen = DrawPresetNavigation(tft, controls, (*presetArray), activePreset, selectedPreset);
         break;
       case Screens::PRESET_CONTROL :
         nextScreen = DrawPresetControl(tft, controls, (*presetArray)[activePreset]);
@@ -162,7 +162,7 @@ void loop()
         }
         break;
       default:
-        nextScreen = DrawPresetNavigation(tft, controls, presetArray, activePreset, selectedPreset);
+        nextScreen = DrawPresetNavigation(tft, controls, (*presetArray), activePreset, selectedPreset);
     }
       
   }     

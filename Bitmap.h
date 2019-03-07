@@ -4,10 +4,9 @@
  *  Created on: Dec 14, 2018
  *      Author: blackaddr
  */
-
-#include <SD.h>
 #include <cstdint>
 #include "ILI9341_t3.h"
+#include "FileAccess.h"
 
 #ifndef __BITMAP_H
 #define __BITMAP_H

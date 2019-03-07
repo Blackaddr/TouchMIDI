@@ -26,6 +26,16 @@ void addToVector(std::vector<T> &vec, T element, unsigned index)
   }
 }
 
+template<typename T>
+void insertToVector(std::vector<T> &vec, T element, unsigned index)
+{
+  if (index >= vec.size()) {
+    vec.emplace_back(element);
+  } else {
+    vec.insert(index, element);
+  }
+}
+
 
 int adjustWithWrap(int currentValue, int adjust, int maxVal, int minVal = 0);
 int adjustWithSaturation(int input, int adj, int min, int max);
