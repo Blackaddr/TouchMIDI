@@ -163,13 +163,13 @@ void DrawPresetConfig(ILI9341_t3 &tft, Controls &controls, Preset &preset)
                 if (selectedControl !=  preset.controls.begin()) { // can't go above the top one
                     // swap the preset with the previous by inserting a copy of the selected
                     // preset before the previous, then delete the old one.
+                    unsigned selectedIndex = std::distance(preset.controls.begin(), selectedControl);
                     auto controlToInsertBefore = selectedControl-1;
                     preset.controls.insert(controlToInsertBefore, *selectedControl);
 
-                    auto controlToErase = selectedControl+1;
+                    auto controlToErase = preset.controls.begin() + selectedIndex + 1;
                     preset.controls.erase(controlToErase);
-                    selectedControl--;
-
+                    selectedControl = preset.controls.begin() + selectedIndex - 1;
                     redrawScreen = true;
                 }
             }
@@ -180,12 +180,13 @@ void DrawPresetConfig(ILI9341_t3 &tft, Controls &controls, Preset &preset)
                 if (selectedControl < preset.controls.end()-1 ) { // can't go below the last
                     // swap the preset with the next by inserting a copy of the selected
                     // preset after the next, then delete the old one.
+                    unsigned selectedIndex = std::distance(preset.controls.begin(), selectedControl);
                     auto controlToInsertBefore = selectedControl+2;
                     preset.controls.insert(controlToInsertBefore, *selectedControl);
 
-                    auto controlToErase = selectedControl;
+                    auto controlToErase = preset.controls.begin() + selectedIndex;
                     preset.controls.erase(controlToErase);
-                    selectedControl++;
+                    selectedControl = preset.controls.begin() + selectedIndex +1;
                     redrawScreen = true;
                 }
             }
