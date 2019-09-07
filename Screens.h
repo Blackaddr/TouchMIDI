@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <cctype>
+#include <MIDI.h>
 
 #include "ILI9341_t3.h"
 #include "ArduinoJson.h"
@@ -21,6 +22,7 @@ enum class Screens : unsigned {
   PRESET_CONFIG,     ///< screen for preset configuration
   MIDI_CONTROL_CONFIG, ///< screen for editing a MIDI control
   TOUCH_CALIBRATE,   ///< calibrate the touch screen
+  MIDI_MONITOR,      ///< Midi monitoring tool
 };
 
 constexpr unsigned TOUCH_CONTROL_HALFSIZE = 20;
@@ -85,7 +87,8 @@ public:
 void DrawMidiControlConfig(ILI9341_t3 &tft, Controls &controls, MidiControl &midiControl);
 void DrawPresetConfig(ILI9341_t3 &tft, Controls &controls, Preset &preset);
 Screens DrawPresetNavigation(ILI9341_t3 &tft, Controls &controls, PresetArray &presetArray, unsigned &activePreset, unsigned &selectedPreset);
-Screens DrawPresetControl(ILI9341_t3 &tft, Controls &controls, Preset &preset);
+Screens DrawPresetControl(ILI9341_t3 &tft, Controls &controls, Preset &preset, midi::MidiInterface<HardwareSerial> &midiPort);
+Screens DrawMidiMonitor(ILI9341_t3 &tft, Controls &controls, Preset &preset, midi::MidiInterface<HardwareSerial> &midiPort);
 bool confirmationScreen(ILI9341_t3 &tft, Controls &controls, String message);
 bool saveConfirmation(ILI9341_t3 &tft, Controls &controls);
 

@@ -3,11 +3,20 @@
  *
  *  Created on: Mar. 2, 2019
  *      Author: blackaddr
+ *  This screen is for normal operation. This screen shows all the controls for a preset
+ *  and allows a control to be adjusted using the buttons/knobs on the hand controller.
+ *  If the input control matches an incoming MIDI CC, then that input control will update
+ *  the parameter.
  */
+#include <MIDI.h>
 #include "Screens.h"
 
+constexpr int MIDI_CHANNEL = 1;
+
+using namespace midi;
+
 // This screen presents a given presets controls for real-time use.
-Screens DrawPresetControl(ILI9341_t3 &tft, Controls &controls, Preset &preset)
+Screens DrawPresetControl(ILI9341_t3 &tft, Controls &controls, Preset &preset, MidiInterface<HardwareSerial> &midiPort)
 {
     unsigned activeControl = 0;
 
@@ -18,6 +27,7 @@ Screens DrawPresetControl(ILI9341_t3 &tft, Controls &controls, Preset &preset)
     bool redrawScreen = true;
     bool redoLayout = true;
     bool redrawControls = true;
+    bool redrawActiveControl = true;
 
     unsigned numKnobs = 0;
     unsigned numSwitches = 0;
@@ -85,12 +95,10 @@ Screens DrawPresetControl(ILI9341_t3 &tft, Controls &controls, Preset &preset)
             redrawScreen = false;
         }
 
-
-        if (redrawControls) {
-            // Draw a light filled box behind the active control and black behind the others
-
-            // Draw the controls
-            for (unsigned i=0; i<MAX_NUM_CONTROLS; i++) {
+        // Draw the controls
+        for (unsigned i=0; i<MAX_NUM_CONTROLS; i++) {
+            if (redrawControls || (i == activeControl)) {
+                // Draw a light filled box behind the active control and black behind the others
                 if (controlLocations[i].control) {
                     MidiControl &controlPtr = *controlLocations[i].control;
                     // valid pointer to control
@@ -104,12 +112,52 @@ Screens DrawPresetControl(ILI9341_t3 &tft, Controls &controls, Preset &preset)
                     }
                 }
             }
-            redrawControls = false;
-        }
 
-        // run a loop waiting for a control input from touch, rotary or switch
+        }
+        redrawControls = false;
+        redrawActiveControl = false;
+
+        // run a loop waiting for a control input from touch, rotary or switch, or external MIDI input.
         while(true) {
             MidiControl &control = *controlLocations[activeControl].control;
+
+            // Check for MIDI activity
+            if (midiPort.read()) {
+                Serial.println("MIDI received!");
+                MidiType type    = midiPort.getType();
+                DataByte ccId    = midiPort.getData1();
+                DataByte ccValue = midiPort.getData2();
+
+                if (type == midi::ControlChange) {
+                    for (auto it = preset.controls.begin(); it != preset.controls.end(); ++it) {
+                        if ( ccId == MidiControl::GetInputControlMappedCC((*it).inputControl)) {
+
+                            // found a control match!
+                            // TODO update behavior for the difference between momentary and toggle behavior
+                            if ((*it).type == ControlType::SWITCH_MOMENTARY) {
+                                if (true) {
+
+                                } else {
+
+                                }
+                                (*it).value = static_cast<unsigned>(toggleValue(control.value, 127));
+                                control.updated = true;
+                                redrawControls = true;
+                                redrawActiveControl = true;
+                            } else {
+                                (*it).value = adjustWithSaturation((*it).value, ccValue, 0, 127);
+                                (*it).updated = true;
+                                redrawControls = true;
+                                redrawActiveControl = true;
+                            }
+
+                            // Send the MIDI message
+                            midiPort.sendControlChange(ccId, ccValue, MIDI_CHANNEL);
+                            Serial.println(String("Send MIDI message ") + ccId + String(" ") + ccValue + String(" ") + MIDI_CHANNEL);
+                        }
+                    }
+                }
+            }
 
             // Check for touch activity
             if (controls.isTouched()) {
@@ -135,7 +183,7 @@ Screens DrawPresetControl(ILI9341_t3 &tft, Controls &controls, Preset &preset)
                     break; // break out of control-detect loop
                 }
 
-                // Check for controls
+                // Check for control touch points
                 for (auto i=0; i<MAX_NUM_CONTROLS; i++) {
                     if ( controlLocations[i].checkCoordinateRange(touchPoint, TOUCH_CONTROL_HALFSIZE) ) {
                         activeControl = i;
@@ -145,7 +193,7 @@ Screens DrawPresetControl(ILI9341_t3 &tft, Controls &controls, Preset &preset)
                 }
 
                 // break out of the control-detect loop if we need to redraw controls
-                if (redrawControls) { break; }
+                if (redrawControls || redrawActiveControl) { break; }
             }
 
             // Check for rotary activity
@@ -157,7 +205,12 @@ Screens DrawPresetControl(ILI9341_t3 &tft, Controls &controls, Preset &preset)
                 if (control.type == ControlType::ROTARY_KNOB) {
                     control.value = adjustWithSaturation(control.value, adjust, 0, 127);
                     control.updated = true;
-                    redrawControls = true;
+                    //redrawControls = true;
+                    redrawActiveControl = true;
+
+                    // Send the MIDI message
+                    midiPort.sendControlChange(control.cc, control.value, MIDI_CHANNEL);
+                    Serial.println(String("Send MIDI message ") + control.cc + String(" ") + control.value + String(" ") + MIDI_CHANNEL);
                     break;
                 }
             }
@@ -168,10 +221,13 @@ Screens DrawPresetControl(ILI9341_t3 &tft, Controls &controls, Preset &preset)
                 if (control.type == ControlType::SWITCH_MOMENTARY) {
                     control.value = static_cast<unsigned>(toggleValue(control.value, 127));
                     control.updated = true;
-                    redrawControls = true;
+                    //redrawControls = true;
+                    redrawActiveControl = true;
                     break;
                 }
             }
+
+            if (redrawControls || redrawActiveControl) { break; }
 
             delay(100); // this is needed for control sampling to work
         } // end while loop to process control inputs

@@ -11,7 +11,7 @@
 const TouchArea BACK_BUTTON_AREA(BACK_BUTTON_X_POS, BACK_BUTTON_X_POS+ICON_SIZE, 0, ICON_SIZE);
 
 
-constexpr int SELECTED_TEXT_WIDTH = 160;
+constexpr int SELECTED_TEXT_WIDTH = 200;
 
 void DrawPresetConfig(ILI9341_t3 &tft, Controls &controls, Preset &preset)
 {
@@ -135,7 +135,8 @@ void DrawPresetConfig(ILI9341_t3 &tft, Controls &controls, Preset &preset)
                         String("*New*"),
                         String("shortName"),
                         0,
-                        static_cast<ControlType>(0),
+                        InputControl::NOT_CONFIGURED,
+                        ControlType::SWITCH_MOMENTARY,
                         0
                       );
                     selectedControl = preset.controls.insert(selectedControl, newControl);

@@ -2,7 +2,9 @@
 #include <Wire.h>      // this is needed even tho we aren't using it
 #include <ILI9341_t3.h>
 #include <SPI.h>
+#include <MIDI.h>
 
+using namespace midi;
 
 #include "FileAccess.h"
 #include "ArduinoJson.h"
@@ -40,9 +42,11 @@ ILI9341_t3 tft = ILI9341_t3(TFT_CS, TFT_DC);
 Controls controls(1,1);
 Screens nextScreen;
 
-char jsonTextBuffer[1024];
-StaticJsonBuffer<1024> jsonBuffer;
+constexpr size_t JSON_BUFFER_SIZE = 1024;
+char jsonTextBuffer[JSON_BUFFER_SIZE];
+StaticJsonBuffer<JSON_BUFFER_SIZE> jsonBuffer;
 JsonObject *jsonObj;
+midi::MidiInterface<HardwareSerial> *midiPortPtr = nullptr;
 
 
 constexpr unsigned PRESET_ID_INDEX = 6;
@@ -58,6 +62,12 @@ void setup(void) {
   delay(1000);
   if (!Serial) { delay(1000); }
   pinMode(23,INPUT);
+
+  // Setup MIDI OUT
+  //MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, midiPort);
+  //midi::MidiInterface<Type> midiPort((HardwareSerial&)Serial1);
+  midiPortPtr = new midi::MidiInterface<HardwareSerial>((HardwareSerial&)Serial1);
+  midiPortPtr->begin(MIDI_CHANNEL_OMNI);
 
   pinMode(SDCARD_CS, OUTPUT);
   digitalWrite(SDCARD_CS, 1); // disable the SD CARD
@@ -87,13 +97,14 @@ void setup(void) {
           if (availableBytes > 0) {
             file.read(jsonTextBuffer, availableBytes);
             jsonObj = &jsonBuffer.parseObject(jsonTextBuffer);
-              if (!jsonObj->success()) {
-                Serial.println("Parsing JSON object failed");
-              } else {
-                Preset newPreset;
-                jsonToPreset(*jsonObj, newPreset);
-                addToVector(*presetArray, newPreset, i);
-              }
+            if (!jsonObj->success()) {
+              Serial.println("Parsing JSON object failed");
+            } else {
+              Preset newPreset;
+              jsonToPreset(*jsonObj, newPreset);
+              addToVector(*presetArray, newPreset, i);
+            }
+            jsonBuffer.clear();  
           }
           file.close();
         }
@@ -145,7 +156,7 @@ void loop()
         nextScreen = DrawPresetNavigation(tft, controls, (*presetArray), activePreset, selectedPreset);
         break;
       case Screens::PRESET_CONTROL :
-        nextScreen = DrawPresetControl(tft, controls, (*presetArray)[activePreset]);
+        nextScreen = DrawPresetControl(tft, controls, (*presetArray)[activePreset], *midiPortPtr);
         break;
       case Screens::TOUCH_CALIBRATE :
         nextScreen = TouchCalib(tft, controls);
@@ -161,6 +172,8 @@ void loop()
           }
         }
         break;
+      case Screens::MIDI_MONITOR :
+        nextScreen = DrawMidiMonitor(tft, controls, (*presetArray)[activePreset], *midiPortPtr);
       default:
         nextScreen = DrawPresetNavigation(tft, controls, (*presetArray), activePreset, selectedPreset);
     }

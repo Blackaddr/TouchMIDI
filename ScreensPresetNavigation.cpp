@@ -34,12 +34,16 @@ Screens DrawPresetNavigation(ILI9341_t3 &tft, Controls &controls, PresetArray &p
     const unsigned MOVEDN_BUTTON_Y_POS = BOTTOM_ICON_ROW_Y_POS;
     const unsigned SAVE_BUTTON_X_POS = MOVEDN_BUTTON_X_POS-ICON_SIZE-ICON_SPACING;
     const unsigned SAVE_BUTTON_Y_POS = BOTTOM_ICON_ROW_Y_POS;
+    const unsigned EXTRA_BUTTON_X_POS = BACK_BUTTON_X_POS;
+    const unsigned EXTRA_BUTTON_Y_POS = BOTTOM_ICON_ROW_Y_POS - ICON_SIZE - ICON_SPACING;
+
 
     const TouchArea SAVE_BUTTON_AREA(SAVE_BUTTON_X_POS, SAVE_BUTTON_X_POS+ICON_SIZE, SAVE_BUTTON_Y_POS, SAVE_BUTTON_Y_POS+ICON_SIZE);
     const TouchArea ADD_BUTTON_AREA(ADD_BUTTON_X_POS, ADD_BUTTON_X_POS+ICON_SIZE, ADD_BUTTON_Y_POS, ADD_BUTTON_Y_POS+ICON_SIZE);
     const TouchArea REMOVE_BUTTON_AREA(REMOVE_BUTTON_X_POS, REMOVE_BUTTON_X_POS+ICON_SIZE, REMOVE_BUTTON_Y_POS, REMOVE_BUTTON_Y_POS+ICON_SIZE);
     const TouchArea MOVEUP_BUTTON_AREA(MOVEUP_BUTTON_X_POS, MOVEUP_BUTTON_X_POS+ICON_SIZE, MOVEUP_BUTTON_Y_POS, MOVEUP_BUTTON_Y_POS+ICON_SIZE);
     const TouchArea MOVEDN_BUTTON_AREA(MOVEDN_BUTTON_X_POS, MOVEDN_BUTTON_X_POS+ICON_SIZE, MOVEDN_BUTTON_Y_POS, MOVEDN_BUTTON_Y_POS+ICON_SIZE);
+    const TouchArea EXTRA_BUTTON_AREA(EXTRA_BUTTON_X_POS, EXTRA_BUTTON_X_POS+ICON_SIZE, EXTRA_BUTTON_Y_POS, EXTRA_BUTTON_Y_POS+ICON_SIZE);
 
     while(true) {
         if (redrawScreen) {
@@ -56,6 +60,7 @@ Screens DrawPresetNavigation(ILI9341_t3 &tft, Controls &controls, PresetArray &p
             bmpDraw(tft, "remove48.bmp", REMOVE_BUTTON_X_POS, REMOVE_BUTTON_Y_POS);
             bmpDraw(tft, "moveup48.bmp", MOVEUP_BUTTON_X_POS, MOVEUP_BUTTON_Y_POS);
             bmpDraw(tft, "movedn48.bmp", MOVEDN_BUTTON_X_POS, MOVEDN_BUTTON_Y_POS);
+            bmpDraw(tft, "extra48.bmp", EXTRA_BUTTON_X_POS, EXTRA_BUTTON_Y_POS);
 
             for (auto it = presetArray.begin(); it != presetArray.end(); ++it) {
 
@@ -166,6 +171,12 @@ Screens DrawPresetNavigation(ILI9341_t3 &tft, Controls &controls, PresetArray &p
                     updatePresetArrayIndices(presetArray);
                     redrawScreen = true;
                 }
+            }
+
+            // Check the EXTRA button
+            if (EXTRA_BUTTON_AREA.checkArea(touchPoint)) {
+                while (controls.isTouched()) {} // wait for release
+                return Screens::MIDI_MONITOR;
             }
 
             // wait for touch release

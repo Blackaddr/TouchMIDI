@@ -13,26 +13,81 @@ constexpr unsigned MAX_PRESETS = 32;
 constexpr unsigned MAX_NAME_SIZE = 32;
 constexpr unsigned MAX_SHORT_NAME_SIZE = 4;
 
+enum class InputControl : unsigned {
+    NOT_CONFIGURED = 0,
+    SW1,
+    SW2,
+    SW3,
+    SW4,
+    EXP1,
+    EXP2,
+    NUM_CONTROLS
+};
+
 /// Contains the necessary information for a single MIDI control parameter
 struct MidiControl {
   String name; ///< the name of the parameter
   String shortName; ///< the short name for the parameter
   unsigned cc; ///< the CC assigned to the parameter
+  InputControl inputControl; ///< option input control from foot switch processor
   ControlType type; ///< the type of control, usually a switch or encoder
   unsigned value; ///<  the current assigned value to the MIDI parameter
   bool updated = false; ///< when true the value has been updated
 
-  /// Construct with values initialzed as specified
-  MidiControl(String name, String shortName, int cc, ControlType type, unsigned value)
-      : name(name), shortName(shortName), cc(cc), type(type), value(value) {
+  /// Construct with values initialized as specified
+  MidiControl(String name, String shortName, int cc, InputControl inputControl, ControlType type, unsigned value)
+      : name(name), shortName(shortName), cc(cc), inputControl(inputControl), type(type), value(value) {
       name.reserve(MAX_NAME_SIZE);
       shortName.reserve(MAX_SHORT_NAME_SIZE);
   }
   /// Construct with default values
   MidiControl()
-      : name(""), shortName(""), cc(0), type(ControlType::SWITCH_MOMENTARY), value(0) {
+      : name(""), shortName(""), cc(0), inputControl(InputControl::NOT_CONFIGURED), type(ControlType::SWITCH_MOMENTARY), value(0) {
       name.reserve(MAX_NAME_SIZE);
       shortName.reserve(MAX_SHORT_NAME_SIZE);
+  }
+
+  static const char* InputControlToString(InputControl type) {
+        switch (type) {
+        case InputControl::NOT_CONFIGURED :
+            return "NOT CONFIG";
+        case InputControl::SW1 :
+            return "SW1";
+        case InputControl::SW2 :
+            return "SW2";
+        case InputControl::SW3 :
+            return "SW3";
+        case InputControl::SW4 :
+            return "SW4";
+        case InputControl::EXP1 :
+            return "EXP1";
+        case InputControl::EXP2 :
+            return "EXP2";
+        default:
+            return "UNDEFINED";
+        }
+    }
+
+  // TODO, replace this with some that reads from a mapped file
+  static unsigned GetInputControlMappedCC(InputControl type) {
+      switch (type) {
+          case InputControl::NOT_CONFIGURED :
+              return 0;
+          case InputControl::SW1 :
+              return 32;
+          case InputControl::SW2 :
+              return 33;
+          case InputControl::SW3 :
+              return 34;
+          case InputControl::SW4 :
+              return 35;
+          case InputControl::EXP1 :
+              return 36;
+          case InputControl::EXP2 :
+              return 37;
+          default:
+              return 0;
+      }
   }
 };
 

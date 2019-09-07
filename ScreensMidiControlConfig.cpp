@@ -11,8 +11,8 @@ const TouchArea BACK_BUTTON_AREA(BACK_BUTTON_X_POS, BACK_BUTTON_X_POS+ICON_SIZE,
 
 constexpr int SELECTED_TEXT_WIDTH = 200;
 
-constexpr int NUM_CONTROL_FIELDS = 4;
-const char *CONTROL_FIELD_NAMES[NUM_CONTROL_FIELDS] = {"Short Name: ", "CC: ", "Type: ", "Value: "};
+constexpr int NUM_CONTROL_FIELDS = 5;
+const char *CONTROL_FIELD_NAMES[NUM_CONTROL_FIELDS] = {"Short Name: ", "CC: ", "Input Control: ", "Type: ", "Value: "};
 
 void DrawMidiControlConfig(ILI9341_t3 &tft, Controls &controls, MidiControl &midiControl)
 {
@@ -54,6 +54,7 @@ void DrawMidiControlConfig(ILI9341_t3 &tft, Controls &controls, MidiControl &mid
             tft.fillRect(0, ICON_SIZE + (selectedField+1)*DEFAULT_TEXT_HEIGHT,SELECTED_TEXT_WIDTH,DEFAULT_TEXT_HEIGHT, boxColor);
             tft.printf("\nShort Name: %s\n", midiControl.shortName.c_str());
             tft.printf("CC: %d\n", midiControl.cc);
+            tft.printf("Input Control: %s\n", MidiControl::InputControlToString(midiControl.inputControl));
             tft.printf("Type: %s\n", Controls::ControlTypeToString(midiControl.type));
             tft.printf("Value: %d\n", midiControl.value);
         }
@@ -92,7 +93,18 @@ void DrawMidiControlConfig(ILI9341_t3 &tft, Controls &controls, MidiControl &mid
                 if (newValue != midiControl.cc) { midiControl.cc = newValue; redrawScreen = true; }
                 break;
             }
-            case 2:
+            case 2 :
+            // InputControl
+            {
+                int knobAdjust = controls.getRotaryAdjustUnit(CONTROL_ENCODER);
+                InputControl newValue = static_cast<InputControl>(adjustWithWrap(
+                        static_cast<int>(midiControl.inputControl), knobAdjust, static_cast<int>(InputControl::NUM_CONTROLS))
+                        );
+                if (newValue != midiControl.inputControl) { midiControl.inputControl = newValue; redrawScreen = true; }
+            }
+                break;
+            case 3:
+            // ControlType
             {
                 int knobAdjust = controls.getRotaryAdjustUnit(CONTROL_ENCODER);
                 ControlType newValue = static_cast<ControlType>(adjustWithWrap(
@@ -101,7 +113,7 @@ void DrawMidiControlConfig(ILI9341_t3 &tft, Controls &controls, MidiControl &mid
                 if (newValue != midiControl.type) { midiControl.type = newValue; redrawScreen = true; }
             }
                 break;
-            case 3:
+            case 4:
                 // Value adjust
                 {
                     unsigned newValue;

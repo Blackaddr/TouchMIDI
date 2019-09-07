@@ -142,6 +142,34 @@ void PrintPreset(ILI9341_t3 &tft, const Preset &preset)
   for (unsigned i=0; i<preset.numControls; i++) {
     tft.println(preset.controls[i].name + String(":"));
     tft.print(String("CC:") + preset.controls[i].cc + String("   "));
+
+    tft.print(String("Input Control: "));
+    switch(preset.controls[i].inputControl) {
+        case InputControl::NOT_CONFIGURED :
+          tft.print("NOT_CONFIG");
+          break;
+        case InputControl::SW1 :
+          tft.print("SW1");
+          break;
+        case InputControl::SW2 :
+          tft.print("SW2");
+          break;
+        case InputControl::SW3 :
+          tft.print("SW3");
+          break;
+        case InputControl::SW4 :
+          tft.print("SW4");
+          break;
+        case InputControl::EXP1 :
+          tft.print("EXP1");
+          break;
+        case InputControl::EXP2 :
+          tft.print("EXP2");
+          break;
+        default :
+          break;
+        }
+
     tft.print(String("Type: "));
 
     switch(preset.controls[i].type) {

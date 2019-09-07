@@ -6,6 +6,8 @@
  */
 #include "Preset.h"
 
+#define DEBUG
+
 // Create and reserve memory for MAX_PRESETS vector of presets
 PresetArray *createPresetArray(void)
 {
@@ -41,9 +43,10 @@ void jsonToPreset(JsonObject &jsonObj, Preset &preset)
 
         String(static_cast<const char *>(jsonObj["controls"][i]["name"])),
         String(static_cast<const char *>(jsonObj["controls"][i]["shortName"])),
-        static_cast<unsigned>(jsonObj["controls"][i]["params"][0]),
-        static_cast<ControlType>(static_cast<unsigned>(jsonObj["controls"][i]["params"][1])),
-        static_cast<unsigned>(jsonObj["controls"][i]["params"][2])
+        static_cast<unsigned>(jsonObj["controls"][i]["params"][0]), // CC
+        static_cast<InputControl>(static_cast<unsigned>(jsonObj["inputControl"][i]["params"][1])), // ControlType
+        static_cast<ControlType>(static_cast<unsigned>(jsonObj["controls"][i]["params"][2])), // ControlType
+        static_cast<unsigned>(jsonObj["controls"][i]["params"][3])
       );
     addToVector(preset.controls, newControl, i);
 
@@ -51,6 +54,7 @@ void jsonToPreset(JsonObject &jsonObj, Preset &preset)
       Serial.println(String("controlName: ") + preset.controls[i].name);
       Serial.println(String("controlShortName: ") + preset.controls[i].shortName);
       Serial.println(String("CC: ") + preset.controls[i].cc);
+      Serial.println(String("Input Control: ") + static_cast<unsigned>(preset.controls[i].inputControl));
       Serial.println(String("Type: ") + static_cast<unsigned>(preset.controls[i].type));
       Serial.println(String("value: ") + preset.controls[i].value);
 #endif
@@ -72,6 +76,7 @@ void presetToJson(Preset &preset, JsonObject &root)
         controlItem["shortName"] = preset.controls[i].shortName.c_str();
         JsonArray &params = controlItem.createNestedArray("params");
         params.add(preset.controls[i].cc);
+        params.add(static_cast<unsigned>(preset.controls[i].inputControl));
         params.add(static_cast<unsigned>(preset.controls[i].type));
         params.add(preset.controls[i].value);
     }
@@ -93,7 +98,7 @@ Preset createDefaultPreset(unsigned index, unsigned numControls)
   for (unsigned i=0; i<preset.numControls; i++) {
     //Serial.println("Creating a control");
     MidiControl newControl = MidiControl(
-      String(String("Control")+i), String(String("Ctl")+i), 16, ControlType::ROTARY_KNOB, 0);
+      String(String("Control")+i), String(String("Ctl")+i), 16, InputControl::NOT_CONFIGURED, ControlType::ROTARY_KNOB, 0);
       addToVector(preset.controls, newControl, i);
   }
   return preset;
