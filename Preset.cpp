@@ -44,8 +44,8 @@ void jsonToPreset(JsonObject &jsonObj, Preset &preset)
         String(static_cast<const char *>(jsonObj["controls"][i]["name"])),
         String(static_cast<const char *>(jsonObj["controls"][i]["shortName"])),
         static_cast<unsigned>(jsonObj["controls"][i]["params"][0]), // CC
-        static_cast<InputControl>(static_cast<unsigned>(jsonObj["inputControl"][i]["params"][1])), // ControlType
-        static_cast<ControlType>(static_cast<unsigned>(jsonObj["controls"][i]["params"][2])), // ControlType
+        static_cast<InputControl>(static_cast<unsigned>(jsonObj["controls"][i]["params"][1])), // InputControl
+        static_cast<ControlType> (static_cast<unsigned>(jsonObj["controls"][i]["params"][2])), // ControlType
         static_cast<unsigned>(jsonObj["controls"][i]["params"][3])
       );
     addToVector(preset.controls, newControl, i);

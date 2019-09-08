@@ -130,30 +130,31 @@ Screens DrawPresetControl(ILI9341_t3 &tft, Controls &controls, Preset &preset, M
 
                 if (type == midi::ControlChange) {
                     for (auto it = preset.controls.begin(); it != preset.controls.end(); ++it) {
+                        bool updateRequired = false;
                         if ( ccId == MidiControl::GetInputControlMappedCC((*it).inputControl)) {
-
                             // found a control match!
-                            // TODO update behavior for the difference between momentary and toggle behavior
-                            if ((*it).type == ControlType::SWITCH_MOMENTARY) {
-                                if (true) {
-
-                                } else {
-
+                            if ((*it).type == ControlType::SWITCH_LATCHING) {
+                                // Toggle the stored value each time MIDI ON is received
+                                if (ccValue == MIDI_ON_VALUE) {
+                                    (*it).value = static_cast<unsigned>(toggleValue((*it).value, MIDI_ON_VALUE));
+                                    (*it).updated = true;
+                                    updateRequired = true;
                                 }
-                                (*it).value = static_cast<unsigned>(toggleValue(control.value, 127));
-                                control.updated = true;
-                                redrawControls = true;
-                                redrawActiveControl = true;
                             } else {
-                                (*it).value = adjustWithSaturation((*it).value, ccValue, 0, 127);
+                                // For all other types, update with the instantaneous value
+                                (*it).value = adjustWithSaturation(0, ccValue, 0, MIDI_VALUE_MAX);
                                 (*it).updated = true;
-                                redrawControls = true;
-                                redrawActiveControl = true;
+                                updateRequired = true;
                             }
 
                             // Send the MIDI message
-                            midiPort.sendControlChange(ccId, ccValue, MIDI_CHANNEL);
-                            Serial.println(String("Send MIDI message ") + ccId + String(" ") + ccValue + String(" ") + MIDI_CHANNEL);
+                            if (updateRequired) {
+                                redrawControls = true;
+                                redrawActiveControl = true;
+                                midiPort.sendControlChange((*it).cc, ccValue, MIDI_CHANNEL);
+                                Serial.println(String("Send MIDI message ") + (*it).cc + String(" ") + ccValue + String(" ") + MIDI_CHANNEL);
+                            }
+
                         }
                     }
                 }
@@ -203,7 +204,7 @@ Screens DrawPresetControl(ILI9341_t3 &tft, Controls &controls, Preset &preset, M
                 Serial.println(String("Adjust by ") + adjust);
 
                 if (control.type == ControlType::ROTARY_KNOB) {
-                    control.value = adjustWithSaturation(control.value, adjust, 0, 127);
+                    control.value = adjustWithSaturation(control.value, adjust, 0, MIDI_VALUE_MAX);
                     control.updated = true;
                     //redrawControls = true;
                     redrawActiveControl = true;
@@ -219,7 +220,7 @@ Screens DrawPresetControl(ILI9341_t3 &tft, Controls &controls, Preset &preset, M
             if (controls.isSwitchToggled(0)) {
                 Serial.println("Toggled!");
                 if (control.type == ControlType::SWITCH_MOMENTARY) {
-                    control.value = static_cast<unsigned>(toggleValue(control.value, 127));
+                    control.value = static_cast<unsigned>(toggleValue(control.value, MIDI_ON_VALUE));
                     control.updated = true;
                     //redrawControls = true;
                     redrawActiveControl = true;
