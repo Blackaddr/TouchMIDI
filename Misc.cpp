@@ -53,5 +53,51 @@ int toggleValue(int input, int onValue, int offValue)
     }
 }
 
+/*
+ * Converts an unsigned to 3-digit ASCII char, decimal format
+ * justify specified howt to align the number.
+ * 0-> centre
+ * 1-> left
+ * 2-> right (default)
+ */
+void uint2dec3(unsigned in, char *dest, unsigned justify) {
+
+    unsigned huns, tens, ones, tmp;
+    huns = in/100; // hunds contains hundreds digit.
+    tmp = in - (huns*100);
+    tens = tmp/10;
+    tmp = tmp - 10*tens;
+    ones = tmp;
+
+    // init to spaces
+    *(dest) = huns > 0 ? (0x30 + huns) : 0x20;
+    *(dest+1) = ( (tens > 0) || (huns > 0) ) ? (0x30 + tens) : 0x20;
+    *(dest+2) = 0x30 + ones;
+    *(dest+3) = 0x0;
+
+    switch (justify) {
+    case 0 :
+        // centre justify
+        if (*(dest+1) == 0x20) {
+            *(dest+1) = *(dest+2);
+            *(dest+2) = 0x20;
+        }
+        break;
+    case 1 :
+        // left justify
+        while (*dest == 0x20) {
+            *dest = *(dest+1);
+            *(dest+1) = *(dest+2);
+            *(dest+2) = 0x20;
+        }
+        break;
+    case 2 :
+        break;
+    default :
+        break;
+    }
+    return;
+}
+
 
 

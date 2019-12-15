@@ -8,10 +8,12 @@
  *  If the input control matches an incoming MIDI CC, then that input control will update
  *  the parameter.
  */
+#include <memory>
+#include <queue>
+//#include <TeensyThreads.h>
 #include <MIDI.h>
 #include "Screens.h"
-
-constexpr int MIDI_CHANNEL = 1;
+#include "MidiProc.h"
 
 using namespace midi;
 
@@ -96,6 +98,8 @@ Screens DrawPresetControl(ILI9341_t3 &tft, Controls &controls, Preset &preset, M
         }
 
         // Draw the controls
+        int valueXPos = tft.width()-MARGIN;
+        int valueYPos = tft.height() - 2*MARGIN;
         for (unsigned i=0; i<MAX_NUM_CONTROLS; i++) {
             if (redrawControls || (i == activeControl)) {
                 // Draw a light filled box behind the active control and black behind the others
@@ -107,8 +111,22 @@ Screens DrawPresetControl(ILI9341_t3 &tft, Controls &controls, Preset &preset, M
 
                     if (controlPtr.type == ControlType::ROTARY_KNOB) {
                         drawKnob(tft, controlPtr, controlLocations[i].x, controlLocations[i].y);
+                        if (i == activeControl) {
+                            // Draw the knob value in the lower right corner
+                            char valueText[4];
+                            uint2dec3(controlPtr.value, valueText, 2); // 2 is justify right
+                            valueText[3] = '\n';
+                            clearTextRightJustified(tft, valueText, valueXPos, valueYPos);
+                            tft.setTextColor(ILI9341_CYAN);
+                            printRightJustified(tft, valueText, valueXPos, valueYPos);
+                        }
+
                     } else {
                         drawSwitch(tft, controlPtr, controlLocations[i].x, controlLocations[i].y);
+                        // Clear the value text box when a switch is the active control
+                        if (i == activeControl) {
+                            clearTextRightJustified(tft, "XXX\n", valueXPos, valueYPos);
+                        }
                     }
                 }
             }
@@ -122,11 +140,24 @@ Screens DrawPresetControl(ILI9341_t3 &tft, Controls &controls, Preset &preset, M
             MidiControl &control = *controlLocations[activeControl].control;
 
             // Check for MIDI activity
-            if (midiPort.read()) {
-                Serial.println("MIDI received!");
-                MidiType type    = midiPort.getType();
-                DataByte ccId    = midiPort.getData1();
-                DataByte ccValue = midiPort.getData2();
+            //if (midiPort.read()) {
+            bool midiAvailable = false;
+            MidiWord midiWord;
+            { // lock scope
+                std::lock_guard<std::mutex> lock(midiQueueMutex);
+                if (!midiQueue->empty()) {
+                    midiWord = midiQueue->front();
+                    midiQueue->pop();
+                    midiAvailable = true;
+                }
+            }
+
+            if (midiAvailable) {
+
+                //Serial.println("MIDI received!");
+                MidiType type    = midiWord.type;
+                DataByte ccId    = midiWord.data1;
+                DataByte ccValue = midiWord.data2;
 
                 if (type == midi::ControlChange) {
                     for (auto it = preset.controls.begin(); it != preset.controls.end(); ++it) {
@@ -142,7 +173,7 @@ Screens DrawPresetControl(ILI9341_t3 &tft, Controls &controls, Preset &preset, M
                                 }
                             } else {
                                 // For all other types, update with the instantaneous value
-                                (*it).value = adjustWithSaturation(0, ccValue, 0, MIDI_VALUE_MAX);
+                                (*it).value = adjustWithSaturation(0, ccValue & 0x7f, 0, MIDI_VALUE_MAX);
                                 (*it).updated = true;
                                 updateRequired = true;
                             }
@@ -230,7 +261,8 @@ Screens DrawPresetControl(ILI9341_t3 &tft, Controls &controls, Preset &preset, M
 
             if (redrawControls || redrawActiveControl) { break; }
 
-            delay(100); // this is needed for control sampling to work
+            yield();
+            delay(10); // this is needed for control sampling to work
         } // end while loop to process control inputs
 
     } // end outer while loop

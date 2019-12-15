@@ -49,7 +49,7 @@ Screens DrawPresetNavigation(ILI9341_t3 &tft, Controls &controls, PresetArray &p
         if (redrawScreen) {
             // Draw the Screen title
             clearScreen(tft);
-            const char *title = "Preset Navigation";
+            const char *title = "Preset Navigation\n";
             tft.setCursor(0,MARGIN);
             printCentered(tft, const_cast<char*>(title));
             tft.println("");
@@ -88,7 +88,7 @@ Screens DrawPresetNavigation(ILI9341_t3 &tft, Controls &controls, PresetArray &p
             // Check the save button
             if (SAVE_BUTTON_AREA.checkArea(touchPoint)) {
                 while (controls.isTouched()) {} // wait for release
-                if (confirmationScreen(tft, controls, "Confirm SAVE ALL?")) {
+                if (confirmationScreen(tft, controls, "Confirm SAVE ALL?\n")) {
 
                     for (auto it=presetArray.begin(); it != presetArray.end(); ++it) {
                         StaticJsonBuffer<1024> jsonBuffer; // stack buffer
@@ -108,7 +108,7 @@ Screens DrawPresetNavigation(ILI9341_t3 &tft, Controls &controls, PresetArray &p
             if (ADD_BUTTON_AREA.checkArea(touchPoint)) {
                 while (controls.isTouched()) {} // wait for release
 
-                if (confirmationScreen(tft, controls, "Confirm ADD?")) {
+                if (confirmationScreen(tft, controls, "Confirm ADD?\n")) {
                     // insert a new preset before index selectedPreset
                     auto presetToInsertBefore = presetArray.begin() + selectedPreset;
                     presetArray.insert(presetToInsertBefore, Preset());
@@ -122,7 +122,7 @@ Screens DrawPresetNavigation(ILI9341_t3 &tft, Controls &controls, PresetArray &p
             // Check the remove button
             if (REMOVE_BUTTON_AREA.checkArea(touchPoint)) {
                 while (controls.isTouched()) {} // wait for release
-                if (confirmationScreen(tft, controls, "Confirm REMOVE?")) {
+                if (confirmationScreen(tft, controls, "Confirm REMOVE?\n")) {
                     auto presetToErase = presetArray.begin() + selectedPreset;
                     presetArray.erase(presetToErase);
                     updatePresetArrayIndices(presetArray);
@@ -202,6 +202,7 @@ Screens DrawPresetNavigation(ILI9341_t3 &tft, Controls &controls, PresetArray &p
         }
 
         delay(100);
+        yield();
     } // end while loop
 
 }

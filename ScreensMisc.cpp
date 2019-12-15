@@ -49,9 +49,9 @@ bool confirmationScreen(ILI9341_t3 &tft, Controls &controls, String message)
     tft.fillRect(YES_BUTTON_X_POS, YES_BUTTON_Y_POS, BUTTON_WIDTH, BUTTON_HEIGHT, ILI9341_GREEN); // YES button
 
     tft.setCursor(NO_BUTTON_X_POS, NO_BUTTON_Y_POS);
-    printCenteredJustified(tft, "NO", NO_BUTTON_X_POS + BUTTON_WIDTH/2, NO_BUTTON_Y_POS + BUTTON_HEIGHT/2 - TEXT_HEIGHT/2);
+    printCenteredJustified(tft, "NO\n", NO_BUTTON_X_POS + BUTTON_WIDTH/2, NO_BUTTON_Y_POS + BUTTON_HEIGHT/2 - TEXT_HEIGHT/2);
     tft.setCursor(YES_BUTTON_X_POS, YES_BUTTON_Y_POS);
-    printCenteredJustified(tft, "YES", YES_BUTTON_X_POS + BUTTON_WIDTH/2, YES_BUTTON_Y_POS + BUTTON_HEIGHT/2 - TEXT_HEIGHT/2);
+    printCenteredJustified(tft, "YES\n", YES_BUTTON_X_POS + BUTTON_WIDTH/2, YES_BUTTON_Y_POS + BUTTON_HEIGHT/2 - TEXT_HEIGHT/2);
 
     while(true) {
         // Check for touch activity
@@ -76,7 +76,7 @@ bool confirmationScreen(ILI9341_t3 &tft, Controls &controls, String message)
 
 bool saveConfirmation(ILI9341_t3 &tft, Controls &controls)
 {
-    return confirmationScreen(tft, controls, "Confirm SAVE?");
+    return confirmationScreen(tft, controls, "Confirm SAVE?\n");
 }
 
 
@@ -114,8 +114,8 @@ Screens TouchCalib(ILI9341_t3 &tft, Controls &controls)
   TS_Point point1, point2, point3, point4, point5;
   clearScreen(tft);
   tft.setCursor(0, MARGIN);
-  printCentered(tft, "Calibration");
-  printCentered(tft, "Touch the cross");
+  printCentered(tft, "Calibration\n");
+  printCentered(tft, "Touch the cross\n");
 
   point1 = calibPoint(tft, controls, tft.width()/2, tft.height()/2); // center
   point2 = calibPoint(tft, controls, tft.width()/4, tft.height()/2); // left of center

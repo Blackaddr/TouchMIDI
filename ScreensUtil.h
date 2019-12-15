@@ -10,6 +10,8 @@ constexpr int DEFAULT_TEXT_HEIGHT = 8*DEFAULT_TEXT_SCALE;
 
 void printCentered(ILI9341_t3 &tft, const char *strIn);
 void printCenteredJustified(ILI9341_t3 &tft, const char *strIn, int16_t xPos, int16_t yPos);
+void printRightJustified(ILI9341_t3 &tft, const char *strIn, int16_t xPos, int16_t yPos);
+void clearTextRightJustified(ILI9341_t3 &tft, const char *strIn, int16_t xPos, int16_t yPos);
 void setCursorX(ILI9341_t3 &tft, int16_t xPos);
 void setCursorY(ILI9341_t3 &tft, int16_t yPos);
 void clearScreen(ILI9341_t3 &tft);

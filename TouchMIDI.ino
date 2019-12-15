@@ -3,6 +3,7 @@
 #include <ILI9341_t3.h>
 #include <SPI.h>
 #include <MIDI.h>
+#include "TeensyThreads.h"
 
 using namespace midi;
 
@@ -11,6 +12,7 @@ using namespace midi;
 #include "Bounce.h"
 
 #include "Misc.h"
+#include "MidiProc.h"
 #include "Controls.h"
 #include "Screens.h"
 #include "Preset.h"
@@ -58,9 +60,10 @@ unsigned selectedPreset = 0;
 
 void setup(void) {
 
-  Serial.begin(57600);
+  Serial.begin(115200);
   delay(1000);
-  if (!Serial) { delay(1000); }
+  if (!Serial) { yield(); delay(100); }
+  delay(1000);
   pinMode(23,INPUT);
 
   // Setup MIDI OUT
@@ -139,6 +142,9 @@ void setup(void) {
     Serial.println("Failed to load calibration data");
     nextScreen = TouchCalib(tft, controls);
   }
+
+  Serial.println("Launching MIDI thread");
+  threads.addThread(processMidi,midiPortPtr);
 
 //  while (true) {
 //    StringEdit(tft, (*presetArray)[0].name, knob0, sw0);

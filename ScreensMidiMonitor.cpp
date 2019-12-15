@@ -29,7 +29,7 @@ using namespace midi;
 // This screen presents a given presets controls for real-time use.
 Screens DrawMidiMonitor(ILI9341_t3 &tft, Controls &controls, Preset &preset, MidiInterface<HardwareSerial> &midiPort)
 {
-    Serial.println("MIDI MONITOR");
+    Serial.println("MIDI MONITOR\n");
     bool redrawScreen = true;
 
     while(true) {
@@ -98,7 +98,7 @@ Screens DrawMidiMonitor(ILI9341_t3 &tft, Controls &controls, Preset &preset, Mid
                 tft.println(String(typeString + data1 + String(" ") + data2));
             }
 
-            delay(100); // this is needed for control sampling to work
+            delay(10); // this is needed for control sampling to work
         } // end while loop to process control inputs
 
     } // end outer while loop

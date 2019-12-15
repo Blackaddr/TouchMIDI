@@ -13,7 +13,9 @@ void printCentered(ILI9341_t3 &tft, const char *strIn)
   tft.getCursor(&x,&y);
   //const char *strPtr = str.c_str();
   int16_t titleLength = tft.strPixelLen(str);
-  tft.setCursor(tft.width()/2 - titleLength/2, y);
+  int xPos = tft.width()/2 - titleLength/2;
+  tft.setCursor(xPos, y);
+  Serial.print("printCentered(): "); Serial.print(String("length: ") + titleLength + String(" xPos: ") + xPos);
   tft.println(str);
 }
 
@@ -22,6 +24,14 @@ void printCenteredJustified(ILI9341_t3 &tft, const char *strIn, int16_t xPos, in
     char *str = const_cast<char *>(strIn); // tft object expects non-const
     int16_t stringLength = tft.strPixelLen(str);
     tft.setCursor(xPos - stringLength/2, yPos);
+    tft.println(str);
+}
+
+void printRightJustified(ILI9341_t3 &tft, const char *strIn, int16_t xPos, int16_t yPos)
+{
+    char *str = const_cast<char *>(strIn); // tft object expects non-const
+    int16_t stringLength = tft.strPixelLen(str);
+    tft.setCursor(xPos - stringLength, yPos);
     tft.println(str);
 }
 
@@ -46,5 +56,12 @@ void clearScreen(ILI9341_t3 &tft)
   tft.fillScreen(ILI9341_BLACK);
   tft.setTextColor(ILI9341_WHITE);
   tft.setTextSize(DEFAULT_TEXT_SCALE);
+}
+
+void clearTextRightJustified(ILI9341_t3 &tft, const char *strIn, int16_t xPos, int16_t yPos)
+{
+    char *str = const_cast<char *>(strIn); // tft object expects non-const
+    int16_t stringLength = tft.strPixelLen(str);
+    tft.fillRect(xPos-stringLength, yPos, stringLength, 2*8, ILI9341_BLACK); // 2*8 pixel text size
 }
 
