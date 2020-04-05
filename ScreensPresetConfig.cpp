@@ -114,6 +114,7 @@ void DrawPresetConfig(ILI9341_t3 &tft, Controls &controls, Preset &preset)
             if (SAVE_BUTTON_AREA.checkArea(touchPoint)) {
                 while (controls.isTouched()) {} // wait for release
                 if (confirmationScreen(tft, controls, "Confirm SAVE?")) {
+                   infoScreen(tft, "Please wait...");
                     StaticJsonBuffer<1024> jsonBuffer; // stack buffer
                     JsonObject& root = jsonBuffer.createObject();
                     presetToJson(preset, root);

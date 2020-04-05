@@ -92,6 +92,7 @@ Screens DrawPresetNavigation(ILI9341_t3 &tft, Controls &controls, PresetArray &p
         unsigned &activePreset, unsigned &selectedPreset);
 Screens DrawPresetControl(ILI9341_t3 &tft, Controls &controls, Preset &preset, midi::MidiInterface<HardwareSerial> &midiPort);
 Screens DrawMidiMonitor(ILI9341_t3 &tft, Controls &controls, Preset &preset, midi::MidiInterface<HardwareSerial> &midiPort);
+void infoScreen(ILI9341_t3 &tft, String message);
 bool confirmationScreen(ILI9341_t3 &tft, Controls &controls, String message);
 bool saveConfirmation(ILI9341_t3 &tft, Controls &controls);
 

@@ -6,6 +6,32 @@
  */
 #include "Screens.h"
 
+void infoScreen(ILI9341_t3 &tft, String message)
+{
+    unsigned width = tft.width();
+    unsigned height = tft.height();
+
+    const unsigned TEXT_HEIGHT = 7;
+
+    const unsigned BOX_WIDTH = (width*7)/10;
+    const unsigned BOX_HEIGHT = (height*5)/10;
+    const unsigned BOX_X_POS = (width - BOX_WIDTH)/2;
+    const unsigned BOX_Y_POS = (height - BOX_HEIGHT)/2;
+    const unsigned BORDER_THICKNESS = width/50;
+    const unsigned BORDER_RADIUS = BORDER_THICKNESS*2;
+
+    tft.fillRoundRect(BOX_X_POS-BORDER_THICKNESS, BOX_Y_POS - BORDER_THICKNESS,
+            BOX_WIDTH + 2*BORDER_THICKNESS, BOX_HEIGHT + 2*BORDER_THICKNESS,
+            BORDER_RADIUS, ILI9341_WHITE);
+
+    tft.fillRect(BOX_X_POS, BOX_Y_POS, BOX_WIDTH, BOX_HEIGHT, ILI9341_DARKCYAN);
+
+    // Print the prompt
+    tft.setCursor(0, BOX_Y_POS + MARGIN); // start row under icons
+    tft.setTextColor(ILI9341_WHITE);
+    printCentered(tft, message.c_str());
+}
+
 bool confirmationScreen(ILI9341_t3 &tft, Controls &controls, String message)
 {
     unsigned width = tft.width();

@@ -103,6 +103,8 @@ Screens DrawPresetNavigation(ILI9341_t3 &tft, Controls &controls, PresetArray &p
                 while (controls.isTouched()) {} // wait for release
                 if (confirmationScreen(tft, controls, "Confirm SAVE ALL?\n")) {
 
+                    constexpr size_t MAX_INFO_SIZE = 32;
+                    char infoText[MAX_INFO_SIZE];
                     for (auto it=presetArray.begin(); it != presetArray.end(); ++it) {
                         StaticJsonBuffer<1024> jsonBuffer; // stack buffer
                         JsonObject& root = jsonBuffer.createObject();
@@ -111,6 +113,8 @@ Screens DrawPresetNavigation(ILI9341_t3 &tft, Controls &controls, PresetArray &p
                         char presetFilename[] = "PRESETX.JSN";
                         constexpr unsigned PRESET_ID_INDEX = 6;
                         presetFilename[PRESET_ID_INDEX] = (*it).index + 0x30;
+                        snprintf(infoText, MAX_INFO_SIZE, "Saving %s", presetFilename);
+                        infoScreen(tft, infoText);
                         writePresetToFile(presetFilename, root); // Write to the SD card
                     }
                 }

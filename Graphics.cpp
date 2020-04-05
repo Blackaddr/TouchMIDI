@@ -79,6 +79,13 @@ void drawKnob(ILI9341_t3 &tft, MidiControl &control, int16_t xPos, int16_t yPos)
 
     tft.setTextColor(ILI9341_MAGENTA);
     printCenteredJustified(tft, control.shortName.c_str(), xPos, yPos-knobRadius-tft.getTextSize()*8);
+
+    // If physically controlled, draw that label
+    if (control.inputControl != InputControl::NOT_CONFIGURED) {
+        tft.setTextColor(ILI9341_DARKGREEN);
+        printCenteredJustified(tft, MidiControl::InputControlToString(control.inputControl),
+                xPos, yPos-tft.getTextSize()*8/2);
+    }
 }
 
 void redrawKnob(ILI9341_t3 &tft, MidiControl &control, int16_t xPos, int16_t yPos)
@@ -111,7 +118,7 @@ void redrawKnob(ILI9341_t3 &tft, MidiControl &control, int16_t xPos, int16_t yPo
 
     // If physically controlled, draw that label
     if (control.inputControl != InputControl::NOT_CONFIGURED) {
-        tft.setTextColor(ILI9341_GREEN);
+        tft.setTextColor(ILI9341_DARKGREEN);
         printCenteredJustified(tft, MidiControl::InputControlToString(control.inputControl),
                 xPos+knobRadius-tft.getTextSize()*8 , yPos-knobRadius-tft.getTextSize()*8);
     }

@@ -176,9 +176,6 @@ Screens DrawPresetControl(ILI9341_t3 &tft, Controls &controls, Preset &preset, M
 
                 if (type == midi::ControlChange) {
                     for (auto it = preset.controls.begin(); it != preset.controls.end(); ++it) {
-                        //bool updateRequired = false;
-
-                        //midiWord.data1 = MidiControl::GetMappedCC(ccId); // remap if necessary
 
                         if ( ccId == MidiControl::GetInputControlMappedCC((*it).inputControl)) {
 
