@@ -105,8 +105,18 @@ void redrawKnob(ILI9341_t3 &tft, MidiControl &control, int16_t xPos, int16_t yPo
     int yOffset1 = sin((angleOffset+4) * DEG2RAD) * innerKnobRadious;
     tft.fillTriangle(xPos,yPos, xPos+xOffset0, yPos+yOffset0, xPos+xOffset1, yPos+yOffset1, ILI9341_MAGENTA);
 
+    // Draw the knob label
     tft.setTextColor(ILI9341_MAGENTA);
     printCenteredJustified(tft, control.shortName.c_str(), xPos, yPos-knobRadius-tft.getTextSize()*8);
+
+    // If physically controlled, draw that label
+    if (control.inputControl != InputControl::NOT_CONFIGURED) {
+        tft.setTextColor(ILI9341_GREEN);
+        printCenteredJustified(tft, MidiControl::InputControlToString(control.inputControl),
+                xPos+knobRadius-tft.getTextSize()*8 , yPos-knobRadius-tft.getTextSize()*8);
+    }
+
+
 }
 
 void drawSwitch(ILI9341_t3 &tft, MidiControl &control, int16_t xPos, int16_t yPos)
@@ -127,8 +137,16 @@ void drawSwitch(ILI9341_t3 &tft, MidiControl &control, int16_t xPos, int16_t yPo
     tft.fillCircle(xPos, yPos, switchRadius, ILI9341_DARKGREY);
     tft.fillCircle(xPos, yPos, static_cast<int16_t>(switchRadius*0.75f), color);
 
+    // Draw the label
     tft.setTextColor(ILI9341_MAGENTA);
     printCenteredJustified(tft, control.shortName.c_str(), xPos, yPos-switchRadius-tft.getTextSize()*8);
+
+    // If physically controlled, draw that label
+    if (control.inputControl != InputControl::NOT_CONFIGURED) {
+        tft.setTextColor(ILI9341_DARKGREEN);
+        printCenteredJustified(tft, MidiControl::InputControlToString(control.inputControl),
+                xPos, yPos-tft.getTextSize()*8/2);
+    }
 
 }
 

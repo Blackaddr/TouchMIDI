@@ -12,7 +12,8 @@ void printCentered(ILI9341_t3 &tft, const char *strIn)
   char *str = const_cast<char *>(strIn); // tft object expects non-const
   tft.getCursor(&x,&y);
   //const char *strPtr = str.c_str();
-  int16_t titleLength = tft.strPixelLen(str);
+  //int16_t titleLength = tft.strPixelLen(str);
+  int16_t titleLength = tft.measureTextWidth(str, 0);
   int xPos = tft.width()/2 - titleLength/2;
   tft.setCursor(xPos, y);
   //Serial.print("printCentered(): "); Serial.print(String("length: ") + titleLength + String(" xPos: ") + xPos);
@@ -22,15 +23,16 @@ void printCentered(ILI9341_t3 &tft, const char *strIn)
 void printCenteredJustified(ILI9341_t3 &tft, const char *strIn, int16_t xPos, int16_t yPos)
 {
     char *str = const_cast<char *>(strIn); // tft object expects non-const
-    int16_t stringLength = tft.strPixelLen(str);
-    tft.setCursor(xPos - stringLength/2, yPos);
+    int16_t stringLength = tft.measureTextWidth(str, 0);
+    tft.setCursor(xPos - stringLength/2 + 1, yPos);
     tft.println(str);
 }
 
 void printRightJustified(ILI9341_t3 &tft, const char *strIn, int16_t xPos, int16_t yPos)
 {
     char *str = const_cast<char *>(strIn); // tft object expects non-const
-    int16_t stringLength = tft.strPixelLen(str);
+    //int16_t stringLength = tft.strPixelLen(str);
+    int16_t stringLength = tft.measureTextWidth(str, 0);
     tft.setCursor(xPos - stringLength, yPos);
     tft.println(str);
 }
