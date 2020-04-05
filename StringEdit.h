@@ -22,6 +22,6 @@ enum class StringEditSymbols : uint8_t {
   NUM_SYMBOLS
 };
 
-void StringEdit(ILI9341_t3 &tft, String &inputString, Controls &controls, RotaryEncoder &encoder, Bounce &selButton);
+void StringEdit(ILI9341_t3 &tft, String &inputString, Controls &controls);
 
 #endif /* STRINGEDIT_H_ */

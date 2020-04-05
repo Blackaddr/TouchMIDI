@@ -33,7 +33,7 @@ constexpr int SHIFT_WIDTH = 5*CHAR_WIDTH;
 constexpr int SHIFT_HEIGHT = DONE_HEIGHT;
 
 
-void StringEdit(ILI9341_t3 &tft, String &inputString, Controls &controls, RotaryEncoder &encoder, Bounce &selButton)
+void StringEdit(ILI9341_t3 &tft, String &inputString, Controls &controls)
 {
   int16_t x,y;
 
@@ -154,7 +154,7 @@ void StringEdit(ILI9341_t3 &tft, String &inputString, Controls &controls, Rotary
     }
 
     // Check for rotary movement
-    int knobAdjust = encoder.getChange();
+    int knobAdjust = controls.getRotaryAdjust(CONTROL_ENCODER);
     if (knobAdjust != 0) {
       int adjust = (knobAdjust > 0) ? 1 : -1;
 
@@ -195,7 +195,7 @@ void StringEdit(ILI9341_t3 &tft, String &inputString, Controls &controls, Rotary
     }
 
     // Check for button
-    if (selButton.update() && selButton.fallingEdge()) {
+    if (controls.isSwitchToggled(CONTROL_SWITCH)) {
 
       // Check for symbol
       if (selectedChar < static_cast<uint8_t>(StringEditSymbols::NUM_SYMBOLS)) {

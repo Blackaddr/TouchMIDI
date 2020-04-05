@@ -106,7 +106,7 @@ void DrawPresetConfig(ILI9341_t3 &tft, Controls &controls, Preset &preset)
             // Check the name edit button button
             if (editNameArea.checkArea(touchPoint)) {
                 while (controls.isTouched()) {} // wait for release
-                StringEdit(tft, preset.name, controls, controls.m_encoders[0], controls.m_switches[0]);
+                StringEdit(tft, preset.name, controls);
                 redrawScreen = true;
             }
 

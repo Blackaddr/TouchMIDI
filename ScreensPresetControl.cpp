@@ -248,8 +248,7 @@ Screens DrawPresetControl(ILI9341_t3 &tft, Controls &controls, Preset &preset, M
             }
 
             // Check for rotary activity
-            //int adjust = controls.getRotaryAdjustUnit(0);
-            int adjust = controls.getRotaryAdjust(0);
+            int adjust = controls.getRotaryAdjust(CONTROL_ENCODER);
             if (adjust != 0) {
                 // primary encoder
                 Serial.println(String("Adjust by ") + adjust);
@@ -261,7 +260,6 @@ Screens DrawPresetControl(ILI9341_t3 &tft, Controls &controls, Preset &preset, M
                     redrawActiveControl = true;
 
                     // Send the MIDI message
-                    //midiPort.sendControlChange(control.cc, control.value, MIDI_CHANNEL);
                     MidiWord midiWord;
                     midiWord.type = midi::MidiType::ControlChange;
                     midiWord.data1 = control.cc;
@@ -274,7 +272,7 @@ Screens DrawPresetControl(ILI9341_t3 &tft, Controls &controls, Preset &preset, M
             }
 
             // Check for pushbutton control
-            if (controls.isSwitchToggled(0)) {
+            if (controls.isSwitchToggled(CONTROL_SWITCH)) {
                 //Serial.println("Toggled!");
 
                 // If it's a toggled switch update the stored value using toggling

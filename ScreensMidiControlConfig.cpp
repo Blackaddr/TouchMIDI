@@ -72,7 +72,7 @@ void DrawMidiControlConfig(ILI9341_t3 &tft, Controls &controls, MidiControl &mid
             // Check the name edit button button
             if (editNameArea.checkArea(touchPoint)) {
                 while (controls.isTouched()) {} // wait for release
-                StringEdit(tft, midiControl.name, controls, controls.m_encoders[CONTROL_ENCODER], controls.m_switches[CONTROL_SWITCH]);
+                StringEdit(tft, midiControl.name, controls);
                 redrawScreen = true;
             }
 
@@ -157,7 +157,7 @@ void DrawMidiControlConfig(ILI9341_t3 &tft, Controls &controls, MidiControl &mid
                 // potentially swich to active mode depending on the selected field
                 switch(selectedField) {
                 case 0:
-                  StringEdit(tft, midiControl.shortName, controls, controls.m_encoders[CONTROL_ENCODER], controls.m_switches[CONTROL_SWITCH]);
+                  StringEdit(tft, midiControl.shortName, controls);
                   break;
                 case 1:
                   activeField = (activeField == 1 ? -1 : 1);
