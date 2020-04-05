@@ -177,7 +177,6 @@ Screens DrawPresetNavigation(ILI9341_t3 &tft, Controls &controls, PresetArray &p
             } // mutex unlocks
 
             if ((midiWord.type == midi::ControlChange) && (midiWord.data2 == MIDI_OFF_VALUE)) {
-                int adjust = 0;
                 switch (midiWord.data1) {
                 case MIDI_CC_SPECIAL_UP     : midiAdjust = -1; break;
                 case MIDI_CC_SPECIAL_DOWN   : midiAdjust =  1; break;

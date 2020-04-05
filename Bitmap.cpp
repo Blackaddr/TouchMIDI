@@ -40,7 +40,8 @@ void bmpDraw(ILI9341_t3 &tft, const char *filename, uint8_t x, uint16_t y) {
   boolean  flip    = true;        // BMP is stored bottom-to-top
   int      w, h, row, col;
   uint8_t  r, g, b;
-  uint32_t pos = 0, startTime = millis();
+  uint32_t pos = 0;
+  //uint32_t startTime = millis();
 
   if((x >= tft.width()) || (y >= tft.height())) return;
 

@@ -6,19 +6,40 @@
  */
 #include <cstdint>
 
+#include "Screens.h"
 #include "StringEdit.h"
 
+constexpr unsigned TOP_MARGIN  = 10;
+constexpr unsigned LEFT_MARGIN = 15;
 
-void StringEdit(ILI9341_t3 &tft, String &inputString, XPT2046_Touchscreen &touch, RotaryEncoder &encoder, Bounce &selButton)
+constexpr int textSize = 3;
+constexpr unsigned CHAR_WIDTH = 6*textSize; // font width, * text scale
+constexpr unsigned CHAR_WIDTH_SPACE = CHAR_WIDTH*2;
+constexpr unsigned CHAR_HEIGHT = 8*textSize;
+
+constexpr int DONE_X_POS  = LEFT_MARGIN;
+constexpr int DONE_Y_POS  = TOP_MARGIN + (unsigned)(CHAR_HEIGHT*7.5f);
+constexpr int DONE_WIDTH  = 4*CHAR_WIDTH;
+constexpr int DONE_HEIGHT = CHAR_HEIGHT;
+
+constexpr int DEL_X_POS = LEFT_MARGIN + 5*CHAR_WIDTH;
+constexpr int DEL_Y_POS = DONE_Y_POS;
+constexpr int DEL_WIDTH = 3*CHAR_WIDTH;
+constexpr int DEL_HEIGHT = DONE_HEIGHT;
+
+constexpr int SHIFT_X_POS = LEFT_MARGIN + 9*CHAR_WIDTH;
+constexpr int SHIFT_Y_POS = DONE_Y_POS;
+constexpr int SHIFT_WIDTH = 5*CHAR_WIDTH;
+constexpr int SHIFT_HEIGHT = DONE_HEIGHT;
+
+
+void StringEdit(ILI9341_t3 &tft, String &inputString, Controls &controls, RotaryEncoder &encoder, Bounce &selButton)
 {
   int16_t x,y;
-  constexpr unsigned LEFT_MARGIN = 15;
-  int textSize = 3;
-  const unsigned CHAR_WIDTH = 6*textSize; // font width, * text scale
-  const unsigned CHAR_WIDTH_SPACE = CHAR_WIDTH*2;
-  const unsigned CHAR_HEIGHT = 8*textSize;
+
   char newString[32];
   inputString.toCharArray(newString, inputString.length()+1);
+  uint8_t ch = 'a';
   uint8_t selectedChar = 'a';
   unsigned newStringIndex = inputString.length();
   bool characterShift = false;
@@ -29,26 +50,29 @@ void StringEdit(ILI9341_t3 &tft, String &inputString, XPT2046_Touchscreen &touch
     if (updateRequired) {
 
       // Draw the Screen title
-      tft.setTextColor(ILI9341_WHITE);
+      tft.setTextColor(ILI9341_CYAN);
       tft.setTextSize(textSize);
-      int16_t titleLength = tft.strPixelLen(newString);
+      //int16_t titleLength = tft.strPixelLen(newString);
       //Serial.println(String("Input length is ") + titleLength);
 
       tft.fillScreen(ILI9341_BLACK);
 
       // Print the string
-      tft.setCursor(tft.width()/2 - titleLength/2, 10);
-      tft.printf("%s_\n\n",newString);
+      //tft.setCursor(tft.width()/2 - titleLength/2, 10);
+      tft.setCursor(LEFT_MARGIN, TOP_MARGIN);
+      tft.printf("%s_\n",newString);
       //tft.println("");
 
       // Print the alphabet
+      tft.setTextColor(ILI9341_WHITE);
       unsigned charsPerLine = (tft.width()-LEFT_MARGIN) / CHAR_WIDTH_SPACE;
-      setCursorX(tft, LEFT_MARGIN);
+      //setCursorX(tft, LEFT_MARGIN);
+      tft.setCursor(LEFT_MARGIN, 10 + (unsigned)(CHAR_HEIGHT*1.5f));
+
       unsigned charIndex = 0;
 
       // Print the letters
-      uint8_t ch = 'a';
-      //for (uint8_t ch='a'; ch<='z'; ch++)
+      ch = 'a';
       while(true)
       {
         // Check if this is the selected char
@@ -64,6 +88,9 @@ void StringEdit(ILI9341_t3 &tft, String &inputString, XPT2046_Touchscreen &touch
             // This is a symbol
             //unsigned width;
             switch(ch) {
+              case static_cast<uint8_t>(StringEditSymbols::SPACE) :
+              tft.fillRect(x,y,CHAR_WIDTH*6,CHAR_HEIGHT, ILI9341_DARKCYAN);
+              break;
               case static_cast<uint8_t>(StringEditSymbols::DONE) :
                 tft.fillRect(x,y,CHAR_WIDTH*5,CHAR_HEIGHT, ILI9341_DARKCYAN);
                 break;
@@ -83,6 +110,9 @@ void StringEdit(ILI9341_t3 &tft, String &inputString, XPT2046_Touchscreen &touch
         if (ch < static_cast<uint8_t>(StringEditSymbols::NUM_SYMBOLS)) {
           // it's a symbol
           switch(ch) {
+            case static_cast<uint8_t>(StringEditSymbols::SPACE) :
+            tft.printf("SPACE ");
+            break;
             case static_cast<uint8_t>(StringEditSymbols::DONE) :
               tft.printf("DONE ");
               break;
@@ -112,7 +142,10 @@ void StringEdit(ILI9341_t3 &tft, String &inputString, XPT2046_Touchscreen &touch
 
         // Switch to letters, numbers or symbols
         if (ch == 'z') { ch = '0';}
-        else if (ch == '9') { ch = static_cast<uint8_t>(StringEditSymbols::DONE); tft.printf("\n\n"); setCursorX(tft, LEFT_MARGIN);}
+        else if (ch == '9') { ch = static_cast<uint8_t>(StringEditSymbols::SPACE);}
+        else if (ch == static_cast<uint8_t>(StringEditSymbols::SPACE)) {
+            ch = static_cast<uint8_t>(StringEditSymbols::DONE); tft.printf("\n\n"); setCursorX(tft, LEFT_MARGIN);
+        }
         else if (ch == static_cast<uint8_t>(StringEditSymbols::SHIFT)) { break; }
         else { ch++; }
       }
@@ -132,7 +165,7 @@ void StringEdit(ILI9341_t3 &tft, String &inputString, XPT2046_Touchscreen &touch
             selectedChar = '0';
             break;
           case '9' :
-            selectedChar = static_cast<uint8_t>(StringEditSymbols::DONE);
+            selectedChar = static_cast<uint8_t>(StringEditSymbols::SPACE);
             break;
           case static_cast<uint8_t>(StringEditSymbols::SHIFT) :
             selectedChar = 'a';
@@ -150,7 +183,7 @@ void StringEdit(ILI9341_t3 &tft, String &inputString, XPT2046_Touchscreen &touch
           case '0' :
             selectedChar = 'z';
             break;
-          case static_cast<uint8_t>(StringEditSymbols::DONE) :
+          case static_cast<uint8_t>(StringEditSymbols::SPACE) :
             selectedChar = '9';
             break;
           default :
@@ -166,14 +199,18 @@ void StringEdit(ILI9341_t3 &tft, String &inputString, XPT2046_Touchscreen &touch
 
       // Check for symbol
       if (selectedChar < static_cast<uint8_t>(StringEditSymbols::NUM_SYMBOLS)) {
+
         switch (selectedChar) {
+          case static_cast<uint8_t>(StringEditSymbols::SPACE) :
+              newString[newStringIndex] = ' ';
+              newStringIndex++;
+              newString[newStringIndex] = 0;
+              updateRequired = true;
+              break;
             case static_cast<uint8_t>(StringEditSymbols::DONE) :
               inputString.remove(0);
               inputString.concat(newString);
               return;
-              // TODO copy newString to oldstring
-              //return;
-              break;
             case static_cast<uint8_t>(StringEditSymbols::BACKSPACE) :
               if (newStringIndex > 0) {
                 // only backspace if not on first char
@@ -200,7 +237,37 @@ void StringEdit(ILI9341_t3 &tft, String &inputString, XPT2046_Touchscreen &touch
 
     }
 
-    delay(100);
+    // Check for touch activity
+    if (controls.isTouched()) {
+        TouchPoint touchPoint = controls.getTouchPoint();
+        Coordinate touchCoordinate(touchPoint.x, touchPoint.y, nullptr);
+
+        // wait until the screen is no longer touched before taking action
+        while (controls.isTouched()) {}
+
+        // Check the DONE button
+        if (touchPoint.x > static_cast<int16_t>(DONE_X_POS) && touchPoint.x < static_cast<int16_t>(DONE_X_POS+DONE_WIDTH) &&
+           (touchPoint.y > static_cast<int16_t>(DONE_Y_POS) )) {
+            ch = selectedChar = static_cast<uint8_t>(StringEditSymbols::DONE);
+            updateRequired = true;
+        }
+
+        // Check the DEL button
+        if (touchPoint.x > static_cast<int16_t>(DEL_X_POS) && touchPoint.x < static_cast<int16_t>(DEL_X_POS+DONE_WIDTH) &&
+           (touchPoint.y > static_cast<int16_t>(DEL_Y_POS) )) {
+            ch = selectedChar = static_cast<uint8_t>(StringEditSymbols::BACKSPACE);
+            updateRequired = true;
+        }
+
+        // Check the SHIFT button
+        if (touchPoint.x > static_cast<int16_t>(SHIFT_X_POS) && touchPoint.x < static_cast<int16_t>(SHIFT_X_POS+DONE_WIDTH) &&
+           (touchPoint.y > static_cast<int16_t>(SHIFT_Y_POS) )) {
+            ch = selectedChar = static_cast<uint8_t>(StringEditSymbols::SHIFT);
+            updateRequired = true;
+        }
+    }
+
+    if (!updateRequired) { delay(100); }
 
   }
 
