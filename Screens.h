@@ -35,6 +35,8 @@ constexpr unsigned SETTINGS_BUTTON_X_POS = BACK_BUTTON_X_POS-ICON_SIZE-ICON_SPAC
 constexpr unsigned CONTROL_ENCODER = 0;
 constexpr unsigned CONTROL_SWITCH  = 0;
 
+extern Screens g_currentScreen;
+
 //using Coordinate = TS_Point;
 
 
@@ -86,7 +88,8 @@ public:
 
 void DrawMidiControlConfig(ILI9341_t3 &tft, Controls &controls, MidiControl &midiControl);
 void DrawPresetConfig(ILI9341_t3 &tft, Controls &controls, Preset &preset);
-Screens DrawPresetNavigation(ILI9341_t3 &tft, Controls &controls, PresetArray &presetArray, unsigned &activePreset, unsigned &selectedPreset);
+Screens DrawPresetNavigation(ILI9341_t3 &tft, Controls &controls, PresetArray &presetArray, midi::MidiInterface<HardwareSerial> &midiPort,
+        unsigned &activePreset, unsigned &selectedPreset);
 Screens DrawPresetControl(ILI9341_t3 &tft, Controls &controls, Preset &preset, midi::MidiInterface<HardwareSerial> &midiPort);
 Screens DrawMidiMonitor(ILI9341_t3 &tft, Controls &controls, Preset &preset, midi::MidiInterface<HardwareSerial> &midiPort);
 bool confirmationScreen(ILI9341_t3 &tft, Controls &controls, String message);

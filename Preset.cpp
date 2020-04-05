@@ -6,15 +6,15 @@
  */
 #include "Preset.h"
 
-#define DEBUG
+//#define DEBUG
 
 // Create and reserve memory for MAX_PRESETS vector of presets
 PresetArray *createPresetArray(void)
 {
   PresetArray *presetArray = new PresetArray();
-  Serial.println("Reserving");
+  //Serial.println("Reserving");
   presetArray->reserve(MAX_PRESETS);
-  Serial.println("Done reserving");
+  //Serial.println("Done reserving");
   return presetArray;
 }
 
@@ -33,9 +33,9 @@ void jsonToPreset(JsonObject &jsonObj, Preset &preset)
   preset.index = jsonObj["presetIndex"];
   preset.numControls = jsonObj["numControls"];
 
-  Serial.println(String("Preset name: ") + preset.name);
-  Serial.println(String("Preset index: ") + preset.index);
-  Serial.println(String("Preset numControls: ") + preset.numControls + String("\n"));
+//  Serial.println(String("Preset name: ") + preset.name);
+//  Serial.println(String("Preset index: ") + preset.index);
+//  Serial.println(String("Preset numControls: ") + preset.numControls + String("\n"));
 
   for (unsigned i=0; i<preset.numControls; i++) {
 
@@ -46,7 +46,7 @@ void jsonToPreset(JsonObject &jsonObj, Preset &preset)
         static_cast<unsigned>(jsonObj["controls"][i]["params"][0]), // CC
         static_cast<InputControl>(static_cast<unsigned>(jsonObj["controls"][i]["params"][1])), // InputControl
         static_cast<ControlType> (static_cast<unsigned>(jsonObj["controls"][i]["params"][2])), // ControlType
-        static_cast<unsigned>(jsonObj["controls"][i]["params"][3])
+        static_cast<unsigned>(jsonObj["controls"][i]["params"][3]) // value
       );
     addToVector(preset.controls, newControl, i);
 
@@ -110,7 +110,7 @@ Preset createDefaultPreset(unsigned index, unsigned numControls)
 /// @param numControls the number of controls to initialize in each preset
 void createDefaultPresets(PresetArray *presetArray, unsigned numPresets, unsigned numControls)
 {
-  Serial.println(String("Current array size is ") + presetArray->size() + String(" capacity is ") + presetArray->capacity());
+  //Serial.println(String("Current array size is ") + presetArray->size() + String(" capacity is ") + presetArray->capacity());
   for (unsigned i=0; i<numPresets; i++) {
     addToVector((*presetArray), createDefaultPreset(i, numControls), i);
   }

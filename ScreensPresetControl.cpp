@@ -17,6 +17,8 @@
 
 using namespace midi;
 
+unsigned maxScanline = 0;
+
 // This screen presents a given presets controls for real-time use.
 Screens DrawPresetControl(ILI9341_t3 &tft, Controls &controls, Preset &preset, MidiInterface<HardwareSerial> &midiPort)
 {
@@ -80,6 +82,11 @@ Screens DrawPresetControl(ILI9341_t3 &tft, Controls &controls, Preset &preset, M
             redoLayout = false;
         } // redoLayout
 
+        //unsigned scanline = tft.readcommand8(0x45, 1);
+        //if (scanline > maxScanline) { maxScanline = scanline; Serial.println(String("Scanline: ") + maxScanline); }
+
+
+
         if (redrawScreen) {
             // Draw the Preset Edit Screen
             clearScreen(tft);
@@ -111,21 +118,28 @@ Screens DrawPresetControl(ILI9341_t3 &tft, Controls &controls, Preset &preset, M
 
                     if (controlPtr.type == ControlType::ROTARY_KNOB) {
                         drawKnob(tft, controlPtr, controlLocations[i].x, controlLocations[i].y);
+
                         if (i == activeControl) {
                             // Draw the knob value in the lower right corner
                             char valueText[4];
                             uint2dec3(controlPtr.value, valueText, 2); // 2 is justify right
                             valueText[3] = '\n';
-                            clearTextRightJustified(tft, valueText, valueXPos, valueYPos);
-                            tft.setTextColor(ILI9341_CYAN);
+                            //clearTextRightJustified(tft, valueText, valueXPos, valueYPos);
+                            tft.setTextColor(ILI9341_CYAN, ILI9341_BLACK); // force the background to be redrawn as black
                             printRightJustified(tft, valueText, valueXPos, valueYPos);
+
+                            unsigned scanline = tft.readcommand8(0x45,1);
+                            if (scanline == 0) { scanline = tft.readcommand8(0x45,1); }
+                            Serial.println(String("Scanline: ") + scanline);
                         }
 
                     } else {
                         drawSwitch(tft, controlPtr, controlLocations[i].x, controlLocations[i].y);
                         // Clear the value text box when a switch is the active control
                         if (i == activeControl) {
-                            clearTextRightJustified(tft, "XXX\n", valueXPos, valueYPos);
+                            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK); // force the background to be redrawn as black
+                            printRightJustified(tft, "   \n", valueXPos, valueYPos);
+                            //clearTextRightJustified(tft, "XXX\n", valueXPos, valueYPos);
                         }
                     }
                 }
@@ -144,10 +158,10 @@ Screens DrawPresetControl(ILI9341_t3 &tft, Controls &controls, Preset &preset, M
             bool midiAvailable = false;
             MidiWord midiWord;
             { // lock scope
-                std::lock_guard<std::mutex> lock(midiQueueMutex);
-                if (!midiQueue->empty()) {
-                    midiWord = midiQueue->front();
-                    midiQueue->pop();
+                std::lock_guard<std::mutex> lock(midiInQueueMutex);
+                if (!midiInQueue->empty()) {
+                    midiWord = midiInQueue->front();
+                    midiInQueue->pop();
                     midiAvailable = true;
                 }
             }
@@ -158,38 +172,43 @@ Screens DrawPresetControl(ILI9341_t3 &tft, Controls &controls, Preset &preset, M
                 MidiType type    = midiWord.type;
                 DataByte ccId    = midiWord.data1;
                 DataByte ccValue = midiWord.data2;
+                bool midiDropMessage = false;
 
                 if (type == midi::ControlChange) {
                     for (auto it = preset.controls.begin(); it != preset.controls.end(); ++it) {
-                        bool updateRequired = false;
+                        //bool updateRequired = false;
+
+                        //midiWord.data1 = MidiControl::GetMappedCC(ccId); // remap if necessary
+
                         if ( ccId == MidiControl::GetInputControlMappedCC((*it).inputControl)) {
-                            // found a control match!
+
+                            midiWord.data1 = (*it).cc; // remap to the assigned CC
+
                             if ((*it).type == ControlType::SWITCH_LATCHING) {
                                 // Toggle the stored value each time MIDI ON is received
                                 if (ccValue == MIDI_ON_VALUE) {
-                                    (*it).value = static_cast<unsigned>(toggleValue((*it).value, MIDI_ON_VALUE));
+                                    (*it).value = static_cast<unsigned>(toggleValue((*it).value, MIDI_ON_VALUE, MIDI_OFF_VALUE));
+                                    midiWord.data2 = (*it).value;
                                     (*it).updated = true;
-                                    updateRequired = true;
+                                    //updateRequired = true;
+                                    redrawControls = true;
+                                } else {
+                                    midiDropMessage = true;
                                 }
                             } else {
                                 // For all other types, update with the instantaneous value
                                 (*it).value = adjustWithSaturation(0, ccValue & 0x7f, 0, MIDI_VALUE_MAX);
                                 (*it).updated = true;
-                                updateRequired = true;
-                            }
-
-                            // Send the MIDI message
-                            if (updateRequired) {
                                 redrawControls = true;
-                                redrawActiveControl = true;
-                                midiPort.sendControlChange((*it).cc, ccValue, MIDI_CHANNEL);
-                                Serial.println(String("Send MIDI message ") + (*it).cc + String(" ") + ccValue + String(" ") + MIDI_CHANNEL);
+                                //updateRequired = true;
                             }
+                        } // end if mapping match found
+                    }// end preset control map FOR loop
+                } // end if CC
 
-                        }
-                    }
-                }
-            }
+                if (!midiDropMessage) { midiSendWord(midiWord); }
+
+            } // end if midiAvailable
 
             // Check for touch activity
             if (controls.isTouched()) {
@@ -229,7 +248,8 @@ Screens DrawPresetControl(ILI9341_t3 &tft, Controls &controls, Preset &preset, M
             }
 
             // Check for rotary activity
-            int adjust = controls.getRotaryAdjustUnit(0);
+            //int adjust = controls.getRotaryAdjustUnit(0);
+            int adjust = controls.getRotaryAdjust(0);
             if (adjust != 0) {
                 // primary encoder
                 Serial.println(String("Adjust by ") + adjust);
@@ -241,7 +261,13 @@ Screens DrawPresetControl(ILI9341_t3 &tft, Controls &controls, Preset &preset, M
                     redrawActiveControl = true;
 
                     // Send the MIDI message
-                    midiPort.sendControlChange(control.cc, control.value, MIDI_CHANNEL);
+                    //midiPort.sendControlChange(control.cc, control.value, MIDI_CHANNEL);
+                    MidiWord midiWord;
+                    midiWord.type = midi::MidiType::ControlChange;
+                    midiWord.data1 = control.cc;
+                    midiWord.data2 = control.value;
+                    midiWord.channel = MIDI_CC_CHANNEL;
+                    midiSendWord(midiWord);
                     Serial.println(String("Send MIDI message ") + control.cc + String(" ") + control.value + String(" ") + MIDI_CHANNEL);
                     break;
                 }
@@ -249,20 +275,33 @@ Screens DrawPresetControl(ILI9341_t3 &tft, Controls &controls, Preset &preset, M
 
             // Check for pushbutton control
             if (controls.isSwitchToggled(0)) {
-                Serial.println("Toggled!");
-                if (control.type == ControlType::SWITCH_MOMENTARY) {
-                    control.value = static_cast<unsigned>(toggleValue(control.value, MIDI_ON_VALUE));
+                //Serial.println("Toggled!");
+
+                // If it's a toggled switch update the stored value using toggling
+                if (control.type == ControlType::SWITCH_LATCHING) {
+                    control.value = static_cast<unsigned>(toggleValue(control.value, MIDI_ON_VALUE, MIDI_OFF_VALUE));
                     control.updated = true;
-                    //redrawControls = true;
-                    redrawActiveControl = true;
-                    break;
                 }
+
+                // Redraw the active control if it is a switch type
+                if ( (control.type == ControlType::SWITCH_LATCHING) ||
+                     (control.type == ControlType::SWITCH_MOMENTARY) ) {
+                    redrawActiveControl = true;
+
+                    MidiWord midiWord;
+                    midiWord.type = midi::MidiType::ControlChange;
+                    midiWord.data1 = control.cc;
+                    midiWord.data2 = control.value;
+                    midiWord.channel = MIDI_CC_CHANNEL;
+                    midiSendWord(midiWord);
+                }
+
             }
 
             if (redrawControls || redrawActiveControl) { break; }
 
             yield();
-            delay(10); // this is needed for control sampling to work
+            //delay(10); // this is needed for control sampling to work
         } // end while loop to process control inputs
 
     } // end outer while loop

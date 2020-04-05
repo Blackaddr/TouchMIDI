@@ -64,15 +64,45 @@ void drawKnob(ILI9341_t3 &tft, MidiControl &control, int16_t xPos, int16_t yPos)
         knobRadius = static_cast<unsigned>(tft.width() * KNOB_SIZE_F + 0.5f); // includes rounding
     }
 
+    unsigned innerKnobRadious = static_cast<unsigned>(knobRadius*0.85f);
+
     tft.fillCircle(xPos, yPos, knobRadius, ILI9341_BLUE);
     tft.fillCircle(xPos, yPos, static_cast<int16_t>(knobRadius*0.85f), ILI9341_LIGHTGREY);
 
     // TODO : draw the indicator on the knob
     int angleOffset = map(control.value, 0, 127, 0, 300) - 240; // map to degress
-    int xOffset0 = cos((angleOffset-4) * DEG2RAD) * knobRadius;
-    int yOffset0 = sin((angleOffset-4) * DEG2RAD) * knobRadius;
-    int xOffset1 = cos((angleOffset+4) * DEG2RAD) * knobRadius;
-    int yOffset1 = sin((angleOffset+4) * DEG2RAD) * knobRadius;
+    int xOffset0 = cos((angleOffset-4) * DEG2RAD) * innerKnobRadious;
+    int yOffset0 = sin((angleOffset-4) * DEG2RAD) * innerKnobRadious;
+    int xOffset1 = cos((angleOffset+4) * DEG2RAD) * innerKnobRadious;
+    int yOffset1 = sin((angleOffset+4) * DEG2RAD) * innerKnobRadious;
+    tft.fillTriangle(xPos,yPos, xPos+xOffset0, yPos+yOffset0, xPos+xOffset1, yPos+yOffset1, ILI9341_MAGENTA);
+
+    tft.setTextColor(ILI9341_MAGENTA);
+    printCenteredJustified(tft, control.shortName.c_str(), xPos, yPos-knobRadius-tft.getTextSize()*8);
+}
+
+void redrawKnob(ILI9341_t3 &tft, MidiControl &control, int16_t xPos, int16_t yPos)
+{
+    // Calculate knob radius in pixels based on smaller dimension
+    unsigned knobRadius;
+    if (tft.height() < tft.width()) {
+        // calculate based on height
+        knobRadius = static_cast<unsigned>(tft.height() * KNOB_SIZE_F + 0.5f); // includes rounding
+    } else {
+        // calculate based on width
+        knobRadius = static_cast<unsigned>(tft.width() * KNOB_SIZE_F + 0.5f); // includes rounding
+    }
+
+    unsigned innerKnobRadious = static_cast<unsigned>(knobRadius*0.85f);
+
+    tft.fillCircle(xPos, yPos, static_cast<int16_t>(knobRadius*0.85f), ILI9341_LIGHTGREY);
+
+    // TODO : draw the indicator on the knob
+    int angleOffset = map(control.value, 0, 127, 0, 300) - 240; // map to degress
+    int xOffset0 = cos((angleOffset-4) * DEG2RAD) * innerKnobRadious;
+    int yOffset0 = sin((angleOffset-4) * DEG2RAD) * innerKnobRadious;
+    int xOffset1 = cos((angleOffset+4) * DEG2RAD) * innerKnobRadious;
+    int yOffset1 = sin((angleOffset+4) * DEG2RAD) * innerKnobRadious;
     tft.fillTriangle(xPos,yPos, xPos+xOffset0, yPos+yOffset0, xPos+xOffset1, yPos+yOffset1, ILI9341_MAGENTA);
 
     tft.setTextColor(ILI9341_MAGENTA);
@@ -82,7 +112,8 @@ void drawKnob(ILI9341_t3 &tft, MidiControl &control, int16_t xPos, int16_t yPos)
 void drawSwitch(ILI9341_t3 &tft, MidiControl &control, int16_t xPos, int16_t yPos)
 {
     // Set color OFF is dark grey, on is red.
-    uint16_t color = (control.value < 64) ? ILI9341_LIGHTGREY : ILI9341_RED;
+    //uint16_t color = (control.value < 64) ? ILI9341_LIGHTGREY : ILI9341_RED;
+    uint16_t color = (control.value == MIDI_ON_VALUE) ? ILI9341_RED : ILI9341_LIGHTGREY;
 
     // Calculate switch radius in pixels based on smaller dimension
     unsigned switchRadius;

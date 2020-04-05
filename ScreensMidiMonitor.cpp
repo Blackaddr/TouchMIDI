@@ -9,8 +9,9 @@
 #include <array>
 #include <MIDI.h>
 #include "Screens.h"
+#include "MidiProc.h"
 
-constexpr int MIDI_CHANNEL = 1;
+//constexpr int MIDI_CHANNEL = 1;
 
 using namespace midi;
 
@@ -74,14 +75,16 @@ Screens DrawMidiMonitor(ILI9341_t3 &tft, Controls &controls, Preset &preset, Mid
                 break;
             }
 
-            while (midiPort.read()) {
-                Serial.println("MIDI received!");
-                MidiType type = midiPort.getType();
-                DataByte data1 = midiPort.getData1();
-                DataByte data2 = midiPort.getData2();
-
+            // Check for MIDI messages
+            while (midiInQueue->size() > 0) {
+                MidiWord midiWord;
                 String typeString;
-                switch (type) {
+                {
+                    std::lock_guard<std::mutex> lock(midiInQueueMutex);
+                    midiWord = midiInQueue->front();
+                    midiInQueue->pop();
+                } // mutex unlocks
+                switch(midiWord.type) {
                 case midi::ControlChange :
                     typeString = "CC ";
                     break;
@@ -94,8 +97,8 @@ Screens DrawMidiMonitor(ILI9341_t3 &tft, Controls &controls, Preset &preset, Mid
                 default :
                     typeString = "?? ";
                 }
-
-                tft.println(String(typeString + data1 + String(" ") + data2));
+                //Serial.println(String("ScreensMidiMonitor(): MIDI Received: ") + midiWord.type + String(" ") + midiWord.data1 + String(" ") + midiWord.data2);
+                tft.println(String(typeString + midiWord.data1 + String(" ") + midiWord.data2));
             }
 
             delay(10); // this is needed for control sampling to work

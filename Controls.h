@@ -137,7 +137,7 @@ public:
         int encoderAdjust = (encoderAdjust > 0) ? 1 : -1;
     }
 
-return encoderAdjust;
+    return encoderAdjust;
   }
 
   bool isSwitchToggled(unsigned index) {

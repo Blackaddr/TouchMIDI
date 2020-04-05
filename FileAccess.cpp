@@ -32,7 +32,7 @@ void writePresetToFile(const char *filename, JsonObject &jsonObject)
     }
     elapsedMillis timeElapsed = 0;
     file.write(buffer, length);
-    Serial.println(String("writePresetToFille():: successfully written bytes: ") + length + String(" millis: ") + timeElapsed);
+    //Serial.println(String("writePresetToFille():: successfully written bytes: ") + length + String(" millis: ") + timeElapsed);
     file.close();
 }
 

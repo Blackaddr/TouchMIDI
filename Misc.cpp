@@ -29,10 +29,10 @@ int adjustWithWrap(int currentValue, int adjust, int maxVal, int minVal)
     newValue =  minVal + (newValue - maxVal) - 1;
   } else if (newValue < minVal) {
     // wrap if below min value
-    Serial.printf("newValue1 is %d\n",newValue);
-    Serial.printf("maxValue is %d\n", maxVal);
+    //Serial.printf("newValue1 is %d\n",newValue);
+    //Serial.printf("maxValue is %d\n", maxVal);
     newValue = maxVal - (minVal - newValue - 1);
-    Serial.printf("newValue2 is %d\n",newValue);
+    //Serial.printf("newValue2 is %d\n",newValue);
   }
   return newValue;
 }

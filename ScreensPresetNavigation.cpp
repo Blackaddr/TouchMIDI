@@ -4,9 +4,19 @@
  *  Created on: Mar. 2, 2019
  *      Author: blackaddr
  */
+#include <MIDI.h>
 #include "Screens.h"
+#include "MidiProc.h"
+#include "MidiDefs.h"
+
+using namespace midi;
 
 constexpr int SELECTED_TEXT_WIDTH = 160;
+
+Screens g_currentScreen = Screens::PRESET_NAVIGATION;
+
+void moveUp  (PresetArray &presetArray, unsigned &activePreset, unsigned &selectedPreset, bool &redrawScreen);
+void moveDown(PresetArray &presetArray, unsigned &activePreset, unsigned &selectedPreset, bool &redrawScreen);
 
 void updatePresetArrayIndices(PresetArray &presetArray)
 {
@@ -17,25 +27,28 @@ void updatePresetArrayIndices(PresetArray &presetArray)
     }
 }
 
-Screens DrawPresetNavigation(ILI9341_t3 &tft, Controls &controls, PresetArray &presetArray, unsigned &activePreset, unsigned &selectedPreset)
+Screens DrawPresetNavigation(ILI9341_t3 &tft, Controls &controls, PresetArray &presetArray, midi::MidiInterface<HardwareSerial> &midiPort,
+        unsigned &activePreset, unsigned &selectedPreset)
 {
     int16_t x,y;
     bool redrawScreen = true;
+    bool selectTriggeredMidi = false;
+    int  midiAdjust = 0;
 
     // Calculate button locations
     const unsigned BOTTOM_ICON_ROW_Y_POS = tft.height() - ICON_SIZE;
-    const unsigned ADD_BUTTON_X_POS = BACK_BUTTON_X_POS;
-    const unsigned ADD_BUTTON_Y_POS = BOTTOM_ICON_ROW_Y_POS;
-    const unsigned REMOVE_BUTTON_X_POS = ADD_BUTTON_X_POS - ICON_SIZE - ICON_SPACING;
-    const unsigned REMOVE_BUTTON_Y_POS = BOTTOM_ICON_ROW_Y_POS;
-    const unsigned MOVEUP_BUTTON_X_POS = REMOVE_BUTTON_X_POS - ICON_SIZE - ICON_SPACING;
-    const unsigned MOVEUP_BUTTON_Y_POS = BOTTOM_ICON_ROW_Y_POS;
-    const unsigned MOVEDN_BUTTON_X_POS = MOVEUP_BUTTON_X_POS - ICON_SIZE - ICON_SPACING;
-    const unsigned MOVEDN_BUTTON_Y_POS = BOTTOM_ICON_ROW_Y_POS;
-    const unsigned SAVE_BUTTON_X_POS = MOVEDN_BUTTON_X_POS-ICON_SIZE-ICON_SPACING;
-    const unsigned SAVE_BUTTON_Y_POS = BOTTOM_ICON_ROW_Y_POS;
-    const unsigned EXTRA_BUTTON_X_POS = BACK_BUTTON_X_POS;
-    const unsigned EXTRA_BUTTON_Y_POS = BOTTOM_ICON_ROW_Y_POS - ICON_SIZE - ICON_SPACING;
+    const unsigned ADD_BUTTON_X_POS      = BACK_BUTTON_X_POS;
+    const unsigned ADD_BUTTON_Y_POS      = BOTTOM_ICON_ROW_Y_POS;
+    const unsigned REMOVE_BUTTON_X_POS   = ADD_BUTTON_X_POS - ICON_SIZE - ICON_SPACING;
+    const unsigned REMOVE_BUTTON_Y_POS   = BOTTOM_ICON_ROW_Y_POS;
+    const unsigned MOVEUP_BUTTON_X_POS   = REMOVE_BUTTON_X_POS - ICON_SIZE - ICON_SPACING;
+    const unsigned MOVEUP_BUTTON_Y_POS   = BOTTOM_ICON_ROW_Y_POS;
+    const unsigned MOVEDN_BUTTON_X_POS   = MOVEUP_BUTTON_X_POS - ICON_SIZE - ICON_SPACING;
+    const unsigned MOVEDN_BUTTON_Y_POS   = BOTTOM_ICON_ROW_Y_POS;
+    const unsigned SAVE_BUTTON_X_POS     = MOVEDN_BUTTON_X_POS-ICON_SIZE-ICON_SPACING;
+    const unsigned SAVE_BUTTON_Y_POS     = BOTTOM_ICON_ROW_Y_POS;
+    const unsigned EXTRA_BUTTON_X_POS    = BACK_BUTTON_X_POS;
+    const unsigned EXTRA_BUTTON_Y_POS    = BOTTOM_ICON_ROW_Y_POS - ICON_SIZE - ICON_SPACING;
 
 
     const TouchArea SAVE_BUTTON_AREA(SAVE_BUTTON_X_POS, SAVE_BUTTON_X_POS+ICON_SIZE, SAVE_BUTTON_Y_POS, SAVE_BUTTON_Y_POS+ICON_SIZE);
@@ -135,42 +148,13 @@ Screens DrawPresetNavigation(ILI9341_t3 &tft, Controls &controls, PresetArray &p
             // Check the MOVEUP button
             if (MOVEUP_BUTTON_AREA.checkArea(touchPoint)) {
                 while (controls.isTouched()) {} // wait for release
-                if (selectedPreset > 0) { // can't go above the top one
-                    // swap the preset with the previous by inserting a copy of the selected
-                    // preset before the previous, then delete the old one.
-                    auto presetToInsertBefore = presetArray.begin() + selectedPreset-1;
-                    presetArray.insert(presetToInsertBefore, presetArray[selectedPreset]);
-
-                    auto presetToErase = presetArray.begin() + selectedPreset+1;
-                    presetArray.erase(presetToErase);
-
-                    if (activePreset == selectedPreset-1) { activePreset++; }
-                    else if (activePreset == selectedPreset) { activePreset--;}
-                    selectedPreset--;
-                    updatePresetArrayIndices(presetArray);
-
-                    redrawScreen = true;
-                }
+                moveUp(presetArray, activePreset, selectedPreset, redrawScreen);
             }
 
             // Check the MOVEUDN button
             if (MOVEDN_BUTTON_AREA.checkArea(touchPoint)) {
                 while (controls.isTouched()) {} // wait for release
-                if (selectedPreset < (*presetArray.end()).index ) { // can't go below the last
-                    // swap the preset with the next by inserting a copy of the selected
-                    // preset after the next, then delete the old one.
-                    auto presetToInsertBefore = presetArray.begin() + selectedPreset+2;
-                    presetArray.insert(presetToInsertBefore, presetArray[selectedPreset]);
-
-                    auto presetToErase = presetArray.begin() + selectedPreset;
-                    presetArray.erase(presetToErase);
-
-                    if (activePreset == selectedPreset+1) { activePreset--; }
-                    else if (activePreset == selectedPreset) { activePreset++;}
-                    selectedPreset++;
-                    updatePresetArrayIndices(presetArray);
-                    redrawScreen = true;
-                }
+                moveDown(presetArray, activePreset, selectedPreset, redrawScreen);
             }
 
             // Check the EXTRA button
@@ -183,21 +167,44 @@ Screens DrawPresetNavigation(ILI9341_t3 &tft, Controls &controls, PresetArray &p
             while (controls.isTouched()) {}
         }
 
-        int knobAdjust = controls.getRotaryAdjustUnit(0);
+        // Check for MIDI
+        while (midiInQueue->size() > 0) {
+            MidiWord midiWord;
+            {
+                std::lock_guard<std::mutex> lock(midiInQueueMutex);
+                midiWord = midiInQueue->front();
+                midiInQueue->pop();
+            } // mutex unlocks
+
+            if ((midiWord.type == midi::ControlChange) && (midiWord.data2 == MIDI_OFF_VALUE)) {
+                int adjust = 0;
+                switch (midiWord.data1) {
+                case MIDI_CC_SPECIAL_UP     : midiAdjust = -1; break;
+                case MIDI_CC_SPECIAL_DOWN   : midiAdjust =  1; break;
+                case MIDI_CC_SPECIAL_SELECT : selectTriggeredMidi = true; break;
+                default: break;
+                }
+            }
+        }
+
+        int knobAdjust = controls.getRotaryAdjustUnit(0) + midiAdjust;
         if (knobAdjust != 0) {
           selectedPreset = adjustWithWrap(selectedPreset, knobAdjust, presetArray.size()-1);
           Serial.println(String("Knob adjusted by ") + knobAdjust + String(", selectedPreset is now ") + selectedPreset);
           redrawScreen = true;
+          midiAdjust = 0;
         }
 
-        if (controls.isSwitchToggled(0)) {
+        if (controls.isSwitchToggled(0) || selectTriggeredMidi) {
           Serial.println(String("Setting activePreset to ") + selectedPreset);
           if (activePreset == selectedPreset) {
               // goto to edit screen
               return Screens::PRESET_CONTROL;
           } else {
               activePreset = selectedPreset;
+              midiProgramSend(activePreset, MIDI_PROGRAM_CHANNEL);
               redrawScreen = true;
+              selectTriggeredMidi = false;
           }
         }
 
@@ -206,6 +213,51 @@ Screens DrawPresetNavigation(ILI9341_t3 &tft, Controls &controls, PresetArray &p
     } // end while loop
 
 }
+
+void moveUp(PresetArray &presetArray, unsigned &activePreset, unsigned &selectedPreset, bool &redrawScreen)
+{
+    if (selectedPreset > 0) { // can't go above the top one
+        // swap the preset with the previous by inserting a copy of the selected
+        // preset before the previous, then delete the old one.
+        auto presetToInsertBefore = presetArray.begin() + selectedPreset-1;
+        presetArray.insert(presetToInsertBefore, presetArray[selectedPreset]);
+
+        auto presetToErase = presetArray.begin() + selectedPreset+1;
+        presetArray.erase(presetToErase);
+
+        if (activePreset == selectedPreset-1) { activePreset++; }
+        else if (activePreset == selectedPreset) { activePreset--;}
+        selectedPreset--;
+        updatePresetArrayIndices(presetArray);
+        midiProgramSend(activePreset, MIDI_PROGRAM_CHANNEL);
+
+        redrawScreen = true;
+    }
+
+}
+
+void moveDown(PresetArray &presetArray, unsigned &activePreset, unsigned &selectedPreset, bool &redrawScreen)
+{
+    if (selectedPreset < (*presetArray.end()).index ) { // can't go below the last
+        // swap the preset with the next by inserting a copy of the selected
+        // preset after the next, then delete the old one.
+        auto presetToInsertBefore = presetArray.begin() + selectedPreset+2;
+        presetArray.insert(presetToInsertBefore, presetArray[selectedPreset]);
+
+        auto presetToErase = presetArray.begin() + selectedPreset;
+        presetArray.erase(presetToErase);
+
+        if (activePreset == selectedPreset+1) { activePreset--; }
+        else if (activePreset == selectedPreset) { activePreset++;}
+        selectedPreset++;
+        updatePresetArrayIndices(presetArray);
+        midiProgramSend(activePreset, MIDI_PROGRAM_CHANNEL);
+
+        redrawScreen = true;
+    }
+}
+
+
 
 
 

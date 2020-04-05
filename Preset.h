@@ -8,9 +8,9 @@
 #include "Controls.h"
 using std::vector;
 
-constexpr int MAX_NUM_CONTROLS = 6;
-constexpr unsigned MAX_PRESETS = 32;
-constexpr unsigned MAX_NAME_SIZE = 32;
+constexpr int      MAX_NUM_CONTROLS    = 6;
+constexpr unsigned MAX_PRESETS         = 32;
+constexpr unsigned MAX_NAME_SIZE       = 32;
 constexpr unsigned MAX_SHORT_NAME_SIZE = 4;
 
 enum class InputControl : unsigned {
@@ -66,13 +66,11 @@ struct MidiControl {
         default:
             return "UNDEFINED";
         }
-    }
+}
 
-  // TODO, replace this with some that reads from a mapped file
-  static unsigned GetInputControlMappedCC(InputControl type) {
+// TODO, replace this with some that reads from a mapped file
+static unsigned GetInputControlMappedCC(InputControl type) {
       switch (type) {
-          case InputControl::NOT_CONFIGURED :
-              return 0;
           case InputControl::SW1 :
               return 32;
           case InputControl::SW2 :
@@ -85,10 +83,14 @@ struct MidiControl {
               return 36;
           case InputControl::EXP2 :
               return 37;
+          case InputControl::NOT_CONFIGURED :
           default:
               return 0;
       }
-  }
+}
+
+
+
 };
 
 /// Contains the necessary information for a single Preset

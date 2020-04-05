@@ -60,9 +60,9 @@ unsigned selectedPreset = 0;
 
 void setup(void) {
 
-  Serial.begin(115200);
   delay(1000);
-  if (!Serial) { yield(); delay(100); }
+  Serial.begin(115200);
+  if (!Serial) { yield(); }
   delay(1000);
   pinMode(23,INPUT);
 
@@ -71,6 +71,7 @@ void setup(void) {
   //midi::MidiInterface<Type> midiPort((HardwareSerial&)Serial1);
   midiPortPtr = new midi::MidiInterface<HardwareSerial>((HardwareSerial&)Serial1);
   midiPortPtr->begin(MIDI_CHANNEL_OMNI);
+  midiPortPtr->turnThruOff();
 
   pinMode(SDCARD_CS, OUTPUT);
   digitalWrite(SDCARD_CS, 1); // disable the SD CARD
@@ -128,6 +129,28 @@ void setup(void) {
   
   Serial.println("FINISHED: setup()");
 
+  delay(100);
+
+//  uint8_t x = tft.readcommand8(ILI9341_RDMODE);
+//  Serial.print("\nDisplay Power Mode: 0x"); Serial.println(x, HEX);
+//  x = tft.readcommand8(ILI9341_RDMADCTL);
+//  Serial.print("\nMADCTL Mode: 0x"); Serial.println(x, HEX);
+//  x = tft.readcommand8(ILI9341_RDPIXFMT);
+//  Serial.print("\nPixel Format: 0x"); Serial.println(x, HEX);
+//  x = tft.readcommand8(ILI9341_RDIMGFMT);
+//  Serial.print("\nImage Format: 0x"); Serial.println(x, HEX);
+//  x = tft.readcommand8(ILI9341_RDSELFDIAG);
+//  Serial.print("\nSelf Diagnostic: 0x"); Serial.println(x, HEX);
+//  x = tft.readcommand8(0x4);
+//  Serial.print("\nID 0: 0x"); Serial.println(x, HEX);
+//  x = tft.readcommand8(0x4,0);
+//  Serial.print("\nID 0: 0x"); Serial.println(x, HEX);
+//  x = tft.readcommand8(0x4,1);
+//  Serial.print("\nID 1: 0x"); Serial.println(x, HEX);
+//  x = tft.readcommand8(0x4,2);
+//  Serial.print("\nID 2: 0x"); Serial.println(x, HEX);
+  
+
   nextScreen = Screens::PRESET_NAVIGATION;
 
   file = SD.open(calibFilename);
@@ -159,12 +182,15 @@ void loop()
   while(true) {
     switch(nextScreen) {
       case Screens::PRESET_NAVIGATION :
-        nextScreen = DrawPresetNavigation(tft, controls, (*presetArray), activePreset, selectedPreset);
+        g_currentScreen = nextScreen;
+        nextScreen = DrawPresetNavigation(tft, controls, (*presetArray), *midiPortPtr, activePreset, selectedPreset);
         break;
       case Screens::PRESET_CONTROL :
+        g_currentScreen = nextScreen;
         nextScreen = DrawPresetControl(tft, controls, (*presetArray)[activePreset], *midiPortPtr);
         break;
       case Screens::TOUCH_CALIBRATE :
+        g_currentScreen = nextScreen;
         nextScreen = TouchCalib(tft, controls);
         {
           TouchCalibration touchCalib = controls.getCalib();        
@@ -179,9 +205,11 @@ void loop()
         }
         break;
       case Screens::MIDI_MONITOR :
+        g_currentScreen = nextScreen;
         nextScreen = DrawMidiMonitor(tft, controls, (*presetArray)[activePreset], *midiPortPtr);
       default:
-        nextScreen = DrawPresetNavigation(tft, controls, (*presetArray), activePreset, selectedPreset);
+        g_currentScreen = nextScreen;
+        nextScreen = DrawPresetNavigation(tft, controls, (*presetArray), *midiPortPtr, activePreset, selectedPreset);
     }
       
   }     
