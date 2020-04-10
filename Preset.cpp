@@ -7,6 +7,7 @@
 #include "Preset.h"
 
 //#define DEBUG
+Preset* g_activePreset = nullptr;
 
 // Create and reserve memory for MAX_PRESETS vector of presets
 PresetArray *createPresetArray(void)
@@ -116,3 +117,13 @@ void createDefaultPresets(PresetArray *presetArray, unsigned numPresets, unsigne
   }
 }
 
+Preset* getActivePreset(void)
+{
+    return g_activePreset;
+}
+void setActivePreset(Preset* activePreset)
+{
+    if (activePreset) {
+        g_activePreset = activePreset;
+    }
+}

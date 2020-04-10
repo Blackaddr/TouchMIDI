@@ -6,6 +6,7 @@
  */
 #include <MIDI.h>
 #include "Screens.h"
+#include "Preset.h"
 #include "MidiProc.h"
 #include "MidiDefs.h"
 
@@ -131,7 +132,7 @@ Screens DrawPresetNavigation(ILI9341_t3 &tft, Controls &controls, PresetArray &p
                     presetArray.insert(presetToInsertBefore, Preset());
                     updatePresetArrayIndices(presetArray);
 
-                    if (activePreset >= selectedPreset) { activePreset++; }
+                    if (activePreset >= selectedPreset) { activePreset++; setActivePreset(&presetArray[activePreset]); }
                 }
                 redrawScreen = true;
             }
@@ -144,7 +145,7 @@ Screens DrawPresetNavigation(ILI9341_t3 &tft, Controls &controls, PresetArray &p
                     presetArray.erase(presetToErase);
                     updatePresetArrayIndices(presetArray);
 
-                    if (activePreset >= selectedPreset) { activePreset--; }
+                    if (activePreset >= selectedPreset) { activePreset--; setActivePreset(&presetArray[activePreset]); }
                 }
                 redrawScreen = true;
             }
@@ -205,6 +206,7 @@ Screens DrawPresetNavigation(ILI9341_t3 &tft, Controls &controls, PresetArray &p
               return Screens::PRESET_CONTROL;
           } else {
               activePreset = selectedPreset;
+              setActivePreset(&presetArray[activePreset]);
               midiProgramSend(activePreset, MIDI_PROGRAM_CHANNEL);
               redrawScreen = true;
               selectTriggeredMidi = false;
@@ -228,8 +230,8 @@ void moveUp(PresetArray &presetArray, unsigned &activePreset, unsigned &selected
         auto presetToErase = presetArray.begin() + selectedPreset+1;
         presetArray.erase(presetToErase);
 
-        if (activePreset == selectedPreset-1) { activePreset++; }
-        else if (activePreset == selectedPreset) { activePreset--;}
+        if (activePreset == selectedPreset-1) { activePreset++; setActivePreset(&presetArray[activePreset]); }
+        else if (activePreset == selectedPreset) { activePreset--; setActivePreset(&presetArray[activePreset]);}
         selectedPreset--;
         updatePresetArrayIndices(presetArray);
         midiProgramSend(activePreset, MIDI_PROGRAM_CHANNEL);
@@ -250,8 +252,8 @@ void moveDown(PresetArray &presetArray, unsigned &activePreset, unsigned &select
         auto presetToErase = presetArray.begin() + selectedPreset;
         presetArray.erase(presetToErase);
 
-        if (activePreset == selectedPreset+1) { activePreset--; }
-        else if (activePreset == selectedPreset) { activePreset++;}
+        if (activePreset == selectedPreset+1) { activePreset--; setActivePreset(&presetArray[activePreset]);}
+        else if (activePreset == selectedPreset) { activePreset++; setActivePreset(&presetArray[activePreset]);}
         selectedPreset++;
         updatePresetArrayIndices(presetArray);
         midiProgramSend(activePreset, MIDI_PROGRAM_CHANNEL);

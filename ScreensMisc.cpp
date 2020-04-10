@@ -11,8 +11,6 @@ void infoScreen(ILI9341_t3 &tft, String message)
     unsigned width = tft.width();
     unsigned height = tft.height();
 
-    const unsigned TEXT_HEIGHT = 7;
-
     const unsigned BOX_WIDTH = (width*7)/10;
     const unsigned BOX_HEIGHT = (height*5)/10;
     const unsigned BOX_X_POS = (width - BOX_WIDTH)/2;

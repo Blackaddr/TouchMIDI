@@ -82,7 +82,6 @@ void setup(void) {
 
   Serial.println("Creating Preset Array");
   presetArray = createPresetArray();
-  //createDefaultPresets(presetArray, 2, 2);
 
   // Check the SD Card
   if (!SD.begin(SDCARD_CS)) {
@@ -115,6 +114,7 @@ void setup(void) {
       }
   }
   digitalWrite(SDCARD_CS,1);
+  setActivePreset(&((*presetArray)[activePreset]));
   
   tft.begin();
   tft.setRotation(3); // left-handed
@@ -168,10 +168,6 @@ void setup(void) {
 
   Serial.println("Launching MIDI thread");
   threads.addThread(processMidi,midiPortPtr);
-
-//  while (true) {
-//    StringEdit(tft, (*presetArray)[0].name, knob0, sw0);
-//  }
 
 }
 

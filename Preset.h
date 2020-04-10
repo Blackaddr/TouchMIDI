@@ -113,5 +113,8 @@ void jsonToPreset(JsonObject &jsonObj, Preset &preset);
 void presetToJson(Preset &preset, JsonObject &root);
 Preset createDefaultPreset(unsigned index, unsigned numControls);
 void createDefaultPresets(PresetArray *presetArray, unsigned numPresets, unsigned numControls);
+Preset* getActivePreset(void);
+void    setActivePreset(Preset* activePreset);
+void    setActivePreset(unsigned activePresetIndex);
 
 #endif

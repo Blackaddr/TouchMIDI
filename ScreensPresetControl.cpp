@@ -128,9 +128,9 @@ Screens DrawPresetControl(ILI9341_t3 &tft, Controls &controls, Preset &preset, M
                             tft.setTextColor(ILI9341_CYAN, ILI9341_BLACK); // force the background to be redrawn as black
                             printRightJustified(tft, valueText, valueXPos, valueYPos);
 
-                            unsigned scanline = tft.readcommand8(0x45,1);
-                            if (scanline == 0) { scanline = tft.readcommand8(0x45,1); }
-                            Serial.println(String("Scanline: ") + scanline);
+//                            unsigned scanline = tft.readcommand8(0x45,1);
+//                            if (scanline == 0) { scanline = tft.readcommand8(0x45,1); }
+//                            Serial.println(String("Scanline: ") + scanline);
                         }
 
                     } else {
@@ -154,7 +154,6 @@ Screens DrawPresetControl(ILI9341_t3 &tft, Controls &controls, Preset &preset, M
             MidiControl &control = *controlLocations[activeControl].control;
 
             // Check for MIDI activity
-            //if (midiPort.read()) {
             bool midiAvailable = false;
             MidiWord midiWord;
             { // lock scope
@@ -171,40 +170,18 @@ Screens DrawPresetControl(ILI9341_t3 &tft, Controls &controls, Preset &preset, M
                 //Serial.println("MIDI received!");
                 MidiType type    = midiWord.type;
                 DataByte ccId    = midiWord.data1;
-                DataByte ccValue = midiWord.data2;
-                bool midiDropMessage = false;
+
 
                 if (type == midi::ControlChange) {
                     for (auto it = preset.controls.begin(); it != preset.controls.end(); ++it) {
 
-                        if ( ccId == MidiControl::GetInputControlMappedCC((*it).inputControl)) {
-
-                            midiWord.data1 = (*it).cc; // remap to the assigned CC
-
-                            if ((*it).type == ControlType::SWITCH_LATCHING) {
-                                // Toggle the stored value each time MIDI ON is received
-                                if (ccValue == MIDI_ON_VALUE) {
-                                    (*it).value = static_cast<unsigned>(toggleValue((*it).value, MIDI_ON_VALUE, MIDI_OFF_VALUE));
-                                    midiWord.data2 = (*it).value;
-                                    (*it).updated = true;
-                                    //updateRequired = true;
-                                    redrawControls = true;
-                                } else {
-                                    midiDropMessage = true;
-                                }
-                            } else {
-                                // For all other types, update with the instantaneous value
-                                (*it).value = adjustWithSaturation(0, ccValue & 0x7f, 0, MIDI_VALUE_MAX);
-                                (*it).updated = true;
-                                redrawControls = true;
-                                //updateRequired = true;
-                            }
-                        } // end if mapping match found
+                        /// check if the CC matches this control and it's been update
+                        if ( ccId == (*it).cc && (*it).updated) {
+                            //(*it).updated = false;
+                            redrawControls = true;
+                        }
                     }// end preset control map FOR loop
                 } // end if CC
-
-                if (!midiDropMessage) { midiSendWord(midiWord); }
-
             } // end if midiAvailable
 
             // Check for touch activity
@@ -223,8 +200,6 @@ Screens DrawPresetControl(ILI9341_t3 &tft, Controls &controls, Preset &preset, M
                 // Check for the settings button
                 if (touchPoint.x > static_cast<int16_t>(SETTINGS_BUTTON_X_POS) && touchPoint.y < static_cast<int16_t>(ICON_SIZE) ) {
                     DrawPresetConfig(tft, controls, preset);
-                    // The preset config screen cleared the settings icon so redraw it
-                    //bmpDraw(tft, "seting48.bmp", SETTINGS_BUTTON_X_POS, 0);
                     redoLayout = true;
                     redrawScreen = true;
                     redrawControls = true;
@@ -248,12 +223,11 @@ Screens DrawPresetControl(ILI9341_t3 &tft, Controls &controls, Preset &preset, M
             int adjust = controls.getRotaryAdjust(CONTROL_ENCODER);
             if (adjust != 0) {
                 // primary encoder
-                Serial.println(String("Adjust by ") + adjust);
+                //Serial.println(String("Adjust by ") + adjust);
 
                 if (control.type == ControlType::ROTARY_KNOB) {
                     control.value = adjustWithSaturation(control.value, adjust, 0, MIDI_VALUE_MAX);
                     control.updated = true;
-                    //redrawControls = true;
                     redrawActiveControl = true;
 
                     // Send the MIDI message
@@ -263,14 +237,12 @@ Screens DrawPresetControl(ILI9341_t3 &tft, Controls &controls, Preset &preset, M
                     midiWord.data2 = control.value;
                     midiWord.channel = MIDI_CC_CHANNEL;
                     midiSendWord(midiWord);
-                    Serial.println(String("Send MIDI message ") + control.cc + String(" ") + control.value + String(" ") + MIDI_CHANNEL);
                     break;
                 }
             }
 
             // Check for pushbutton control
             if (controls.isSwitchToggled(CONTROL_SWITCH)) {
-                //Serial.println("Toggled!");
 
                 // If it's a toggled switch update the stored value using toggling
                 if (control.type == ControlType::SWITCH_LATCHING) {
