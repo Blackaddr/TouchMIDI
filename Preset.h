@@ -1,6 +1,7 @@
 #ifndef __PRESET_H
 #define __PRESET_H
 
+#include <atomic>
 #include "VectorSupport.h"
 
 #include "ArduinoJson.h"
@@ -32,17 +33,18 @@ struct MidiControl {
   InputControl inputControl; ///< option input control from foot switch processor
   ControlType type; ///< the type of control, usually a switch or encoder
   unsigned value; ///<  the current assigned value to the MIDI parameter
-  bool updated = false; ///< when true the value has been updated
+  //std::atomic_bool updated; ///< when true the value has been updated
+  bool updated;
 
   /// Construct with values initialized as specified
   MidiControl(String name, String shortName, int cc, InputControl inputControl, ControlType type, unsigned value)
-      : name(name), shortName(shortName), cc(cc), inputControl(inputControl), type(type), value(value) {
+      : name(name), shortName(shortName), cc(cc), inputControl(inputControl), type(type), value(value), updated(true) {
       name.reserve(MAX_NAME_SIZE);
       shortName.reserve(MAX_SHORT_NAME_SIZE);
   }
   /// Construct with default values
   MidiControl()
-      : name(""), shortName(""), cc(0), inputControl(InputControl::NOT_CONFIGURED), type(ControlType::SWITCH_MOMENTARY), value(0) {
+      : name(""), shortName(""), cc(0), inputControl(InputControl::NOT_CONFIGURED), type(ControlType::SWITCH_MOMENTARY), value(0), updated(true) {
       name.reserve(MAX_NAME_SIZE);
       shortName.reserve(MAX_SHORT_NAME_SIZE);
   }

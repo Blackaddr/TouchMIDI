@@ -4,7 +4,8 @@ Touchscreen MIDI Controller for Arduino Teensy
 This project is an active work in progress:
 
 April 2020
-- fix delay on Preset Control screen when using expression pedal. Drawing is slow, we need expression to be very fast!
+- Use updated filed on preset control to only draw that control. This will reduce overall flicker.
+- (DONE) fix delay on Preset Control screen when using expression pedal. Drawing is slow, we need expression to be very fast!
 - (DONE) Add "Savings" status screen
 - (DONE) add SPACE to text editor
 - (DONE) add touch to text editor
