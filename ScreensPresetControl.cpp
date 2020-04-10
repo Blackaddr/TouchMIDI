@@ -153,51 +153,6 @@ Screens DrawPresetControl(ILI9341_t3 &tft, Controls &controls, Preset &preset, M
         redrawControls = false;
         redrawActiveControl = false;
 
-//        // Draw the controls
-//        int valueXPos = tft.width()-MARGIN;
-//        int valueYPos = tft.height() - 2*MARGIN;
-//        for (unsigned i=0; i<MAX_NUM_CONTROLS; i++) {
-//            if (redrawControls || (i == activeControl)) {
-//                // Draw a light filled box behind the active control and black behind the others
-//                if (controlLocations[i].control) {
-//                    MidiControl &controlPtr = *controlLocations[i].control;
-//                    // valid pointer to control
-//                    uint16_t color = (activeControl == i) ? ILI9341_YELLOW : ILI9341_BLACK;
-//                    drawActiveControl(tft, controlLocations[i].x, controlLocations[i].y, color);
-//
-//                    if (controlPtr.type == ControlType::ROTARY_KNOB) {
-//                        drawKnob(tft, controlPtr, controlLocations[i].x, controlLocations[i].y);
-//
-//                        if (i == activeControl) {
-//                            // Draw the knob value in the lower right corner
-//                            char valueText[4];
-//                            uint2dec3(controlPtr.value, valueText, 2); // 2 is justify right
-//                            valueText[3] = '\n';
-//                            //clearTextRightJustified(tft, valueText, valueXPos, valueYPos);
-//                            tft.setTextColor(ILI9341_CYAN, ILI9341_BLACK); // force the background to be redrawn as black
-//                            printRightJustified(tft, valueText, valueXPos, valueYPos);
-//
-////                            unsigned scanline = tft.readcommand8(0x45,1);
-////                            if (scanline == 0) { scanline = tft.readcommand8(0x45,1); }
-////                            Serial.println(String("Scanline: ") + scanline);
-//                        }
-//
-//                    } else {
-//                        drawSwitch(tft, controlPtr, controlLocations[i].x, controlLocations[i].y);
-//                        // Clear the value text box when a switch is the active control
-//                        if (i == activeControl) {
-//                            tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK); // force the background to be redrawn as black
-//                            printRightJustified(tft, "   \n", valueXPos, valueYPos);
-//                            //clearTextRightJustified(tft, "XXX\n", valueXPos, valueYPos);
-//                        }
-//                    }
-//                }
-//            }
-//
-//        }
-//        redrawControls = false;
-//        redrawActiveControl = false;
-
         // run a loop waiting for a control input from touch, rotary or switch, or external MIDI input.
         while(true) {
             MidiControl &control = *controlLocations[activeControl].control;
