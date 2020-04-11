@@ -26,12 +26,14 @@ using namespace midi;
 //constexpr size_t NUM_ENTRIES = 32;
 //std::array<LogEntry, NUM_ENTRIES> entryLog;
 
+constexpr unsigned MAX_LINES = 12;
 
 // This screen presents a given presets controls for real-time use.
 Screens DrawMidiMonitor(ILI9341_t3 &tft, Controls &controls, Preset &preset, MidiInterface<HardwareSerial> &midiPort)
 {
-    Serial.println("MIDI MONITOR\n");
     bool redrawScreen = true;
+    unsigned wordCount = 0;
+    unsigned lineCount = 0;
 
     while(true) {
 
@@ -42,7 +44,7 @@ Screens DrawMidiMonitor(ILI9341_t3 &tft, Controls &controls, Preset &preset, Mid
 
             // print the preset number in the top left
             tft.setCursor(tft.width()/10,MARGIN);
-            tft.println("MIDI MONITOR");
+            tft.println("MIDI MONITOR\n");
 
             // Draw the icons
             bmpDraw(tft, "back48.bmp", BACK_BUTTON_X_POS,0); // shifting more than 255 pixels seems to wrap the screen
@@ -51,7 +53,6 @@ Screens DrawMidiMonitor(ILI9341_t3 &tft, Controls &controls, Preset &preset, Mid
 
         // run a loop waiting for a control input from touch, rotary or switch
         while(true) {
-            //MidiControl &control = *controlLocations[activeControl].control;
 
             // Check for touch activity
             if (controls.isTouched()) {
@@ -69,39 +70,49 @@ Screens DrawMidiMonitor(ILI9341_t3 &tft, Controls &controls, Preset &preset, Mid
             }
 
             // Check for pushbutton control
-            if (controls.isSwitchToggled(0)) {
-                // Clear the screen
-                redrawScreen = true;
-                break;
+            ControlEvent controlEvent;
+            while (getNextControlEvent(controlEvent)) {
+                switch(controlEvent.eventType) {
+                case ControlEventType::SWITCH : redrawScreen = true; break; // clear the screen
+                default : break;
+                }
             }
 
             // Check for MIDI messages
-            while (midiInQueue->size() > 0) {
-                MidiWord midiWord;
+            MidiWord midiWord;
+            while (isMidiWordReady()) {
+
+                if (lineCount == MAX_LINES) {
+                    lineCount = 0;
+                    redrawScreen = true;
+                    break;
+                }
+
+                getNextMidiWord(midiWord);
                 String typeString;
-                {
-                    std::lock_guard<std::mutex> lock(midiInQueueMutex);
-                    midiWord = midiInQueue->front();
-                    midiInQueue->pop();
-                } // mutex unlocks
+
                 switch(midiWord.type) {
                 case midi::ControlChange :
-                    typeString = "CC ";
+                    typeString = "CC";
                     break;
                 case midi::ProgramChange :
-                    typeString = "PC ";
+                    typeString = "PC";
                     break;
                 case midi::SystemExclusive :
-                    typeString = "EX ";
+                    typeString = "EX";
                     break;
                 default :
                     typeString = "?? ";
                 }
-                //Serial.println(String("ScreensMidiMonitor(): MIDI Received: ") + midiWord.type + String(" ") + midiWord.data1 + String(" ") + midiWord.data2);
-                tft.println(String(typeString + midiWord.data1 + String(" ") + midiWord.data2));
+                tft.printf("%s %02X %2X ", typeString.c_str(), midiWord.data1, midiWord.data2);
+                wordCount++;
+                if ((wordCount % 2) == 0) {
+                    lineCount++;
+                    tft.printf("\n");
+                }
             }
 
-            delay(10); // this is needed for control sampling to work
+            if (redrawScreen) { break; }
         } // end while loop to process control inputs
 
     } // end outer while loop

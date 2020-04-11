@@ -52,22 +52,16 @@ void StringEdit(ILI9341_t3 &tft, String &inputString, Controls &controls)
       // Draw the Screen title
       tft.setTextColor(ILI9341_CYAN);
       tft.setTextSize(textSize);
-      //int16_t titleLength = tft.strPixelLen(newString);
-      //Serial.println(String("Input length is ") + titleLength);
-
       tft.fillScreen(ILI9341_BLACK);
 
       // Print the string
-      //tft.setCursor(tft.width()/2 - titleLength/2, 10);
       tft.setCursor(LEFT_MARGIN, TOP_MARGIN);
       tft.printf("%s_\n",newString);
-      //tft.println("");
 
       // Print the alphabet
       tft.setTextColor(ILI9341_WHITE);
       unsigned charsPerLine = (tft.width()-LEFT_MARGIN) / CHAR_WIDTH_SPACE;
-      //setCursorX(tft, LEFT_MARGIN);
-      tft.setCursor(LEFT_MARGIN, 10 + (unsigned)(CHAR_HEIGHT*1.5f));
+      tft.setCursor(LEFT_MARGIN, TOP_MARGIN + (unsigned)(CHAR_HEIGHT*1.5f));
 
       unsigned charIndex = 0;
 
@@ -154,7 +148,17 @@ void StringEdit(ILI9341_t3 &tft, String &inputString, Controls &controls)
     }
 
     // Check for rotary movement
-    int knobAdjust = controls.getRotaryAdjust(CONTROL_ENCODER);
+    ControlEvent controlEvent;
+    int knobAdjust = 0;
+    int switchToggled = 0;
+    while (getNextControlEvent(controlEvent)) {
+        switch(controlEvent.eventType) {
+        case ControlEventType::ENCODER : knobAdjust    = controlEvent.value; break;
+        case ControlEventType::SWITCH  : switchToggled = controlEvent.value; break;
+        default : break;
+        }
+    }
+
     if (knobAdjust != 0) {
       int adjust = (knobAdjust > 0) ? 1 : -1;
 
@@ -191,11 +195,10 @@ void StringEdit(ILI9341_t3 &tft, String &inputString, Controls &controls)
         }
       }
       updateRequired =  true;
-      //Serial.println(String("encoder adjusted by ") + knobAdjust + String(", selectedChar is now ") + selectedChar);
     }
 
     // Check for button
-    if (controls.isSwitchToggled(CONTROL_SWITCH)) {
+    if (switchToggled) {
 
       // Check for symbol
       if (selectedChar < static_cast<uint8_t>(StringEditSymbols::NUM_SYMBOLS)) {
@@ -233,8 +236,6 @@ void StringEdit(ILI9341_t3 &tft, String &inputString, Controls &controls)
         updateRequired = true;
 
       }
-
-
     }
 
     // Check for touch activity
@@ -267,7 +268,7 @@ void StringEdit(ILI9341_t3 &tft, String &inputString, Controls &controls)
         }
     }
 
-    if (!updateRequired) { delay(100); }
+    if (!updateRequired) { yield(); }
 
   }
 

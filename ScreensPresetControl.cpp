@@ -10,7 +10,6 @@
  */
 #include <memory>
 #include <queue>
-//#include <TeensyThreads.h>
 #include <MIDI.h>
 #include "Screens.h"
 #include "MidiProc.h"
@@ -85,8 +84,6 @@ Screens DrawPresetControl(ILI9341_t3 &tft, Controls &controls, Preset &preset, M
         //unsigned scanline = tft.readcommand8(0x45, 1);
         //if (scanline > maxScanline) { maxScanline = scanline; Serial.println(String("Scanline: ") + maxScanline); }
 
-
-
         if (redrawScreen) {
             // Draw the Preset Edit Screen
             clearScreen(tft);
@@ -158,35 +155,22 @@ Screens DrawPresetControl(ILI9341_t3 &tft, Controls &controls, Preset &preset, M
             MidiControl &control = *controlLocations[activeControl].control;
 
             // Check for MIDI activity
-            bool midiAvailable = false;
             MidiWord midiWord;
-            { // lock scope
-                std::lock_guard<std::mutex> lock(midiInQueueMutex);
-                if (!midiInQueue->empty()) {
-                    midiWord = midiInQueue->front();
-                    midiInQueue->pop();
-                    midiAvailable = true;
-                }
-            }
+            if (getNextMidiWord(midiWord)) {
 
-            if (midiAvailable) {
-
-                //Serial.println("MIDI received!");
                 MidiType type    = midiWord.type;
                 DataByte ccId    = midiWord.data1;
-
 
                 if (type == midi::ControlChange) {
                     for (auto it = preset.controls.begin(); it != preset.controls.end(); ++it) {
 
                         /// check if the CC matches this control and it's been update
                         if ( ccId == (*it).cc && (*it).updated) {
-                            //(*it).updated = false;
                             redrawControls = true;
                         }
                     }// end preset control map FOR loop
                 } // end if CC
-            } // end if midiAvailable
+            } // end if midi available
 
             // Check for touch activity
             if (controls.isTouched()) {
@@ -226,48 +210,56 @@ Screens DrawPresetControl(ILI9341_t3 &tft, Controls &controls, Preset &preset, M
                 if (redrawControls || redrawActiveControl) { break; }
             }
 
-            // Check for rotary activity
-            int adjust = controls.getRotaryAdjust(CONTROL_ENCODER);
-            if (adjust != 0) {
-                // primary encoder
-                //Serial.println(String("Adjust by ") + adjust);
+            // Check for physical input controls
+            ControlEvent controlEvent;
+            while (getNextControlEvent(controlEvent)) {
+                switch(controlEvent.eventType) {
+                case ControlEventType::ENCODER :
+                {
+                    int knobAdjust = controlEvent.value;
+                    // primary encoder
+                    if (control.type == ControlType::ROTARY_KNOB) {
+                        control.value = adjustWithSaturation(control.value, knobAdjust, 0, MIDI_VALUE_MAX);
+                        control.updated = true;
+                        redrawActiveControl = true;
 
-                if (control.type == ControlType::ROTARY_KNOB) {
-                    control.value = adjustWithSaturation(control.value, adjust, 0, MIDI_VALUE_MAX);
-                    control.updated = true;
-                    redrawActiveControl = true;
-
-                    // Send the MIDI message
-                    MidiWord midiWord;
-                    midiWord.type = midi::MidiType::ControlChange;
-                    midiWord.data1 = control.cc;
-                    midiWord.data2 = control.value;
-                    midiWord.channel = MIDI_CC_CHANNEL;
-                    midiSendWord(midiWord);
+                        // Send the MIDI message
+                        MidiWord midiWord;
+                        midiWord.type = midi::MidiType::ControlChange;
+                        midiWord.data1 = control.cc;
+                        midiWord.data2 = control.value;
+                        midiWord.channel = MIDI_CC_CHANNEL;
+                        midiSendWord(midiWord);
+                        break;
+                    }
                     break;
                 }
-            }
 
-            // Check for pushbutton control
-            if (controls.isSwitchToggled(CONTROL_SWITCH)) {
+                case ControlEventType::SWITCH :
+                {
+                    // If it's a toggled switch update the stored value using toggling
+                    if (control.type == ControlType::SWITCH_LATCHING) {
+                        control.value = static_cast<unsigned>(toggleValue(control.value, MIDI_ON_VALUE, MIDI_OFF_VALUE));
+                        control.updated = true;
+                    }
 
-                // If it's a toggled switch update the stored value using toggling
-                if (control.type == ControlType::SWITCH_LATCHING) {
-                    control.value = static_cast<unsigned>(toggleValue(control.value, MIDI_ON_VALUE, MIDI_OFF_VALUE));
-                    control.updated = true;
+                    // Redraw the active control if it is a switch type
+                    if ( (control.type == ControlType::SWITCH_LATCHING) ||
+                         (control.type == ControlType::SWITCH_MOMENTARY) ) {
+                        redrawActiveControl = true;
+
+                        MidiWord midiWord;
+                        midiWord.type = midi::MidiType::ControlChange;
+                        midiWord.data1 = control.cc;
+                        midiWord.data2 = control.value;
+                        midiWord.channel = MIDI_CC_CHANNEL;
+                        midiSendWord(midiWord);
+                    }
+                    break;
                 }
 
-                // Redraw the active control if it is a switch type
-                if ( (control.type == ControlType::SWITCH_LATCHING) ||
-                     (control.type == ControlType::SWITCH_MOMENTARY) ) {
-                    redrawActiveControl = true;
-
-                    MidiWord midiWord;
-                    midiWord.type = midi::MidiType::ControlChange;
-                    midiWord.data1 = control.cc;
-                    midiWord.data2 = control.value;
-                    midiWord.channel = MIDI_CC_CHANNEL;
-                    midiSendWord(midiWord);
+                default :
+                    break;
                 }
 
             }
@@ -275,7 +267,6 @@ Screens DrawPresetControl(ILI9341_t3 &tft, Controls &controls, Preset &preset, M
             if (redrawControls || redrawActiveControl) { break; }
 
             yield();
-            //delay(10); // this is needed for control sampling to work
         } // end while loop to process control inputs
 
     } // end outer while loop

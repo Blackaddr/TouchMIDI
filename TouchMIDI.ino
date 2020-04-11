@@ -166,8 +166,9 @@ void setup(void) {
     nextScreen = TouchCalib(tft, controls);
   }
 
-  Serial.println("Launching MIDI thread");
+  Serial.println("Launching threads");
   threads.addThread(processMidi,midiPortPtr);
+  threads.addThread(processControls, &controls);
 
 }
 

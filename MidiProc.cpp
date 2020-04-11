@@ -35,8 +35,6 @@ void processMidi(void *rawMidiPortPtr)
             // trap on certain CCs to convert them custom CC that is not sent out over MIDI
             // No other MIDI will be passed while on the nav screen as that screen takes control over
             // sending MIDI out messages.
-            //Serial.println(String("MidiProc(): MIDI Received: ") + midiWord.type + String(" ") + midiWord.data1 + String(" ") + midiWord.data2);
-            //Serial.println(String("MidiProc(): Screen: ") + static_cast<unsigned>(g_currentScreen));
             if (g_currentScreen == Screens::PRESET_NAVIGATION) {
                 if ((midiWord.type == midi::ControlChange) && (midiWord.data2 == MIDI_OFF_VALUE)) {
                     switch (midiWord.data1) {
@@ -55,7 +53,6 @@ void processMidi(void *rawMidiPortPtr)
                         }
                         midiInQueue->emplace(midiWord);
                     }
-
                 }
             } else {
                 // Not on the Nav screen.
@@ -70,8 +67,6 @@ void processMidi(void *rawMidiPortPtr)
                     midiInQueue->emplace(midiWord);
                 }
             }
-
-
         }
 
         // Check the MIDI OUT queue
@@ -83,7 +78,6 @@ void processMidi(void *rawMidiPortPtr)
                 midiOutQueue->pop();
             }
 
-            //Serial.println("Send midi\n");
             midiPort.send(midiWord.type, midiWord.data1, midiWord.data2, midiWord.channel);
 
         }
@@ -127,6 +121,20 @@ void remapMidiSend(MidiWord &midiWord, volatile Preset &activePresetIn)
     if (!midiDropMessage) { midiSendWord(midiWord); }
 }
 
+bool getNextMidiWord(MidiWord &midiWord)
+{
+    bool isMidiAvailable = false;
+    {
+        std::lock_guard<std::mutex> lock(midiInQueueMutex);
+        midiWord = midiInQueue->front();
+        if (!midiInQueue->empty()) {
+            isMidiAvailable = true;
+            midiInQueue->pop();
+        }
+    } // mutex unlocks
+    return isMidiAvailable;
+}
+
 void midiSendWord(MidiWord midiWord)
 {
     {
@@ -147,8 +155,12 @@ void midiProgramSend(unsigned programNumber, unsigned channel)
     midiWord.data2 = 0;
     midiWord.channel = channel;
 
-    //Serial.println("Add PGM change");
     midiSendWord(midiWord);
+}
+
+bool isMidiWordReady(void)
+{
+    return (!midiInQueue->empty());
 }
 
 

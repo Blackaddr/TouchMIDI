@@ -205,17 +205,11 @@ Screens DrawPresetNavigation(ILI9341_t3 &tft, Controls &controls, PresetArray &p
 
             // wait for touch release
             while (controls.isTouched()) {}
-        }
+        } // end controls.isTouched()
 
         // Check for MIDI
-        while (midiInQueue->size() > 0) {
-            MidiWord midiWord;
-            {
-                std::lock_guard<std::mutex> lock(midiInQueueMutex);
-                midiWord = midiInQueue->front();
-                midiInQueue->pop();
-            } // mutex unlocks
-
+        MidiWord midiWord;
+        while (getNextMidiWord(midiWord)) {
             if ((midiWord.type == midi::ControlChange) && (midiWord.data2 == MIDI_OFF_VALUE)) {
                 switch (midiWord.data1) {
                 case MIDI_CC_SPECIAL_UP     : midiAdjust = -1; break;
@@ -226,8 +220,20 @@ Screens DrawPresetNavigation(ILI9341_t3 &tft, Controls &controls, PresetArray &p
             }
         }
 
-        // Check for Rotary knob
-        int knobAdjust = controls.getRotaryAdjustUnit(0) + midiAdjust;
+        int  knobAdjust = midiAdjust;
+        bool switchToggled = false;
+        ControlEvent controlEvent;
+
+        while (getNextControlEvent(controlEvent)) {
+            switch(controlEvent.eventType) {
+            case ControlEventType::ENCODER : knobAdjust += controlEvent.value; break;
+            case ControlEventType::SWITCH  : switchToggled = true; break;
+            default :
+                break;
+            }
+        }
+
+
         if (knobAdjust != 0) {
             // set the previous selected preset to update
             unsigned prevSelectedPreset = selectedPreset;
@@ -237,29 +243,24 @@ Screens DrawPresetNavigation(ILI9341_t3 &tft, Controls &controls, PresetArray &p
                 updatePresetDrawByIndex(prevSelectedPreset);
                 updatePresetDrawByIndex(selectedPreset);
             }
-            //Serial.println(String("Knob adjusted by ") + knobAdjust + String(", selectedPreset is now ") + selectedPreset);
-
-            //redrawScreen = true;
             midiAdjust = 0;
         }
 
-        if (controls.isSwitchToggled(CONTROL_SWITCH) || selectTriggeredMidi) {
-          Serial.println(String("Setting activePreset to ") + selectedPreset);
-          if (activePreset == selectedPreset) {
+        if (switchToggled || selectTriggeredMidi) {
+            Serial.println(String("Setting activePreset to ") + selectedPreset);
+            if (activePreset == selectedPreset) {
               // goto to edit screen
               return Screens::PRESET_CONTROL;
-          } else {
+            } else {
               updatePresetDrawByIndex(activePreset); // update the previously active
               activePreset = selectedPreset;
               updatePresetDrawByIndex(activePreset); // update tne new active
               setActivePreset(&presetArray[activePreset]);
               midiProgramSend(activePreset, MIDI_PROGRAM_CHANNEL);
-              //redrawScreen = true;
               selectTriggeredMidi = false;
-          }
+            }
         }
 
-        delay(100);
         yield();
     } // end while loop
 
@@ -289,8 +290,6 @@ void moveUp(PresetArray &presetArray, unsigned &activePreset, unsigned &selected
 
         updatePresetDrawByIndex(selectedPreset);
         updatePresetDrawByIndex(activePreset);
-
-        //redrawScreen = true;
     }
 
 }
@@ -319,7 +318,6 @@ void moveDown(PresetArray &presetArray, unsigned &activePreset, unsigned &select
 
         updatePresetDrawByIndex(selectedPreset);
         updatePresetDrawByIndex(activePreset);
-        //redrawScreen = true;
     }
 }
 

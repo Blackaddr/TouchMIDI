@@ -31,6 +31,8 @@ extern std::mutex midiOutQueueMutex;
 extern std::queue<MidiWord> *midiOutQueue;
 
 void processMidi(void *rawMidiPortPtr);
+bool getNextMidiWord(MidiWord &midiWord);
+bool isMidiWordReady(void);
 void midiSendWord(MidiWord midiWord);
 void midiProgramSend(unsigned programNumber, unsigned channel);
 

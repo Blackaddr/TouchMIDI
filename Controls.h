@@ -1,16 +1,32 @@
 #ifndef __CONTROLS_H
 #define __CONTROLS_H
 
+#include <queue>
 #include <vector>
 #include <XPT2046_Touchscreen.h>
 #include "RotaryEncoder.h"
 #include <Bounce.h>
+#include <TeensyThreads.h>
 
 // This is calibration data for the raw touch data to the screen coordinates
 #define TS_MINX 360
 #define TS_MINY 380
 #define TS_MAXX 3700
 #define TS_MAXY 3700
+
+enum class ControlEventType {
+    ENCODER = 0,
+    SWITCH  = 1
+};
+
+struct ControlEvent {
+    ControlEventType eventType;
+    int              value;
+};
+
+constexpr size_t             CONTROL_QUEUE_MAX_SIZE = 128;
+extern std::mutex            controlInputMutex;
+extern std::queue<ControlEvent> *controlInputQueue;
 
 /// Specifies the type of MIDI control
 enum class ControlType : unsigned {
@@ -182,6 +198,7 @@ private:
   bool     m_isHorizontalFlipped = false;
 };
 
-
+void processControls(void *controlsPtr);
+bool getNextControlEvent(ControlEvent& controlEvent);
 
 #endif
