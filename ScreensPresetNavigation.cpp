@@ -55,7 +55,7 @@ void drawPresetLines(ILI9341_t3 &tft, PresetArray &presetArray, unsigned activeP
     for (unsigned i=0; i < min(NUM_PRESET_LINES_DRAW,presetArray.size()) ; i++) {
 
         if (updatePresetLine[i]) {
-            unsigned presetToUpdate = (firstPresetLine + i) % presetArray.size();
+            unsigned presetToUpdate = (firstPresetLine + i) % presetArray.size(); // wraps around
             Preset& preset = presetArray[presetToUpdate];
             tft.setCursor(PRESET_TEXT_START_XPOS, PRESET_TEXT_START_YPOS + i*DEFAULT_TEXT_HEIGHT);
 
@@ -235,6 +235,7 @@ Screens DrawPresetNavigation(ILI9341_t3 &tft, Controls &controls, PresetArray &p
 
 
         if (knobAdjust != 0) {
+            knobAdjust =  adjustAsUnit(knobAdjust);
             // set the previous selected preset to update
             unsigned prevSelectedPreset = selectedPreset;
             // update the new selected preset;
@@ -242,6 +243,21 @@ Screens DrawPresetNavigation(ILI9341_t3 &tft, Controls &controls, PresetArray &p
             if (prevSelectedPreset != selectedPreset) {
                 updatePresetDrawByIndex(prevSelectedPreset);
                 updatePresetDrawByIndex(selectedPreset);
+            }
+
+            if ((selectedPreset == 0) && (firstPresetLine != 0)) {
+                firstPresetLine = 0;
+                updateAllPresetDrawLines();
+            }
+
+            if (selectedPreset == (firstPresetLine + NUM_PRESET_LINES_DRAW)) {
+                // advanced past last to next or back to zero
+                firstPresetLine = (firstPresetLine + 1) % presetArray.size();
+                updateAllPresetDrawLines();
+            }
+
+            if ( (selectedPreset == firstPresetLine-1) ) {
+                firstPresetLine = (firstPresetLine - 1) % presetArray.size();
             }
             midiAdjust = 0;
         }

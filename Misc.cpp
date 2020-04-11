@@ -44,6 +44,12 @@ int adjustWithSaturation(int input, int adj, int min, int max) {
     return temp;
 }
 
+int adjustAsUnit(int input) {
+    if (input > 0) { return 1; }
+    if (input < 0) { return -1; }
+    else { return 0; }
+}
+
 int toggleValue(int input, int onValue, int offValue)
 {
     if (input == offValue) {

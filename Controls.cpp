@@ -6,7 +6,7 @@
  */
 #include "Controls.h"
 
-constexpr unsigned CONTROL_SAMPLE_PERIOD_MS = 10;
+constexpr unsigned CONTROL_SAMPLE_PERIOD_MS = 50;
 
 std::mutex                controlInputMutex;
 std::queue<ControlEvent> *controlInputQueue = new std::queue<ControlEvent>();
