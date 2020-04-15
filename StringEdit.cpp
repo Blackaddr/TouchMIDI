@@ -17,6 +17,11 @@ constexpr unsigned CHAR_WIDTH = 6*textSize; // font width, * text scale
 constexpr unsigned CHAR_WIDTH_SPACE = CHAR_WIDTH*2;
 constexpr unsigned CHAR_HEIGHT = 8*textSize;
 
+constexpr int SPACE_X_POS = LEFT_MARGIN + 8*CHAR_WIDTH;
+constexpr int SPACE_Y_POS = TOP_MARGIN + (unsigned)(CHAR_HEIGHT*5.5f);
+constexpr int SPACE_WIDTH = 5*CHAR_WIDTH;
+constexpr int SPACE_HEIGHT = CHAR_HEIGHT;
+
 constexpr int DONE_X_POS  = LEFT_MARGIN;
 constexpr int DONE_Y_POS  = TOP_MARGIN + (unsigned)(CHAR_HEIGHT*7.5f);
 constexpr int DONE_WIDTH  = 4*CHAR_WIDTH;
@@ -32,6 +37,53 @@ constexpr int SHIFT_Y_POS = DONE_Y_POS;
 constexpr int SHIFT_WIDTH = 5*CHAR_WIDTH;
 constexpr int SHIFT_HEIGHT = DONE_HEIGHT;
 
+// This function is brute force and not portable to different screens sizes.
+// Maybe one day compute it directly instad of using branches.
+void getPosition(char ch, int16_t* xPos, int16_t* yPos, unsigned charPerLine)
+{
+    if ((!xPos) || (!yPos)) { return; }
+    if (ch >= 'a' && ch <= 'h') {
+        *xPos = LEFT_MARGIN + 2*CHAR_WIDTH*(ch-'a');
+        *yPos = TOP_MARGIN + (unsigned)(CHAR_HEIGHT*1.5f);
+    }
+    if (ch >= 'i' && ch <= 'p') {
+        *xPos = LEFT_MARGIN + 2*CHAR_WIDTH*(ch-'i');
+        *yPos = TOP_MARGIN + (unsigned)(CHAR_HEIGHT*2.5f);
+    }
+    if (ch >= 'q' && ch <= 'x') {
+        *xPos = LEFT_MARGIN + 2*CHAR_WIDTH*(ch-'q');
+        *yPos = TOP_MARGIN + (unsigned)(CHAR_HEIGHT*3.5f);
+    }
+    if (ch >= 'y' && ch <= 'z') {
+        *xPos = LEFT_MARGIN + 2*CHAR_WIDTH*(ch-'y');
+        *yPos = TOP_MARGIN + (unsigned)(CHAR_HEIGHT*4.5f);
+    }
+    if (ch >= '0' && ch <= '5') {
+        *xPos = LEFT_MARGIN + 2*CHAR_WIDTH*(2+ch-'0');
+        *yPos = TOP_MARGIN + (unsigned)(CHAR_HEIGHT*4.5f);
+    }
+    if (ch >= '6' && ch <= '9') {
+        *xPos = LEFT_MARGIN + 2*CHAR_WIDTH*(ch-'6');
+        *yPos = TOP_MARGIN + (unsigned)(CHAR_HEIGHT*5.5f);
+    }
+    if (ch == (char)StringEditSymbols::SPACE) {
+        *xPos = SPACE_X_POS;
+        *yPos = SPACE_Y_POS;
+    }
+    if (ch == (char)StringEditSymbols::DONE) {
+        *xPos = DONE_X_POS;
+        *yPos = DONE_Y_POS;
+    }
+    if (ch == (char)StringEditSymbols::BACKSPACE) {
+        *xPos = DEL_X_POS;
+        *yPos = DEL_Y_POS;
+    }
+    if (ch == (char)StringEditSymbols::SHIFT) {
+        *xPos = SHIFT_X_POS;
+        *yPos = SHIFT_Y_POS;
+    }
+}
+
 
 void StringEdit(ILI9341_t3 &tft, String &inputString, Controls &controls)
 {
@@ -40,99 +92,106 @@ void StringEdit(ILI9341_t3 &tft, String &inputString, Controls &controls)
   char newString[32];
   inputString.toCharArray(newString, inputString.length()+1);
   uint8_t ch = 'a';
+  uint8_t previousChar = 'a';
   uint8_t selectedChar = 'a';
   unsigned newStringIndex = inputString.length();
+  unsigned charsPerLine = (tft.width()-LEFT_MARGIN) / CHAR_WIDTH_SPACE;
   bool characterShift = false;
   bool updateRequired = true;
+  bool redrawAllChars = true;
+  bool redrawString   = true;
+
+  tft.fillScreen(ILI9341_BLACK);
 
   while(true)
   {
     if (updateRequired) {
 
-      // Draw the Screen title
-      tft.setTextColor(ILI9341_CYAN);
-      tft.setTextSize(textSize);
-      tft.fillScreen(ILI9341_BLACK);
-
-      // Print the string
-      tft.setCursor(LEFT_MARGIN, TOP_MARGIN);
-      tft.printf("%s_\n",newString);
+        if (redrawString) {
+            // Draw the string being edited
+            tft.setTextColor(ILI9341_CYAN);
+            tft.setTextSize(textSize);
+            // Print the string
+            tft.fillRect(LEFT_MARGIN,TOP_MARGIN,CHAR_WIDTH*16,CHAR_HEIGHT, ILI9341_BLACK);
+            tft.setCursor(LEFT_MARGIN, TOP_MARGIN);
+            tft.printf("%s_\n",newString);
+            redrawString = false;
+        }
 
       // Print the alphabet
       tft.setTextColor(ILI9341_WHITE);
-      unsigned charsPerLine = (tft.width()-LEFT_MARGIN) / CHAR_WIDTH_SPACE;
       tft.setCursor(LEFT_MARGIN, TOP_MARGIN + (unsigned)(CHAR_HEIGHT*1.5f));
-
-      unsigned charIndex = 0;
 
       // Print the letters
       ch = 'a';
       while(true)
       {
         // Check if this is the selected char
-        if (ch == selectedChar) {
+        if ((ch == selectedChar) || (ch == previousChar) || redrawAllChars) {
 
-          tft.getCursor(&x,&y);
+          getPosition(ch, &x, &y, charsPerLine);
+          tft.setCursor(x,y);
           x -= CHAR_WIDTH/2;
+
+          uint16_t color = (ch == selectedChar) ? ILI9341_DARKCYAN : ILI9341_BLACK;
           if (ch > static_cast<uint8_t>(StringEditSymbols::SHIFT)) {
             // This is a letter or number
-            tft.fillRect(x,y,CHAR_WIDTH*2,CHAR_HEIGHT, ILI9341_DARKCYAN);
+            tft.fillRect(x,y,CHAR_WIDTH*2,CHAR_HEIGHT, color);
 
           } else {
             // This is a symbol
-            //unsigned width;
             switch(ch) {
               case static_cast<uint8_t>(StringEditSymbols::SPACE) :
-              tft.fillRect(x,y,CHAR_WIDTH*6,CHAR_HEIGHT, ILI9341_DARKCYAN);
+              tft.fillRect(x,y,CHAR_WIDTH*6,CHAR_HEIGHT, color);
               break;
               case static_cast<uint8_t>(StringEditSymbols::DONE) :
-                tft.fillRect(x,y,CHAR_WIDTH*5,CHAR_HEIGHT, ILI9341_DARKCYAN);
+                tft.fillRect(x,y,CHAR_WIDTH*5,CHAR_HEIGHT, color);
                 break;
               case static_cast<uint8_t>(StringEditSymbols::BACKSPACE) :
-                tft.fillRect(x,y,CHAR_WIDTH*4,CHAR_HEIGHT, ILI9341_DARKCYAN);
+                tft.fillRect(x,y,CHAR_WIDTH*4,CHAR_HEIGHT, color);
                 break;
               case static_cast<uint8_t>(StringEditSymbols::SHIFT) :
-                tft.fillRect(x,y,CHAR_WIDTH*6,CHAR_HEIGHT, ILI9341_DARKCYAN);
+                tft.fillRect(x,y,CHAR_WIDTH*6,CHAR_HEIGHT, color);
                 break;
               default :
                 break;
             }
           }
-        }
+        } // end if ch == selectedChar
 
-        // Check for symbols first
-        if (ch < static_cast<uint8_t>(StringEditSymbols::NUM_SYMBOLS)) {
-          // it's a symbol
-          switch(ch) {
-            case static_cast<uint8_t>(StringEditSymbols::SPACE) :
-            tft.printf("SPACE ");
-            break;
-            case static_cast<uint8_t>(StringEditSymbols::DONE) :
-              tft.printf("DONE ");
-              break;
-            case static_cast<uint8_t>(StringEditSymbols::BACKSPACE) :
-              tft.printf("DEL ");
-              break;
-            case static_cast<uint8_t>(StringEditSymbols::SHIFT) :
-              tft.printf("SHIFT ");
-              break;
-            default :
-              break;
-          }
-          charIndex = 0;
-        } else {
-          // it's a letter or number
-          char printChar = characterShift ? toupper(ch) : ch;
-          if (charIndex >= charsPerLine-1) {
-            tft.printf("%c\n", printChar);
-            charIndex = 0;
-            setCursorX(tft, LEFT_MARGIN);
-          } else {
-            tft.printf("%c ", printChar);
-            charIndex++;
-          }
-        }
 
+        // Only draw the selected and the previous to reduce screen draws
+        if ((ch == selectedChar) || (ch == previousChar) || redrawAllChars) {
+
+            getPosition(ch, &x, &y, charsPerLine);
+            tft.setCursor(x,y);
+
+            // Check for symbols first
+            if (ch < static_cast<uint8_t>(StringEditSymbols::NUM_SYMBOLS)) {
+              // it's a symbol
+              switch(ch) {
+                case static_cast<uint8_t>(StringEditSymbols::SPACE) :
+                tft.printf("SPACE ");
+                break;
+                case static_cast<uint8_t>(StringEditSymbols::DONE) :
+                  tft.printf("DONE ");
+                  break;
+                case static_cast<uint8_t>(StringEditSymbols::BACKSPACE) :
+                  tft.printf("DEL ");
+                  break;
+                case static_cast<uint8_t>(StringEditSymbols::SHIFT) :
+                  tft.printf("SHIFT ");
+                  break;
+                default :
+                  break;
+              }
+              //charIndex = 0;
+            } else {
+              // it's a letter or number
+              char printChar = characterShift ? toupper(ch) : ch;
+              tft.printf("%c ", printChar);
+            }
+        }
 
         // Switch to letters, numbers or symbols
         if (ch == 'z') { ch = '0';}
@@ -140,9 +199,12 @@ void StringEdit(ILI9341_t3 &tft, String &inputString, Controls &controls)
         else if (ch == static_cast<uint8_t>(StringEditSymbols::SPACE)) {
             ch = static_cast<uint8_t>(StringEditSymbols::DONE); tft.printf("\n\n"); setCursorX(tft, LEFT_MARGIN);
         }
-        else if (ch == static_cast<uint8_t>(StringEditSymbols::SHIFT)) { break; }
+        else if (ch == static_cast<uint8_t>(StringEditSymbols::SHIFT)) {
+            redrawAllChars = false;
+            break;
+        }
         else { ch++; }
-      }
+      } // end while(true)
 
       updateRequired = false;
     }
@@ -162,6 +224,7 @@ void StringEdit(ILI9341_t3 &tft, String &inputString, Controls &controls)
     if (knobAdjust != 0) {
       int adjust = (knobAdjust > 0) ? 1 : -1;
 
+      previousChar = selectedChar;
       if (adjust > 0) {
         // going up
         switch (selectedChar) {
@@ -199,43 +262,44 @@ void StringEdit(ILI9341_t3 &tft, String &inputString, Controls &controls)
 
     // Check for button
     if (switchToggled) {
+        updateRequired = true;
+        redrawString = true;
 
-      // Check for symbol
-      if (selectedChar < static_cast<uint8_t>(StringEditSymbols::NUM_SYMBOLS)) {
+        // Check for symbol
+        if (selectedChar < static_cast<uint8_t>(StringEditSymbols::NUM_SYMBOLS)) {
 
-        switch (selectedChar) {
-          case static_cast<uint8_t>(StringEditSymbols::SPACE) :
-              newString[newStringIndex] = ' ';
-              newStringIndex++;
-              newString[newStringIndex] = 0;
-              updateRequired = true;
-              break;
-            case static_cast<uint8_t>(StringEditSymbols::DONE) :
-              inputString.remove(0);
-              inputString.concat(newString);
-              return;
-            case static_cast<uint8_t>(StringEditSymbols::BACKSPACE) :
-              if (newStringIndex > 0) {
-                // only backspace if not on first char
-                newString[newStringIndex-1] = 0;
-                newStringIndex--;
-              }
-              break;
-            case static_cast<uint8_t>(StringEditSymbols::SHIFT) :
-              characterShift = !characterShift;
-              break;
-            default :
-              break;
+            switch (selectedChar) {
+                case static_cast<uint8_t>(StringEditSymbols::SPACE) :
+                  newString[newStringIndex] = ' ';
+                  newStringIndex++;
+                  newString[newStringIndex] = 0;
+                  updateRequired = true;
+                  break;
+                case static_cast<uint8_t>(StringEditSymbols::DONE) :
+                  inputString.remove(0);
+                  inputString.concat(newString);
+                  return;
+                case static_cast<uint8_t>(StringEditSymbols::BACKSPACE) :
+                  if (newStringIndex > 0) {
+                    // only backspace if not on first char
+                    newString[newStringIndex-1] = 0;
+                    newStringIndex--;
+                  }
+                  break;
+                case static_cast<uint8_t>(StringEditSymbols::SHIFT) :
+                  characterShift = !characterShift;
+                  redrawAllChars = true;
+                  break;
+                default :
+                  break;
+            }
+
+        } else {
+            char storedChar = characterShift ? toupper(selectedChar) : selectedChar;
+            newString[newStringIndex] = storedChar;
+            newStringIndex++;
+            newString[newStringIndex] = 0;
         }
-        updateRequired = true;
-      } else {
-        char storedChar = characterShift ? toupper(selectedChar) : selectedChar;
-        newString[newStringIndex] = storedChar;
-        newStringIndex++;
-        newString[newStringIndex] = 0;
-        updateRequired = true;
-
-      }
     }
 
     // Check for touch activity
