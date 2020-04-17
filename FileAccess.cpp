@@ -8,11 +8,16 @@
 #include "FileAccess.h"
 
 //SdFat SD;
+constexpr size_t MIN_PRESET_SIZE = 2048;
+
+bool initSerialFlash(unsigned chipSelect) {
+    return SerialFlash.begin(chipSelect);
+}
 
 void writePresetToFile(const char *filename, JsonObject &jsonObject)
 {
     // create  buffer to hold the contexts
-    constexpr int BUFFER_SIZE = 1024;
+    constexpr int BUFFER_SIZE = MIN_PRESET_SIZE;
     char buffer[BUFFER_SIZE];
     memset(buffer, 0, BUFFER_SIZE);
     //serializeJson(jsonObject, buffer);

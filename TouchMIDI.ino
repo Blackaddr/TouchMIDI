@@ -24,6 +24,11 @@ File file;
 #define SDCARD_CS 3
 
 /////////////////////
+// Serial Flash
+/////////////////////
+#define SERIALFLASH_CS 8
+
+/////////////////////
 // TOUCH
 /////////////////////
 // The STMPE610 uses hardware SPI on the shield, and #8
@@ -73,6 +78,8 @@ void setup(void) {
   midiPortPtr->begin(MIDI_CHANNEL_OMNI);
   midiPortPtr->turnThruOff();
 
+  pinMode(SERIALFLASH_CS, OUTPUT);
+  digitalWrite(SERIALFLASH_CS, 1); // disable the Serial Flash
   pinMode(SDCARD_CS, OUTPUT);
   digitalWrite(SDCARD_CS, 1); // disable the SD CARD
   pinMode(STMPE_CS, OUTPUT);
@@ -82,6 +89,9 @@ void setup(void) {
 
   Serial.println("Creating Preset Array");
   presetArray = createPresetArray();
+
+  // Setup the SerialFlash
+  initSerialFlash(SERIALFLASH_CS);
 
   // Check the SD Card
   if (!SD.begin(SDCARD_CS)) {
@@ -204,6 +214,9 @@ void loop()
       case Screens::MIDI_MONITOR :
         g_currentScreen = nextScreen;
         nextScreen = DrawMidiMonitor(tft, controls, (*presetArray)[activePreset], *midiPortPtr);
+      case Screens::UTILITIES :
+        g_currentScreen = nextScreen;
+        nextScreen = DrawUtilities(tft, controls, *presetArray);
       default:
         g_currentScreen = nextScreen;
         nextScreen = DrawPresetNavigation(tft, controls, (*presetArray), *midiPortPtr, activePreset, selectedPreset);

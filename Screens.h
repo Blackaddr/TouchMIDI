@@ -23,6 +23,7 @@ enum class Screens : unsigned {
   MIDI_CONTROL_CONFIG, ///< screen for editing a MIDI control
   TOUCH_CALIBRATE,   ///< calibrate the touch screen
   MIDI_MONITOR,      ///< Midi monitoring tool
+  UTILITIES          ///< General utilities
 };
 
 constexpr unsigned TOUCH_CONTROL_HALFSIZE = 20;
@@ -86,19 +87,22 @@ public:
 };
 
 
-void DrawMidiControlConfig(ILI9341_t3 &tft, Controls &controls, MidiControl &midiControl);
-void DrawPresetConfig(ILI9341_t3 &tft, Controls &controls, Preset &preset);
-Screens DrawPresetNavigation(ILI9341_t3 &tft, Controls &controls, PresetArray &presetArray, midi::MidiInterface<HardwareSerial> &midiPort,
+void    DrawMidiControlConfig(ILI9341_t3 &tft, Controls &controls, MidiControl &midiControl);
+void    DrawPresetConfig     (ILI9341_t3 &tft, Controls &controls, Preset &preset);
+Screens DrawPresetNavigation (ILI9341_t3 &tft, Controls &controls, PresetArray &presetArray, midi::MidiInterface<HardwareSerial> &midiPort,
         unsigned &activePreset, unsigned &selectedPreset);
-Screens DrawPresetControl(ILI9341_t3 &tft, Controls &controls, Preset &preset, midi::MidiInterface<HardwareSerial> &midiPort);
-Screens DrawMidiMonitor(ILI9341_t3 &tft, Controls &controls, Preset &preset, midi::MidiInterface<HardwareSerial> &midiPort);
-void infoScreen(ILI9341_t3 &tft, String message);
-bool confirmationScreen(ILI9341_t3 &tft, Controls &controls, String message);
-bool saveConfirmation(ILI9341_t3 &tft, Controls &controls);
+Screens DrawPresetControl    (ILI9341_t3 &tft, Controls &controls, Preset &preset, midi::MidiInterface<HardwareSerial> &midiPort);
+Screens DrawMidiMonitor      (ILI9341_t3 &tft, Controls &controls, Preset &preset, midi::MidiInterface<HardwareSerial> &midiPort);
+Screens DrawUtilities        (ILI9341_t3 &tft, Controls &controls, PresetArray& presetArray);
 
-TS_Point calibPoint(ILI9341_t3 &tft, Controls &controls, int16_t x, int16_t y);
+
+void infoScreen         (ILI9341_t3 &tft, String message);
+bool confirmationScreen(ILI9341_t3 &tft, Controls &controls, String message);
+bool saveConfirmation  (ILI9341_t3 &tft, Controls &controls);
+
+TS_Point calibPoint     (ILI9341_t3 &tft, Controls &controls, int16_t x, int16_t y);
 TS_Point calcCalibLimits(unsigned p1, unsigned p2, unsigned p3);
-Screens TouchCalib(ILI9341_t3 &tft, Controls &controls);
-void PrintPreset(ILI9341_t3 &tft, const Preset &preset);
+Screens  TouchCalib     (ILI9341_t3 &tft, Controls &controls);
+void     PrintPreset    (ILI9341_t3 &tft, const Preset &preset);
 
 #endif

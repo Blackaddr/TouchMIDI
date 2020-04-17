@@ -9,8 +9,6 @@
 // This screen provides a way for editing a preset.
 const TouchArea BACK_BUTTON_AREA(BACK_BUTTON_X_POS, BACK_BUTTON_X_POS+ICON_SIZE, 0, ICON_SIZE);
 
-constexpr int SELECTED_TEXT_WIDTH = 200;
-
 constexpr int NUM_CONTROL_FIELDS = 5;
 const char *CONTROL_FIELD_NAMES[NUM_CONTROL_FIELDS] = {"Short Name: ", "CC: ", "Input Control: ", "Type: ", "Value: "};
 

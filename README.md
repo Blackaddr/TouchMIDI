@@ -4,10 +4,12 @@ Touchscreen MIDI Controller for Arduino Teensy
 This project is an active work in progress:
 
 April 2020
-- (PARTIALLY DONE) add preset list scrolling
-- update text edit screen to only update when necessary
-- speed up flash saving
+- update PresetEdit screens to only update when necessary
+- speed up flash saving (doesn't seem possible???)
+- add SerialFlash utils to UTIL screen
 - transfer to onboard flash
+- (PARTIALLY DONE) add preset list scrolling
+- (DONE) update text edit screen to only update when necessary
 - (DONE) move input control sampling to it's own thread
 - (DONE) improve preset select nav screen by only redrawing the lines that needs updating.
 - (DONE) Use updated filed on preset control to only draw that control. This will reduce overall flicker.

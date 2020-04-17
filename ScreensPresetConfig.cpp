@@ -10,9 +10,6 @@
 // This screen provides a way for editing a preset.
 const TouchArea BACK_BUTTON_AREA(BACK_BUTTON_X_POS, BACK_BUTTON_X_POS+ICON_SIZE, 0, ICON_SIZE);
 
-
-constexpr int SELECTED_TEXT_WIDTH = 200;
-
 void DrawPresetConfig(ILI9341_t3 &tft, Controls &controls, Preset &preset)
 {
 
@@ -197,8 +194,21 @@ void DrawPresetConfig(ILI9341_t3 &tft, Controls &controls, Preset &preset)
             while (controls.isTouched()) {}
         }
 
+        int  knobAdjust = 0;
+        bool switchToggled = false;
+        ControlEvent controlEvent;
+
+        while (getNextControlEvent(controlEvent)) {
+            switch(controlEvent.eventType) {
+            case ControlEventType::ENCODER : knobAdjust += controlEvent.value; break;
+            case ControlEventType::SWITCH  : switchToggled = true; break;
+            default :
+                break;
+            }
+        }
+
         // Check for encoder activity
-        int knobAdjust = controls.getRotaryAdjustUnit(CONTROL_ENCODER);
+        //int knobAdjust = controls.getRotaryAdjustUnit(CONTROL_ENCODER);
         if (knobAdjust > 0) {
             if (selectedControl != preset.controls.end()-1) {
                 ++selectedControl;
@@ -211,12 +221,13 @@ void DrawPresetConfig(ILI9341_t3 &tft, Controls &controls, Preset &preset)
             }
         }
 
-        if (controls.isSwitchToggled(CONTROL_SWITCH)) {
+        //if (controls.isSwitchToggled(CONTROL_SWITCH)) {
+        if (switchToggled) {
             DrawMidiControlConfig(tft, controls, (*selectedControl));
             redrawScreen = true;
         }
 
-        delay(100); // needed in order for encoder activity sampling/filteirng
+        //delay(100); // needed in order for encoder activity sampling/filteirng
     }
 }
 

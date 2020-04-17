@@ -12,7 +12,6 @@
 
 using namespace midi;
 
-constexpr int      SELECTED_TEXT_WIDTH = 160;
 constexpr unsigned NUM_PRESET_LINES_DRAW = 8;
 static    unsigned firstPresetLine = 0;
 static    bool     updatePresetLine[NUM_PRESET_LINES_DRAW];
@@ -97,6 +96,8 @@ Screens DrawPresetNavigation(ILI9341_t3 &tft, Controls &controls, PresetArray &p
     const unsigned SAVE_BUTTON_Y_POS     = BOTTOM_ICON_ROW_Y_POS;
     const unsigned EXTRA_BUTTON_X_POS    = BACK_BUTTON_X_POS;
     const unsigned EXTRA_BUTTON_Y_POS    = BOTTOM_ICON_ROW_Y_POS - ICON_SIZE - ICON_SPACING;
+    const unsigned UTILS_BUTTON_X_POS    = BACK_BUTTON_X_POS;
+    const unsigned UTILS_BUTTON_Y_POS    = EXTRA_BUTTON_Y_POS -ICON_SIZE - ICON_SPACING;
 
 
     const TouchArea SAVE_BUTTON_AREA(SAVE_BUTTON_X_POS, SAVE_BUTTON_X_POS+ICON_SIZE, SAVE_BUTTON_Y_POS, SAVE_BUTTON_Y_POS+ICON_SIZE);
@@ -105,6 +106,7 @@ Screens DrawPresetNavigation(ILI9341_t3 &tft, Controls &controls, PresetArray &p
     const TouchArea MOVEUP_BUTTON_AREA(MOVEUP_BUTTON_X_POS, MOVEUP_BUTTON_X_POS+ICON_SIZE, MOVEUP_BUTTON_Y_POS, MOVEUP_BUTTON_Y_POS+ICON_SIZE);
     const TouchArea MOVEDN_BUTTON_AREA(MOVEDN_BUTTON_X_POS, MOVEDN_BUTTON_X_POS+ICON_SIZE, MOVEDN_BUTTON_Y_POS, MOVEDN_BUTTON_Y_POS+ICON_SIZE);
     const TouchArea EXTRA_BUTTON_AREA(EXTRA_BUTTON_X_POS, EXTRA_BUTTON_X_POS+ICON_SIZE, EXTRA_BUTTON_Y_POS, EXTRA_BUTTON_Y_POS+ICON_SIZE);
+    const TouchArea UTILS_BUTTON_AREA(UTILS_BUTTON_X_POS, UTILS_BUTTON_X_POS+ICON_SIZE, UTILS_BUTTON_Y_POS, UTILS_BUTTON_Y_POS+ICON_SIZE);
 
     while(true) {
         if (redrawScreen) {
@@ -122,6 +124,8 @@ Screens DrawPresetNavigation(ILI9341_t3 &tft, Controls &controls, PresetArray &p
             bmpDraw(tft, "moveup48.bmp", MOVEUP_BUTTON_X_POS, MOVEUP_BUTTON_Y_POS);
             bmpDraw(tft, "movedn48.bmp", MOVEDN_BUTTON_X_POS, MOVEDN_BUTTON_Y_POS);
             bmpDraw(tft, "extra48.bmp", EXTRA_BUTTON_X_POS, EXTRA_BUTTON_Y_POS);
+            bmpDraw(tft, "utils48.bmp", UTILS_BUTTON_X_POS, UTILS_BUTTON_Y_POS);
+
 
             updateAllPresetDrawLines();
             drawPresetLines(tft, presetArray, activePreset, selectedPreset);
@@ -201,6 +205,12 @@ Screens DrawPresetNavigation(ILI9341_t3 &tft, Controls &controls, PresetArray &p
             if (EXTRA_BUTTON_AREA.checkArea(touchPoint)) {
                 while (controls.isTouched()) {} // wait for release
                 return Screens::MIDI_MONITOR;
+            }
+
+            // Check the UTILS button
+            if (UTILS_BUTTON_AREA.checkArea(touchPoint)) {
+                while (controls.isTouched()) {} // wait for release
+                return Screens::UTILITIES;
             }
 
             // wait for touch release

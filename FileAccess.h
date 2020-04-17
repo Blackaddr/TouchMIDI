@@ -9,11 +9,13 @@
 #define FILEACCESS_H_
 
 #include "SD.h"
+#include <SerialFlash.h>
 //#include "SdFs.h"
 #include "ArduinoJson.h"
 
 //extern SdFat SD;
 
+bool initSerialFlash(unsigned chipSelect);
 void writePresetToFile(const char *filename, JsonObject &jsonObject);
 
 
