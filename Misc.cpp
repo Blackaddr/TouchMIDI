@@ -105,5 +105,17 @@ void uint2dec3(unsigned in, char *dest, unsigned justify) {
     return;
 }
 
+void rebootTeensy(void)
+{
+//    #define RESTART_ADDR 0xE000ED0C
+//    #define READ_RESTART() (*(volatile uint32_t *)RESTART_ADDR)
+//    #define WRITE_RESTART(val) ((*(volatile uint32_t *)RESTART_ADDR) = (val))
+//    WRITE_RESTART(0x5FA0004);
+//    ((*(volatile uint32_t *)RESTART_ADDR) = (val));
+
+    SCB_AIRCR = 0x5FA0004;
+
+}
+
 
 

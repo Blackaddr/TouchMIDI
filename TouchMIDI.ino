@@ -49,31 +49,31 @@ ILI9341_t3 tft = ILI9341_t3(TFT_CS, TFT_DC);
 Controls controls(1,1);
 Screens nextScreen;
 
-constexpr size_t JSON_BUFFER_SIZE = 1024;
-char jsonTextBuffer[JSON_BUFFER_SIZE];
-StaticJsonBuffer<JSON_BUFFER_SIZE> jsonBuffer;
-JsonObject *jsonObj;
+//constexpr size_t JSON_BUFFER_SIZE = 1024;
+//char jsonTextBuffer[JSON_BUFFER_SIZE];
+//StaticJsonBuffer<JSON_BUFFER_SIZE> jsonBuffer;
+//JsonObject *jsonObj;
 midi::MidiInterface<HardwareSerial> *midiPortPtr = nullptr;
 
 
-constexpr unsigned PRESET_ID_INDEX = 6;
-char presetFilename[] = "PRESET0.JSN";
-char calibFilename[] = "TCALIB.BIN";
+//constexpr unsigned PRESET_ID_INDEX = 6;
+//char presetFilename[] = "PRESET0.JSN";
+//char calibFilename[] = "TCALIB.BIN";
 PresetArray *presetArray = nullptr;
 unsigned activePreset = 0;
 unsigned selectedPreset = 0;
+bool serialFlashPresent = false;
+bool sdCardPresent = false;
 
 void setup(void) {
 
   delay(1000);
   Serial.begin(115200);
-  if (!Serial) { yield(); }
+  if (!Serial) { delay(100); yield(); }
   delay(1000);
   pinMode(23,INPUT);
 
   // Setup MIDI OUT
-  //MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, midiPort);
-  //midi::MidiInterface<Type> midiPort((HardwareSerial&)Serial1);
   midiPortPtr = new midi::MidiInterface<HardwareSerial>((HardwareSerial&)Serial1);
   midiPortPtr->begin(MIDI_CHANNEL_OMNI);
   midiPortPtr->turnThruOff();
@@ -89,53 +89,49 @@ void setup(void) {
 
   Serial.println("Creating Preset Array");
   presetArray = createPresetArray();
-
-  // Setup the SerialFlash
-  initSerialFlash(SERIALFLASH_CS);
-
-  // Check the SD Card
-  if (!SD.begin(SDCARD_CS)) {
-    Serial.println("SD Card init seems to fail");
-  } else {
-      for (unsigned i=0; i<MAX_PRESETS; i++) {
-        presetFilename[PRESET_ID_INDEX] = i + 0x30;
-        file = SD.open(presetFilename);
-        if (!file) {
-          //Serial.println(String("Can't open ") + presetFilename);
-        } else {
-          // Read the file contents
-          Serial.println(String("Processing ") + presetFilename);
-          size_t availableBytes = file.available();
-          Serial.println(String("Reading ") + availableBytes + String(" bytes"));
-          if (availableBytes > 0) {
-            file.read(jsonTextBuffer, availableBytes);
-            jsonObj = &jsonBuffer.parseObject(jsonTextBuffer);
-            if (!jsonObj->success()) {
-              Serial.println("Parsing JSON object failed");
-            } else {
-              Preset newPreset;
-              jsonToPreset(*jsonObj, newPreset);
-              addToVector(*presetArray, newPreset, i);
-            }
-            jsonBuffer.clear();  
-          }
-          file.close();
-        }
-      }
-  }
-  digitalWrite(SDCARD_CS,1);
   setActivePreset(&((*presetArray)[activePreset]));
-  
+
+  // Setup the other chip selects
+  setOtherChipSelects(TFT_CS, STMPE_CS);
+  disableAllChipSelects();
+
+  // Setup the TFT
   tft.begin();
   tft.setRotation(3); // left-handed
   //tft.setRotation(1);  // right-handed
   Serial.println(String("Height is ") + tft.height() + String(", width is ") + tft.width());
 
-    // Setup the Controls.
+  // Setup the Controls.
   controls.addRotary(19, 22, SWAP, 3);
   controls.addSwitch(23, 10);
   controls.addTouch(STMPE_CS, STMPE_IRQ, tft.height(), tft.width());
   //controls.touchFlipAxis(true, true);
+
+  // Setup the SerialFlash
+  serialFlashPresent = initSerialFlash(SERIALFLASH_CS);
+  if (!serialFlashPresent) {
+    Serial.println("SerialFlash init seems to fail");
+  } else {
+    Serial.println("SerialFlash detected");
+  }
+  disableSerialFlashChipSelect(); // disable the Serial Flash
+
+  // Setup the SD card
+  sdCardPresent = initSdCard(SDCARD_CS);
+  if (!sdCardPresent) {
+    Serial.println("No SD card detect");
+  } else { Serial.println("SD Card detected"); } 
+
+  // Read the presets
+  if (sdCardPresent) { 
+    setStorageType(StorageType::SD_CARD);
+    Serial. println("Reading presets from SD");
+  } else if (serialFlashPresent) {
+    setStorageType(StorageType::FLASH);
+    Serial.println("Reading presets from flash"); 
+  }
+  readPresetFromFile(presetArray);
+  disableSdCardChipSelect(); // Disable the SDCard
   
   Serial.println("FINISHED: setup()");
 
@@ -162,16 +158,9 @@ void setup(void) {
   
 
   nextScreen = Screens::PRESET_NAVIGATION;
+  bool isCalibRead = readCalib(controls);
 
-  file = SD.open(calibFilename);
-  if (file) {
-    TouchCalibration touchCalib;
-    file.read(reinterpret_cast<uint8_t*>(&touchCalib), sizeof(touchCalib));
-    file.close();
-    //controls.setCalib(touchCalib);
-    controls.setCalib(410,3900,300,3800);
-    Serial.println("Calibration data loaded");
-  } else {
+  if (!isCalibRead) {
     Serial.println("Failed to load calibration data");
     nextScreen = TouchCalib(tft, controls);
   }
@@ -200,15 +189,7 @@ void loop()
         g_currentScreen = nextScreen;
         nextScreen = TouchCalib(tft, controls);
         {
-          TouchCalibration touchCalib = controls.getCalib();        
-          file = SD.open(calibFilename, FILE_WRITE);
-          if (file) {
-            file.write(reinterpret_cast<uint8_t*>(&touchCalib), sizeof(touchCalib));
-            file.close();
-            Serial.println("Calibration data saved");
-          } else {
-            Serial.println("Failed to save calib data");
-          }
+          writeCalib(controls);          
         }
         break;
       case Screens::MIDI_MONITOR :

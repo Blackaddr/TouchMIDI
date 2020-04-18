@@ -8,15 +8,36 @@
 #ifndef FILEACCESS_H_
 #define FILEACCESS_H_
 
-#include "SD.h"
+#include "SD.h" // This library is safe and doesn't leave CS asserted
 #include <SerialFlash.h>
-//#include "SdFs.h"
 #include "ArduinoJson.h"
 
-//extern SdFat SD;
+#include "Preset.h"
+
+enum class StorageType {
+    FLASH,
+    SD_CARD
+};
+
+void setStorageType(StorageType storageType);
+StorageType getStorageType(void);
+
+void setOtherChipSelects(unsigned tftChipSelect, unsigned touchChipSelect);
+void disableAllChipSelects(void);
+
+bool initSdCard(unsigned chipSelect);
+void disableSdCardChipSelect(void);
 
 bool initSerialFlash(unsigned chipSelect);
-void writePresetToFile(const char *filename, JsonObject &jsonObject);
+void disableSerialFlashChipSelect(void);
+
+bool readCalib (Controls& controls);
+bool writeCalib(Controls& controls);
+
+bool readPresetFromFile(PresetArray* presetArray);
+void writePresetToFile (const char *filename, JsonObject &jsonObject);
+
+void copySdToFlash(void);
 
 
 #endif /* FILEACCESS_H_ */

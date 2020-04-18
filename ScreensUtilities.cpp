@@ -11,22 +11,30 @@
 // This screen provides a way for editing a preset.
 const TouchArea BACK_BUTTON_AREA(BACK_BUTTON_X_POS, BACK_BUTTON_X_POS+ICON_SIZE, 0, ICON_SIZE);
 
+enum class MenuItem {
+    FLASH_ERASE,
+    COPY_FLASH_TO_SD,
+    COPY_SD_TO_FLASH,
+    REBOOT
+};
+
 Screens DrawUtilities(ILI9341_t3 &tft, Controls &controls, PresetArray& presetArray)
 {
     bool redrawScreen = true;
     bool updateScreen = false;
-    int16_t x,y;
 
     // Built the menu entries
     struct MenuEntry {
-        MenuEntry(String str, int16_t yPos) : str(str), yPos(yPos) {}
+        MenuEntry(MenuItem menuItem, String str, int16_t yPos) : menuItem(menuItem), str(str), yPos(yPos) {}
+        MenuItem menuItem;
         String str;
         int16_t yPos;
     };
     std::vector<MenuEntry> menuEntries;
-    menuEntries.emplace_back(MenuEntry({"FLASH Erase"}, {MARGIN + 2*DEFAULT_TEXT_HEIGHT}));
-    menuEntries.emplace_back(MenuEntry({"Copy FLASH -> SD"}, {MARGIN + 3*DEFAULT_TEXT_HEIGHT}));
-    menuEntries.emplace_back(MenuEntry({"Copy SD -> FLASH"}, {MARGIN + 4*DEFAULT_TEXT_HEIGHT}));
+    menuEntries.emplace_back(MenuEntry(MenuItem::FLASH_ERASE,      {"FLASH Erase"},      {MARGIN + 2*DEFAULT_TEXT_HEIGHT}));
+    menuEntries.emplace_back(MenuEntry(MenuItem::COPY_FLASH_TO_SD, {"Copy FLASH -> SD"}, {MARGIN + 3*DEFAULT_TEXT_HEIGHT}));
+    menuEntries.emplace_back(MenuEntry(MenuItem::COPY_SD_TO_FLASH, {"Copy SD -> FLASH"}, {MARGIN + 4*DEFAULT_TEXT_HEIGHT}));
+    menuEntries.emplace_back(MenuEntry(MenuItem::REBOOT,           {"Reboot"},           {MARGIN + 5*DEFAULT_TEXT_HEIGHT}));
     auto selectedControl = menuEntries.begin();
     auto previousSelectedControl = selectedControl;
 
@@ -119,7 +127,32 @@ Screens DrawUtilities(ILI9341_t3 &tft, Controls &controls, PresetArray& presetAr
 
         // check for switch activity
         if (switchToggled) {
-            updateScreen = true;
+            switch((*selectedControl).menuItem) {
+                case MenuItem::FLASH_ERASE :
+                    if (confirmationScreen(tft, controls, "ERASE Flash?\n")) {
+                        infoScreen(tft, "Please wait...");
+                        SerialFlash.eraseAll();
+                    }
+                    redrawScreen = true;
+                    break;
+                case MenuItem::COPY_FLASH_TO_SD :
+                    break;
+                case MenuItem::COPY_SD_TO_FLASH :
+                    if (confirmationScreen(tft, controls, "Copy SD->Flash?\n")) {
+                        infoScreen(tft, "Please wait...");
+                        copySdToFlash();
+                    }
+                    redrawScreen = true;
+                    break;
+                case MenuItem::REBOOT :
+                    if (confirmationScreen(tft, controls, "Reboot?\n")) {
+                        infoScreen(tft, "Please wait...");
+                        rebootTeensy();
+                    }
+                    break;
+                default :
+                    break;
+            }
         }
 
     } // end while(true)

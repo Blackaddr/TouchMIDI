@@ -6,7 +6,6 @@
  */
 #include <cstdint>
 #include "ILI9341_t3.h"
-#include "FileAccess.h"
 
 #ifndef __BITMAP_H
 #define __BITMAP_H
@@ -21,15 +20,19 @@
 
 #define BUFFPIXEL 20
 
+//#define bmpDraw bmpDrawFlash
+
 // These read 16- and 32-bit types from the SD card file.
 // BMP data is stored little-endian, Arduino is little-endian too.
 // May need to reverse subscript order if porting elsewhere.
 
-uint16_t read16(File &f);
-
-uint32_t read32(File &f);
+//uint16_t read16(File &f);
+//
+//uint32_t read32(File &f);
 
 void bmpDraw(ILI9341_t3 &tft, const char *filename, uint8_t x, uint16_t y);
+void bmpDrawFlash(ILI9341_t3 &tft, const char *filename, uint8_t x, uint16_t y);
+void bmpDrawSd(ILI9341_t3 &tft, const char *filename, uint8_t x, uint16_t y);
 
 
 

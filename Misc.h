@@ -42,6 +42,7 @@ int adjustWithSaturation(int input, int adj, int min, int max);
 int adjustAsUnit(int input);
 int toggleValue(int input, int onValue, int offValue=0);
 void uint2dec3(unsigned in, char *dest, unsigned justify);
+void rebootTeensy(void);
 
 
 //template <class Container, class Iterator>
