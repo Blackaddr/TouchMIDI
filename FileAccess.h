@@ -38,6 +38,7 @@ bool readPresetFromFile(PresetArray* presetArray);
 void writePresetToFile (const char *filename, JsonObject &jsonObject);
 
 void copySdToFlash(void);
+void copyFlashToSd(void);
 
 
 #endif /* FILEACCESS_H_ */

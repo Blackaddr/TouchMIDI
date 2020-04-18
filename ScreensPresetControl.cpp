@@ -110,7 +110,7 @@ Screens DrawPresetControl(ILI9341_t3 &tft, Controls &controls, Preset &preset, M
         }
 
         // Draw the controls
-        int valueXPos = tft.width()-MARGIN;
+        int valueXPos = tft.width()  - MARGIN;
         int valueYPos = tft.height() - 2*MARGIN;
 
         for (unsigned i=0; i<MAX_NUM_CONTROLS; i++) {
@@ -129,8 +129,8 @@ Screens DrawPresetControl(ILI9341_t3 &tft, Controls &controls, Preset &preset, M
                         if (i == activeControl) {
                             // Draw the knob value in the lower right corner
                             char valueText[4];
-                            uint2dec3(controlPtr.value, valueText, 2); // 2 is justify right
-                            valueText[3] = '\n';
+                            uint2dec3(midiToPercent(controlPtr.value), valueText, 2); // 2 is justify right
+                            valueText[3] = '\0';
                             tft.setTextColor(ILI9341_CYAN, ILI9341_BLACK); // force the background to be redrawn as black
                             printRightJustified(tft, valueText, valueXPos, valueYPos);
                         }

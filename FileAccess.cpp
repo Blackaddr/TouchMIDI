@@ -407,6 +407,46 @@ void copySdToFlash(void) {
     sdRootdir.close();
 }
 
+//void copyFlashToSd(void) {
+//    char presetFilename[] = "PRESET0.JSN";
+//    SerialFlashFile rootdir = .open("/"); // Open the SD card
+//    File file;
+//
+//    // Copy all BMP files
+//    while(true) {
+//        file = sdRootdir.openNextFile();
+//        if (!file) { break; }
+//        const char* filename = file.name();
+//        const char* ext = getFilenameExt(filename);
+//
+//        if ((strcmp(ext,"BMP") == 0) || (strcmp(ext,"bmp") == 0)) {
+//            copyFileIfDifferentToFlash(file, filename);
+//        }
+//    }
+//
+//    // Copy the calibration file if exits
+//    {
+//        file = SD.open(calibFilename);
+//        if (file) {
+//            copyFileIfDifferentToFlash(file, file.name());
+//        } else {
+//            Serial.printf("%s not found on SD card\n", file.name());
+//        }
+//    }
+//
+//    // Copy the preset files
+//    for (unsigned i=0; i<MAX_PRESETS; i++) {
+//        presetFilename[PRESET_ID_INDEX] = i + 0x30;
+//        Serial.printf("Checking for %s\n", presetFilename);
+//        File f = SD.open(presetFilename);
+//
+//        if (f) {
+//            copyFileIfDifferentToFlash(file, presetFilename);
+//        }
+//    } // end for loop
+//    sdRootdir.close();
+//}
+
 const char *getFilenameExt(const char *filename) {
     const char *dot = strrchr(filename, '.');
     if(!dot || dot == filename) return "";

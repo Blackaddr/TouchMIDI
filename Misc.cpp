@@ -59,6 +59,15 @@ int toggleValue(int input, int onValue, int offValue)
     }
 }
 
+unsigned midiToPercent(unsigned midiIn)
+{
+    unsigned percentOut;
+    if (midiIn == 0)        { percentOut = 0; }
+    else if (midiIn >= 127) { percentOut = 100; }
+    else { percentOut = (unsigned)(((float)(midiIn)+0.5f) / 127.0f * 100.0f); }
+    return percentOut;
+}
+
 /*
  * Converts an unsigned to 3-digit ASCII char, decimal format
  * justify specified howt to align the number.
