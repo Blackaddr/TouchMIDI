@@ -16,14 +16,15 @@
 
 static StorageType g_storageType = StorageType::SD_CARD;
 
-constexpr size_t   MIN_PRESET_SIZE = 2048;
-constexpr unsigned PRESET_ID_INDEX = 6;
-const char calibFilename[] = "TCALIB.BIN";
+constexpr size_t MAX_FILENAME_CHARS = 32;
+constexpr size_t   MIN_PRESET_SIZE  = 2048;
+constexpr unsigned PRESET_ID_INDEX  = 6;
+const char calibFilename[]          = "TCALIB.BIN";
 
-static int g_sdCardChipSelect      = -1;
-static int g_serialFlashChipSelect = -1;
-static int g_tftChipSelect         = -1;
-static int g_touchChipSelect       = -1;
+static int g_sdCardChipSelect       = -1;
+static int g_serialFlashChipSelect  = -1;
+static int g_tftChipSelect          = -1;
+static int g_touchChipSelect        = -1;
 
 void setStorageType(StorageType storageType)
 {
@@ -167,7 +168,7 @@ bool readPresetFromFlash(PresetArray* presetArray)
     char jsonTextBuffer[JSON_BUFFER_SIZE];
     StaticJsonBuffer<JSON_BUFFER_SIZE> jsonBuffer;
     JsonObject *jsonObj;
-    char presetFilename[] = "";
+    char presetFilename[MAX_FILENAME_CHARS] = "";
     SerialFlashFile file;
 
     for (unsigned i=0; i<MAX_PRESETS; i++) {
@@ -204,7 +205,7 @@ bool readPresetFromSd(PresetArray* presetArray)
     char jsonTextBuffer[JSON_BUFFER_SIZE];
     StaticJsonBuffer<JSON_BUFFER_SIZE> jsonBuffer;
     JsonObject *jsonObj;
-    char presetFilename[] = "";
+    char presetFilename[MAX_FILENAME_CHARS] = "";
     File file;
 
     for (unsigned i=0; i<MAX_PRESETS; i++) {
@@ -351,6 +352,7 @@ void copyFileIfDifferentToFlash(File f, const char* filename)
 
 void copyFileIfDifferentToSd(SerialFlashFile ff, const char* filename)
 {
+    Serial.printf("Processing %s\n", filename);
     if (ff) {
         // Check if this file already exists on the flash
         if (SD.exists(filename)) { // exists on SD
@@ -394,7 +396,7 @@ void copyFileIfDifferentToSd(SerialFlashFile ff, const char* filename)
 
 void copySdToFlash(void) {
 
-    char presetFilename[] = "";
+    char presetFilename[MAX_FILENAME_CHARS] = "";
     File sdRootdir = SD.open("/"); // Open the SD card
     File file;
 
@@ -439,7 +441,7 @@ void copyFlashToSd(void) {
         return;
     }
 
-    char presetFilename[] = "";
+    char presetFilename[MAX_FILENAME_CHARS] = "";
     char filename[32];
     uint32_t fileSize = 0;
     SerialFlash.opendir();
@@ -473,7 +475,6 @@ void copyFlashToSd(void) {
     // Copy the preset files
     for (unsigned i=0; i<MAX_PRESETS; i++) {
         createPresetFilename(i, presetFilename);
-        Serial.printf("Checking for %s\n", presetFilename);
         file = SerialFlash.open(presetFilename);
 
         if (file) {

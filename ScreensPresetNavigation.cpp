@@ -246,7 +246,7 @@ Screens DrawPresetNavigation(ILI9341_t3 &tft, Controls &controls, PresetArray &p
 
 
         if (knobAdjust != 0) {
-            knobAdjust =  adjustAsUnit(knobAdjust);
+            knobAdjust =  adjustAsUnit(knobAdjust); // clamp from -1 to +1
             // set the previous selected preset to update
             unsigned prevSelectedPreset = selectedPreset;
             // update the new selected preset;
@@ -257,17 +257,20 @@ Screens DrawPresetNavigation(ILI9341_t3 &tft, Controls &controls, PresetArray &p
             }
 
             if ((selectedPreset == 0) && (firstPresetLine != 0)) {
+                // whenever the first preset is zero, reset the first drawline to zero and update all lines
                 firstPresetLine = 0;
                 updateAllPresetDrawLines();
-            }
-
-            if (selectedPreset == (firstPresetLine + NUM_PRESET_LINES_DRAW)) {
+            } else if ( (firstPresetLine == 0) && selectedPreset == presetArray.size()-1 ) {
+                // we rolled up past the first preset we have to jump to the bottom preset
+                firstPresetLine = presetArray.size()-NUM_PRESET_LINES_DRAW;
+                updateAllPresetDrawLines();
+            } else if (selectedPreset == (firstPresetLine + NUM_PRESET_LINES_DRAW)) {
                 // advanced past last to next or back to zero
+                // the drawing window is going to shift down one
                 firstPresetLine = (firstPresetLine + 1) % presetArray.size();
                 updateAllPresetDrawLines();
-            }
-
-            if ( (selectedPreset == firstPresetLine-1) ) {
+            } else if ( (selectedPreset == firstPresetLine-1) ) {
+                // shift the drawing window up by one
                 firstPresetLine = (firstPresetLine - 1) % presetArray.size();
             }
             midiAdjust = 0;
