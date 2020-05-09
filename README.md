@@ -3,10 +3,15 @@ Touchscreen MIDI Controller for Arduino Teensy
 
 This project is an active work in progress:
 
-April 2020
-- add copy from flash to SD to utils menu
-- update PresetEdit screens to only update when necessary
+May 2020
+- add copy presets to/from flash/sd rather than whole flash contents.
+- fix preset filenames past number 9
 - speed up flash saving (doesn't seem possible???)
+- (DONE) refactor control drawing on presetConfig
+- (DONE) update PresetEdit screens to only update when necessary
+
+April 2020
+- (DONE) add copy from flash to SD to utils menu
 - (DONE) fix knob rendering (text in bottom right corruption)
 - (DONE) transfer to onboard flash
 - (DONE) add SerialFlash utils to UTIL screen

@@ -14,6 +14,9 @@
 
 #include "Preset.h"
 
+#define SDCARD_CS 3
+#define SERIALFLASH_CS 8
+
 enum class StorageType {
     FLASH,
     SD_CARD

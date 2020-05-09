@@ -136,6 +136,11 @@ Screens DrawUtilities(ILI9341_t3 &tft, Controls &controls, PresetArray& presetAr
                     redrawScreen = true;
                     break;
                 case MenuItem::COPY_FLASH_TO_SD :
+                    if (confirmationScreen(tft, controls, "Copy SD->Flash?\n")) {
+                        infoScreen(tft, "Please wait...");
+                        copyFlashToSd();
+                    }
+                    redrawScreen = true;
                     break;
                 case MenuItem::COPY_SD_TO_FLASH :
                     if (confirmationScreen(tft, controls, "Copy SD->Flash?\n")) {

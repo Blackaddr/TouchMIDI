@@ -21,12 +21,12 @@ using namespace midi;
 // SD CARD
 /////////////////////
 File file;
-#define SDCARD_CS 3
+//#define SDCARD_CS 3
 
 /////////////////////
 // Serial Flash
 /////////////////////
-#define SERIALFLASH_CS 8
+//#define SERIALFLASH_CS 8
 
 /////////////////////
 // TOUCH

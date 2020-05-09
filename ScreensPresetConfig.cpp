@@ -10,14 +10,51 @@
 // This screen provides a way for editing a preset.
 const TouchArea BACK_BUTTON_AREA(BACK_BUTTON_X_POS, BACK_BUTTON_X_POS+ICON_SIZE, 0, ICON_SIZE);
 
+template <typename PresetControlIterator>
+void redrawControlsTft(ILI9341_t3 &tft, Preset &preset, bool redrawAll, PresetControlIterator selectedControl, PresetControlIterator selectedControlPrevious)
+{
+    int16_t x, y;
+
+    // Draw the Controls with their type and names.
+    tft.setCursor(0,ICON_SIZE); // start row under icons
+    for (auto it = preset.controls.begin(); it != preset.controls.end(); ++it) {
+        tft.getCursor(&x,&y);
+
+        if ((it == selectedControl) || (it == selectedControlPrevious) || redrawAll) {
+            if (it == selectedControl) {
+                tft.fillRect(x,y,SELECTED_TEXT_WIDTH,DEFAULT_TEXT_HEIGHT, ILI9341_DARKCYAN);
+            } else {
+                tft.fillRect(x,y,SELECTED_TEXT_WIDTH,DEFAULT_TEXT_HEIGHT, ILI9341_BLACK);
+            }
+
+            // color code the control types
+            char controlTypeChar = ' ';
+            uint16_t color = ILI9341_WHITE;
+            if ((*it).type == ControlType::ROTARY_KNOB)      {controlTypeChar = 'K'; color = ILI9341_BLUE;}
+            if ((*it).type == ControlType::SWITCH_LATCHING)  {controlTypeChar = 'L'; color = ILI9341_RED;}
+            if ((*it).type == ControlType::SWITCH_MOMENTARY) {controlTypeChar = 'M'; color = ILI9341_GREEN;}
+            tft.printf("(");
+            tft.setTextColor(color);
+            tft.print(controlTypeChar);
+            tft.setTextColor(ILI9341_WHITE);
+            tft.printf(") ");
+            tft.printf("%s\n",(*it).name.c_str());
+        } else {
+            tft.setCursor(x, y + DEFAULT_TEXT_HEIGHT);
+        }
+    }
+}
+
 void DrawPresetConfig(ILI9341_t3 &tft, Controls &controls, Preset &preset)
 {
 
     bool redrawScreen = true;
+    bool redrawControls = false;
     int16_t nameEditButtonPosition;
     TouchArea editNameArea;
-    int16_t x,y;
-    auto selectedControl = preset.controls.begin();
+
+    auto selectedControl         = preset.controls.begin();
+    auto selectedControlPrevious = preset.controls.begin();
 
     // Calculate button locations
     const unsigned BOTTOM_ICON_ROW_Y_POS = tft.height() - ICON_SIZE;
@@ -62,32 +99,19 @@ void DrawPresetConfig(ILI9341_t3 &tft, Controls &controls, Preset &preset)
             // NAME EDIT button
             nameEditButtonPosition = tft.getCursorX() + MARGIN;
             bmpDraw(tft, "edit48.bmp", nameEditButtonPosition, 0);
-            redrawScreen = false;
             editNameArea.setArea(nameEditButtonPosition, nameEditButtonPosition+ICON_SIZE, 0, ICON_SIZE);
 
             // Draw the Controls with their type and names.
-            tft.setCursor(0,ICON_SIZE); // start row under icons
-            for (auto it = preset.controls.begin(); it != preset.controls.end(); ++it) {
-                //tft.printf("%s\n",(*it).name.c_str());
-                tft.getCursor(&x,&y);
-                // TODO Fix rect width here
-                if (it == selectedControl) {
-                    tft.fillRect(x,y,SELECTED_TEXT_WIDTH,DEFAULT_TEXT_HEIGHT, ILI9341_DARKCYAN);
-                }
+            redrawControlsTft(tft, preset, redrawScreen, selectedControl, selectedControlPrevious);
 
-                // color code the control types
-                char controlTypeChar = ' ';
-                uint16_t color = ILI9341_WHITE;
-                if ((*it).type == ControlType::ROTARY_KNOB)      {controlTypeChar = 'K'; color = ILI9341_BLUE;}
-                if ((*it).type == ControlType::SWITCH_LATCHING)  {controlTypeChar = 'L'; color = ILI9341_RED;}
-                if ((*it).type == ControlType::SWITCH_MOMENTARY) {controlTypeChar = 'M'; color = ILI9341_GREEN;}
-                tft.printf("(");
-                tft.setTextColor(color);
-                tft.print(controlTypeChar);
-                tft.setTextColor(ILI9341_WHITE);
-                tft.printf(") ");
-                tft.printf("%s\n",(*it).name.c_str());
-            }
+            redrawScreen = false;
+        }
+
+        decltype(preset.controls.begin()) it;
+
+        if (redrawControls) {
+            redrawControlsTft(tft, preset, redrawScreen, selectedControl, selectedControlPrevious);
+            redrawControls = false;
         }
 
         // Check for touch activity
@@ -138,6 +162,7 @@ void DrawPresetConfig(ILI9341_t3 &tft, Controls &controls, Preset &preset)
                         0
                       );
                     selectedControl = preset.controls.insert(selectedControl, newControl);
+                    selectedControlPrevious = selectedControl;
                     preset.numControls++;
                 }
                 redrawScreen = true;
@@ -151,6 +176,7 @@ void DrawPresetConfig(ILI9341_t3 &tft, Controls &controls, Preset &preset)
                     if (selectedControl != preset.controls.begin()) { previousControl = selectedControl-1; }
                     preset.controls.erase(selectedControl);
                     selectedControl = previousControl;
+                    selectedControlPrevious = selectedControl;
                     if (preset.numControls > 1) { preset.numControls--; }
                 }
                 redrawScreen = true;
@@ -168,8 +194,10 @@ void DrawPresetConfig(ILI9341_t3 &tft, Controls &controls, Preset &preset)
 
                     auto controlToErase = preset.controls.begin() + selectedIndex + 1;
                     preset.controls.erase(controlToErase);
+                    selectedControlPrevious = selectedControl;
                     selectedControl = preset.controls.begin() + selectedIndex - 1;
-                    redrawScreen = true;
+                    selectedControlPrevious = selectedControl + 1;
+                    redrawControls = true;
                 }
             }
 
@@ -185,8 +213,10 @@ void DrawPresetConfig(ILI9341_t3 &tft, Controls &controls, Preset &preset)
 
                     auto controlToErase = preset.controls.begin() + selectedIndex;
                     preset.controls.erase(controlToErase);
+
                     selectedControl = preset.controls.begin() + selectedIndex +1;
-                    redrawScreen = true;
+                    selectedControlPrevious = selectedControl -1;
+                    redrawControls = true;
                 }
             }
 
@@ -208,26 +238,25 @@ void DrawPresetConfig(ILI9341_t3 &tft, Controls &controls, Preset &preset)
         }
 
         // Check for encoder activity
-        //int knobAdjust = controls.getRotaryAdjustUnit(CONTROL_ENCODER);
         if (knobAdjust > 0) {
             if (selectedControl != preset.controls.end()-1) {
+                selectedControlPrevious = selectedControl;
                 ++selectedControl;
-                redrawScreen = true;
+                redrawControls = true;
             }
         } else if (knobAdjust < 0) {
             if (selectedControl != preset.controls.begin()) {
+                selectedControlPrevious = selectedControl;
                 --selectedControl;
-                redrawScreen = true;
+                redrawControls = true;
             }
         }
 
-        //if (controls.isSwitchToggled(CONTROL_SWITCH)) {
         if (switchToggled) {
             DrawMidiControlConfig(tft, controls, (*selectedControl));
             redrawScreen = true;
         }
 
-        //delay(100); // needed in order for encoder activity sampling/filteirng
     }
 }
 

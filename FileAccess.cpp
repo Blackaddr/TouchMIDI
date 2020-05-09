@@ -111,7 +111,7 @@ bool readCalibFromFlash(Controls& controls)
 bool writeCalibToSd(Controls& controls)
 {
     bool status = true;
-    File file = SD.open(calibFilename, FILE_WRITE);
+    File file = SD.open(calibFilename, O_WRITE | O_CREAT);
     TouchCalibration touchCalib = controls.getCalib();
     if (file) {
         file.write(reinterpret_cast<uint8_t*>(&touchCalib), sizeof(touchCalib));
@@ -303,23 +303,6 @@ void writePresetToFile(const char *filename, JsonObject &jsonObject) {
     }
 }
 
-//void writePresetToFile(const char *filename, JsonObject &jsonObject)
-//{
-//    // create  buffer to hold the contexts
-//    constexpr int BUFFER_SIZE = MIN_PRESET_SIZE;
-//    char buffer[BUFFER_SIZE];
-//    memset(buffer, 0, BUFFER_SIZE);
-//    //serializeJson(jsonObject, buffer);
-//    jsonObject.prettyPrintTo(buffer);
-//    unsigned length = strlen(buffer);
-//    if ((length < 1) || (length > BUFFER_SIZE) ) { return; }
-//
-//    if (getStorageType() == StorageType::SD_CARD) {
-//
-//    } else if (getStorageType() == StorageType::FLASH) {
-//
-//    }
-//}
 
 void copyFileIfDifferentToFlash(File f, const char* filename)
 {
@@ -345,7 +328,6 @@ void copyFileIfDifferentToFlash(File f, const char* filename)
         if (SerialFlash.create(filename, length)) {
             SerialFlashFile ff = SerialFlash.open(filename);
             if (ff) {
-                //Serial.print("  copying");
                 // copy data loop
                 Serial.printf("Copying %s\n", filename);
                 size_t count = 0;
@@ -367,7 +349,51 @@ void copyFileIfDifferentToFlash(File f, const char* filename)
     }
 }
 
+void copyFileIfDifferentToSd(SerialFlashFile ff, const char* filename)
+{
+    if (ff) {
+        // Check if this file already exists on the flash
+        if (SD.exists(filename)) { // exists on SD
+            File f = SD.open(filename);
+            if (f && f.size() == ff.size()) { // same size
+                if (compareFiles(f, ff) == true) {
+                    // files are identical
+                    Serial.printf("Skipping %s\n", filename);
+                    f.close();
+                    ff.close();
+                    return;
+                }
+            }
+            f.close();
+        }
+        // File is not same size or not identical
+        ff.seek(0); // rewind the flash file
+        SD.remove(filename); // remove the old file
+        size_t length = ff.size();
+
+        // create the file on the SD chip and copy data
+        File f = SD.open(filename, O_WRITE | O_CREAT);
+        if (f) {
+            // copy data loop
+            Serial.printf("Copying %s, size %d\n", filename, length);
+            int remaining = length;
+            while (remaining > 0) {
+                char buf[256];
+                unsigned n = ff.read(buf, 256);
+                f.write(buf, n);
+                remaining -= n;
+            }
+            f.close();
+
+        } else {
+            Serial.println("  unable to create file");
+        }
+        ff.close();
+    }
+}
+
 void copySdToFlash(void) {
+
     char presetFilename[] = "PRESET0.JSN";
     File sdRootdir = SD.open("/"); // Open the SD card
     File file;
@@ -407,45 +433,56 @@ void copySdToFlash(void) {
     sdRootdir.close();
 }
 
-//void copyFlashToSd(void) {
-//    char presetFilename[] = "PRESET0.JSN";
-//    SerialFlashFile rootdir = .open("/"); // Open the SD card
-//    File file;
-//
-//    // Copy all BMP files
-//    while(true) {
-//        file = sdRootdir.openNextFile();
-//        if (!file) { break; }
-//        const char* filename = file.name();
-//        const char* ext = getFilenameExt(filename);
-//
-//        if ((strcmp(ext,"BMP") == 0) || (strcmp(ext,"bmp") == 0)) {
-//            copyFileIfDifferentToFlash(file, filename);
-//        }
-//    }
-//
-//    // Copy the calibration file if exits
-//    {
-//        file = SD.open(calibFilename);
-//        if (file) {
-//            copyFileIfDifferentToFlash(file, file.name());
-//        } else {
-//            Serial.printf("%s not found on SD card\n", file.name());
-//        }
-//    }
-//
-//    // Copy the preset files
-//    for (unsigned i=0; i<MAX_PRESETS; i++) {
-//        presetFilename[PRESET_ID_INDEX] = i + 0x30;
-//        Serial.printf("Checking for %s\n", presetFilename);
-//        File f = SD.open(presetFilename);
-//
-//        if (f) {
-//            copyFileIfDifferentToFlash(file, presetFilename);
-//        }
-//    } // end for loop
-//    sdRootdir.close();
-//}
+void copyFlashToSd(void) {
+    if (!initSdCard(SDCARD_CS)) {
+        Serial.println("Cannot initialize SD");
+        return;
+    }
+
+    char presetFilename[] = "PRESET0.JSN";
+    char filename[32];
+    uint32_t fileSize = 0;
+    SerialFlash.opendir();
+    SerialFlashFile file;
+
+    // Copy all BMP files
+    while(true) {
+        bool fileFound = SerialFlash.readdir(filename, sizeof(filename), fileSize);
+        if (!fileFound) { break; }
+        file = SerialFlash.open(filename);
+        const char* ext = getFilenameExt(filename);
+        Serial.printf("found %s\n", filename);
+
+        if ((strcmp(ext,"BMP") == 0) || (strcmp(ext,"bmp") == 0)) {
+            copyFileIfDifferentToSd(file, filename);
+        }
+        file.close();
+    }
+
+    // Copy the calibration file if exits
+    {
+        file = SerialFlash.open(calibFilename);
+        if (file) {
+            copyFileIfDifferentToSd(file, calibFilename);
+            file.close();
+        } else {
+            Serial.printf("%s not found on Flash\n", calibFilename);
+        }
+    }
+
+    // Copy the preset files
+    for (unsigned i=0; i<MAX_PRESETS; i++) {
+        presetFilename[PRESET_ID_INDEX] = i + 0x30;
+        Serial.printf("Checking for %s\n", presetFilename);
+        file = SerialFlash.open(presetFilename);
+
+        if (file) {
+            copyFileIfDifferentToSd(file, presetFilename);
+            file.close();
+        }
+    } // end for loop
+
+}
 
 const char *getFilenameExt(const char *filename) {
     const char *dot = strrchr(filename, '.');
