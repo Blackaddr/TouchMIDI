@@ -198,6 +198,9 @@ void loop()
       case Screens::UTILITIES :
         g_currentScreen = nextScreen;
         nextScreen = DrawUtilities(tft, controls, *presetArray);
+      case Screens::SETLIST :
+        g_currentScreen = nextScreen;
+        nextScreen = DrawSetlist(tft, controls, *presetArray);
       default:
         g_currentScreen = nextScreen;
         nextScreen = DrawPresetNavigation(tft, controls, (*presetArray), *midiPortPtr, activePreset, selectedPreset);

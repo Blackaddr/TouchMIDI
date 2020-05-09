@@ -17,13 +17,14 @@
 
 /// Enumerations for each screen
 enum class Screens : unsigned {
-  PRESET_NAVIGATION, ///< screen for navigating between and selecting a preset
-  PRESET_CONTROL,       ///< screen for editing a preset
-  PRESET_CONFIG,     ///< screen for preset configuration
+  PRESET_NAVIGATION,   ///< screen for navigating between and selecting a preset
+  PRESET_CONTROL,      ///< screen for editing a preset
+  PRESET_CONFIG,       ///< screen for preset configuration
   MIDI_CONTROL_CONFIG, ///< screen for editing a MIDI control
-  TOUCH_CALIBRATE,   ///< calibrate the touch screen
-  MIDI_MONITOR,      ///< Midi monitoring tool
-  UTILITIES          ///< General utilities
+  TOUCH_CALIBRATE,     ///< calibrate the touch screen
+  MIDI_MONITOR,        ///< Midi monitoring tool
+  UTILITIES,           ///< General utilities
+  SETLIST              ///< Playlist utilities
 };
 
 constexpr unsigned TOUCH_CONTROL_HALFSIZE = 20;
@@ -94,6 +95,7 @@ Screens DrawPresetNavigation (ILI9341_t3 &tft, Controls &controls, PresetArray &
 Screens DrawPresetControl    (ILI9341_t3 &tft, Controls &controls, Preset &preset, midi::MidiInterface<HardwareSerial> &midiPort);
 Screens DrawMidiMonitor      (ILI9341_t3 &tft, Controls &controls, Preset &preset, midi::MidiInterface<HardwareSerial> &midiPort);
 Screens DrawUtilities        (ILI9341_t3 &tft, Controls &controls, PresetArray& presetArray);
+Screens DrawSetlist         (ILI9341_t3 &tft, Controls &controls, PresetArray& presetArray);
 
 
 void infoScreen         (ILI9341_t3 &tft, String message);

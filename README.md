@@ -4,13 +4,14 @@ Touchscreen MIDI Controller for Arduino Teensy
 This project is an active work in progress:
 
 May 2020
-- add touch to string edit letters
+- add "playlist icon" to nav screen
 - have different configs for 'shows' using show_* directories
 - move data files to 'data' directory and presets to 'presets' directory.
-- fix string edgit when touch button selections to clear previous letter
-- (DONE)fix screen scrolling before first preset doesn't update
 - add copy presets to/from flash/sd rather than whole flash contents.
 - speed up flash saving (doesn't seem possible???)
+- (DONE)fix string edit when touch button selections to clear previous letter
+- (DONE)fix screen scrolling before first preset doesn't update
+- (DONE) add touch to string edit letters
 - (DONE)fix screen scrolling before first preset doesn't update
 - (DONE) fix preset filenames past number 9
 - (DONE) refactor control drawing on presetConfig

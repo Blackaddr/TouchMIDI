@@ -99,6 +99,8 @@ Screens DrawPresetNavigation(ILI9341_t3 &tft, Controls &controls, PresetArray &p
     const unsigned EXTRA_BUTTON_Y_POS    = BOTTOM_ICON_ROW_Y_POS - ICON_SIZE - ICON_SPACING;
     const unsigned UTILS_BUTTON_X_POS    = BACK_BUTTON_X_POS;
     const unsigned UTILS_BUTTON_Y_POS    = EXTRA_BUTTON_Y_POS -ICON_SIZE - ICON_SPACING;
+    const unsigned SETLIST_BUTTON_X_POS = BACK_BUTTON_X_POS;
+    const unsigned SETLIST_BUTTON_Y_POS = UTILS_BUTTON_Y_POS -ICON_SIZE - ICON_SPACING;
 
 
     const TouchArea SAVE_BUTTON_AREA(SAVE_BUTTON_X_POS, SAVE_BUTTON_X_POS+ICON_SIZE, SAVE_BUTTON_Y_POS, SAVE_BUTTON_Y_POS+ICON_SIZE);
@@ -108,6 +110,7 @@ Screens DrawPresetNavigation(ILI9341_t3 &tft, Controls &controls, PresetArray &p
     const TouchArea MOVEDN_BUTTON_AREA(MOVEDN_BUTTON_X_POS, MOVEDN_BUTTON_X_POS+ICON_SIZE, MOVEDN_BUTTON_Y_POS, MOVEDN_BUTTON_Y_POS+ICON_SIZE);
     const TouchArea EXTRA_BUTTON_AREA(EXTRA_BUTTON_X_POS, EXTRA_BUTTON_X_POS+ICON_SIZE, EXTRA_BUTTON_Y_POS, EXTRA_BUTTON_Y_POS+ICON_SIZE);
     const TouchArea UTILS_BUTTON_AREA(UTILS_BUTTON_X_POS, UTILS_BUTTON_X_POS+ICON_SIZE, UTILS_BUTTON_Y_POS, UTILS_BUTTON_Y_POS+ICON_SIZE);
+    const TouchArea SETLIST_BUTTON_AREA(SETLIST_BUTTON_X_POS, SETLIST_BUTTON_X_POS+ICON_SIZE, SETLIST_BUTTON_Y_POS, SETLIST_BUTTON_Y_POS+ICON_SIZE);
 
     while(true) {
         if (redrawScreen) {
@@ -119,13 +122,14 @@ Screens DrawPresetNavigation(ILI9341_t3 &tft, Controls &controls, PresetArray &p
             tft.println("");
 
             // Draw the icons
-            bmpDraw(tft, "save48.bmp", SAVE_BUTTON_X_POS, SAVE_BUTTON_Y_POS);
-            bmpDraw(tft, "add48.bmp", ADD_BUTTON_X_POS, ADD_BUTTON_Y_POS);
-            bmpDraw(tft, "remove48.bmp", REMOVE_BUTTON_X_POS, REMOVE_BUTTON_Y_POS);
-            bmpDraw(tft, "moveup48.bmp", MOVEUP_BUTTON_X_POS, MOVEUP_BUTTON_Y_POS);
-            bmpDraw(tft, "movedn48.bmp", MOVEDN_BUTTON_X_POS, MOVEDN_BUTTON_Y_POS);
-            bmpDraw(tft, "extra48.bmp", EXTRA_BUTTON_X_POS, EXTRA_BUTTON_Y_POS);
-            bmpDraw(tft, "utils48.bmp", UTILS_BUTTON_X_POS, UTILS_BUTTON_Y_POS);
+            bmpDraw(tft, "save48.bmp",   SAVE_BUTTON_X_POS,     SAVE_BUTTON_Y_POS);
+            bmpDraw(tft, "add48.bmp",    ADD_BUTTON_X_POS,      ADD_BUTTON_Y_POS);
+            bmpDraw(tft, "remove48.bmp", REMOVE_BUTTON_X_POS,   REMOVE_BUTTON_Y_POS);
+            bmpDraw(tft, "moveup48.bmp", MOVEUP_BUTTON_X_POS,   MOVEUP_BUTTON_Y_POS);
+            bmpDraw(tft, "movedn48.bmp", MOVEDN_BUTTON_X_POS,   MOVEDN_BUTTON_Y_POS);
+            bmpDraw(tft, "extra48.bmp",  EXTRA_BUTTON_X_POS,    EXTRA_BUTTON_Y_POS);
+            bmpDraw(tft, "utils48.bmp",  UTILS_BUTTON_X_POS,    UTILS_BUTTON_Y_POS);
+            bmpDraw(tft, "setlist.bmp", SETLIST_BUTTON_X_POS, SETLIST_BUTTON_Y_POS);
 
 
             updateAllPresetDrawLines();
@@ -212,6 +216,12 @@ Screens DrawPresetNavigation(ILI9341_t3 &tft, Controls &controls, PresetArray &p
             if (UTILS_BUTTON_AREA.checkArea(touchPoint)) {
                 while (controls.isTouched()) {} // wait for release
                 return Screens::UTILITIES;
+            }
+
+            // Check the SETLIST button
+            if (SETLIST_BUTTON_AREA.checkArea(touchPoint)) {
+                while (controls.isTouched()) {} // wait for release
+                return Screens::SETLIST;
             }
 
             // wait for touch release

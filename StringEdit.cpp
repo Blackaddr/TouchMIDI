@@ -12,6 +12,8 @@
 constexpr unsigned TOP_MARGIN  = 10;
 constexpr unsigned LEFT_MARGIN = 15;
 
+constexpr unsigned CHARS_PER_LINE = 8;
+
 constexpr int textSize = 3;
 constexpr unsigned CHAR_WIDTH = 6*textSize; // font width, * text scale
 constexpr unsigned CHAR_WIDTH_SPACE = CHAR_WIDTH*2;
@@ -38,8 +40,8 @@ constexpr int SHIFT_WIDTH = 5*CHAR_WIDTH;
 constexpr int SHIFT_HEIGHT = DONE_HEIGHT;
 
 // This function is brute force and not portable to different screens sizes.
-// Maybe one day compute it directly instad of using branches.
-void getPosition(char ch, int16_t* xPos, int16_t* yPos, unsigned charPerLine)
+// Maybe one day compute it directly instaed of using branches.
+void getPosition(char ch, int16_t* xPos, int16_t* yPos)
 {
     if ((!xPos) || (!yPos)) { return; }
     if (ch >= 'a' && ch <= 'h') {
@@ -84,6 +86,51 @@ void getPosition(char ch, int16_t* xPos, int16_t* yPos, unsigned charPerLine)
     }
 }
 
+// This function will take in a pixel position and return the nearest char
+bool getChar(unsigned char* ch, unsigned height, unsigned width, int16_t xPos, int16_t yPos)
+{
+    if ( (yPos < (int)(TOP_MARGIN + 1.5f*CHAR_HEIGHT)) || (yPos > (int)(height-TOP_MARGIN)) || (xPos < (int)LEFT_MARGIN) || (xPos > (int)(LEFT_MARGIN + 8*2*CHAR_WIDTH)) ) {
+        return false; // not valid
+    }
+
+    unsigned hoffset = (xPos - LEFT_MARGIN + CHAR_WIDTH) / (2*CHAR_WIDTH);
+
+    if (yPos < (TOP_MARGIN + 2.5f*CHAR_HEIGHT)) { // 'a' row
+        *ch = 'a' + hoffset;
+        return true;
+    }
+
+    if (yPos < (TOP_MARGIN + 3.5f*CHAR_HEIGHT)) {
+        *ch = 'i' + hoffset;
+        return true;
+    }
+
+    if (yPos < (TOP_MARGIN + 4.5f*CHAR_HEIGHT)) {
+        *ch = 'q' + hoffset;
+        return true;
+    }
+
+    if (yPos < (TOP_MARGIN + 5.5f*CHAR_HEIGHT)) {
+        if (hoffset < 2) {
+            *ch = 'y' + hoffset;
+        } else {
+            *ch = '0' + hoffset - 2;
+        }
+        return true;
+    }
+
+    if (yPos < (TOP_MARGIN + 6.5f*CHAR_HEIGHT)) {
+        if (hoffset < 4) {
+            *ch = '6' + hoffset;
+            return true;
+        } else {
+            *ch = static_cast<unsigned char>(StringEditSymbols::SPACE);
+        }
+        return true;
+    }
+    return false;
+
+}
 
 void StringEdit(ILI9341_t3 &tft, String &inputString, Controls &controls)
 {
@@ -95,7 +142,6 @@ void StringEdit(ILI9341_t3 &tft, String &inputString, Controls &controls)
   uint8_t previousChar = 'a';
   uint8_t selectedChar = 'a';
   unsigned newStringIndex = inputString.length();
-  unsigned charsPerLine = (tft.width()-LEFT_MARGIN) / CHAR_WIDTH_SPACE;
   bool characterShift = false;
   bool updateRequired = true;
   bool redrawAllChars = true;
@@ -129,7 +175,7 @@ void StringEdit(ILI9341_t3 &tft, String &inputString, Controls &controls)
         // Check if this is the selected char
         if ((ch == selectedChar) || (ch == previousChar) || redrawAllChars) {
 
-          getPosition(ch, &x, &y, charsPerLine);
+          getPosition(ch, &x, &y);
           tft.setCursor(x,y);
           x -= CHAR_WIDTH/2;
 
@@ -163,7 +209,7 @@ void StringEdit(ILI9341_t3 &tft, String &inputString, Controls &controls)
         // Only draw the selected and the previous to reduce screen draws
         if ((ch == selectedChar) || (ch == previousChar) || redrawAllChars) {
 
-            getPosition(ch, &x, &y, charsPerLine);
+            getPosition(ch, &x, &y);
             tft.setCursor(x,y);
 
             // Check for symbols first
@@ -309,6 +355,15 @@ void StringEdit(ILI9341_t3 &tft, String &inputString, Controls &controls)
 
         // wait until the screen is no longer touched before taking action
         while (controls.isTouched()) {}
+        previousChar = selectedChar;
+
+        // Check for touch on a letter
+        uint8_t charTemp;
+        if (getChar(&charTemp, tft.height(), tft.width(), touchPoint.x, touchPoint.y)) {
+            ch = selectedChar = charTemp;
+            updateRequired = true;
+        }
+
 
         // Check the DONE button
         if (touchPoint.x > static_cast<int16_t>(DONE_X_POS) && touchPoint.x < static_cast<int16_t>(DONE_X_POS+DONE_WIDTH) &&
