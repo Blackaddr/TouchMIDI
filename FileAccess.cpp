@@ -12,15 +12,14 @@
 
 #include "Misc.h"
 #include "Controls.h"
+#include "filePaths.h"
 #include "FileAccess.h"
 
 static StorageType g_storageType = StorageType::SD_CARD;
 
-constexpr size_t MAX_FILENAME_CHARS = 32;
+
 constexpr size_t   MIN_PRESET_SIZE  = 2048;
 constexpr unsigned PRESET_ID_INDEX  = 6;
-const char calibFilename[]          = "/data/TCALIB.BIN";
-const char PRESETS_DIR[]            = "presets/";
 
 static int g_sdCardChipSelect       = -1;
 static int g_serialFlashChipSelect  = -1;
@@ -217,7 +216,7 @@ bool readPresetFromSd(PresetArray* presetArray)
         createPresetFilename(i, presetFilename);
         file = SD.open(presetFilename);
         if (!file) {
-          Serial.println(String("Can't open ") + presetFilename);
+          //Serial.println(String("Can't open ") + presetFilename);
         } else {
           // Read the file contents
           Serial.println(String("Processing ") + presetFilename);
@@ -301,17 +300,22 @@ void writePresetToFlash(const char *filename, JsonObject &jsonObject)
     file.close();
 }
 
-void writePresetToFile(const char *filename, JsonObject &jsonObject) {
+void writePresetToFile(unsigned presetIndex, JsonObject &jsonObject) {
+
+    char presetFilename[MAX_FILENAME_CHARS] = "";
+    createPresetFilename(presetIndex, presetFilename);
+
     if (getStorageType() == StorageType::SD_CARD) {
-        return writePresetToSd(filename, jsonObject);
+        return writePresetToSd(presetFilename, jsonObject);
     } else if (getStorageType() == StorageType::FLASH) {
-        return writePresetToFlash(filename, jsonObject);
+        return writePresetToFlash(presetFilename, jsonObject);
     }
 }
 
 
 void copyFileIfDifferentToFlash(File f, const char* filename)
 {
+    Serial.printf("copyFileIfDifferentToFlash(): processing %s\n", filename);
     if (f) {
         // Check if this file already exists on the flash
         if (SerialFlash.exists(filename)) { // exists on flash
@@ -357,7 +361,7 @@ void copyFileIfDifferentToFlash(File f, const char* filename)
 
 void copyFileIfDifferentToSd(SerialFlashFile ff, const char* filename)
 {
-    Serial.printf("Processing %s\n", filename);
+    Serial.printf("copyFileIfDifferentToSd(): processing %s\n", filename);
     if (ff) {
         // Check if this file already exists on the flash
         if (SD.exists(filename)) { // exists on SD
@@ -399,10 +403,12 @@ void copyFileIfDifferentToSd(SerialFlashFile ff, const char* filename)
     }
 }
 
+// Note the the Flash filesystem is really just file paths using / to mimic
+// a directory structure, but there isn't one really.
 void copySdToFlash(void) {
 
     char presetFilename[MAX_FILENAME_CHARS] = "";
-    File sdRootdir = SD.open("/data/"); // Open the SD card
+    File sdRootdir = SD.open(DATA_PATH); // Open the SD card
     File file;
 
     // Copy all BMP files
@@ -414,7 +420,7 @@ void copySdToFlash(void) {
 
         if ((strcmp(ext,"BMP") == 0) || (strcmp(ext,"bmp") == 0)) {
             char fullPathName[MAX_FILENAME_CHARS] = "";
-            strncat(fullPathName, "/data/", 7);
+            strncat(fullPathName, DATA_PATH, strlen(DATA_PATH)+1);
             strncat(fullPathName, filename, strlen(filename));
             copyFileIfDifferentToFlash(file, fullPathName);
         }
@@ -448,9 +454,20 @@ void copyFlashToSd(void) {
         Serial.println("Cannot initialize SD");
         return;
     }
+    Serial.printf("copyFlashtoSd(): running...\n");
+
+    // First ensure the directories exist on the SD card.
+    if (!SD.exists(DATA_PATH)) {
+        Serial.printf("Creating dir %s\n", DATA_PATH);
+        SD.mkdir(DATA_PATH);
+    }
+    if (!SD.exists(PRESETS_DIR)) {
+        Serial.printf("Creating dir %s\n", PRESETS_DIR);
+        SD.mkdir(PRESETS_DIR);
+    }
 
     char presetFilename[MAX_FILENAME_CHARS] = "";
-    char filename[32];
+    char filename[MAX_FILENAME_CHARS];
     uint32_t fileSize = 0;
     SerialFlash.opendir();
     SerialFlashFile file;
@@ -461,7 +478,7 @@ void copyFlashToSd(void) {
         if (!fileFound) { break; }
         file = SerialFlash.open(filename);
         const char* ext = getFilenameExt(filename);
-        Serial.printf("found %s\n", filename);
+        Serial.printf("copyFlashtoSd(): found %s\n", filename);
 
         if ((strcmp(ext,"BMP") == 0) || (strcmp(ext,"bmp") == 0)) {
             copyFileIfDifferentToSd(file, filename);
@@ -490,7 +507,6 @@ void copyFlashToSd(void) {
             file.close();
         }
     } // end for loop
-
 }
 
 const char *getFilenameExt(const char *filename) {

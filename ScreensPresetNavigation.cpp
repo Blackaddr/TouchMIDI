@@ -158,9 +158,10 @@ Screens DrawPresetNavigation(ILI9341_t3 &tft, Controls &controls, PresetArray &p
                         char presetFilename[] = "PRESETX.JSN";
                         constexpr unsigned PRESET_ID_INDEX = 6;
                         presetFilename[PRESET_ID_INDEX] = (*it).index + 0x30;
+
                         snprintf(infoText, MAX_INFO_SIZE, "Saving %s", presetFilename);
                         infoScreen(tft, infoText);
-                        writePresetToFile(presetFilename, root); // Write to storage
+                        writePresetToFile((*it).index, root); // Write to storage
                     }
                 }
                 redrawScreen = true;

@@ -12,6 +12,7 @@
 #include <SerialFlash.h>
 #include "ArduinoJson.h"
 
+#include "filePaths.h"
 #include "Preset.h"
 
 #define SDCARD_CS 3
@@ -38,7 +39,7 @@ bool readCalib (Controls& controls);
 bool writeCalib(Controls& controls);
 
 bool readPresetFromFile(PresetArray* presetArray);
-void writePresetToFile (const char *filename, JsonObject &jsonObject);
+void writePresetToFile (unsigned presetIndex, JsonObject &jsonObject);
 
 void copySdToFlash(void);
 void copyFlashToSd(void);

@@ -89,16 +89,16 @@ void DrawPresetConfig(ILI9341_t3 &tft, Controls &controls, Preset &preset)
             tft.print(const_cast<char*>(presetName));
 
             // 2) Draw the icons
-            bmpDraw(tft, "back48.bmp", BACK_BUTTON_X_POS, BACK_BUTTON_Y_POS); // shifting more than 255 pixels seems to wrap the screen
-            bmpDraw(tft, "add48.bmp", ADD_BUTTON_X_POS, ADD_BUTTON_Y_POS);
-            bmpDraw(tft, "remove48.bmp", REMOVE_BUTTON_X_POS, REMOVE_BUTTON_Y_POS);
-            bmpDraw(tft, "moveup48.bmp", MOVEUP_BUTTON_X_POS, MOVEUP_BUTTON_Y_POS);
-            bmpDraw(tft, "movedn48.bmp", MOVEDN_BUTTON_X_POS, MOVEDN_BUTTON_Y_POS);
-            bmpDraw(tft, "save48.bmp", SAVE_BUTTON_X_POS, SAVE_BUTTON_Y_POS);
+            bmpDraw(tft, BACK_ICON_PATH,   BACK_BUTTON_X_POS,   BACK_BUTTON_Y_POS); // shifting more than 255 pixels seems to wrap the screen
+            bmpDraw(tft, ADD_ICON_PATH,    ADD_BUTTON_X_POS,    ADD_BUTTON_Y_POS);
+            bmpDraw(tft, REMOVE_ICON_PATH, REMOVE_BUTTON_X_POS, REMOVE_BUTTON_Y_POS);
+            bmpDraw(tft, MOVEUP_ICON_PATH, MOVEUP_BUTTON_X_POS, MOVEUP_BUTTON_Y_POS);
+            bmpDraw(tft, MOVEDN_ICON_PATH, MOVEDN_BUTTON_X_POS, MOVEDN_BUTTON_Y_POS);
+            bmpDraw(tft, SAVE_ICON_PATH,   SAVE_BUTTON_X_POS,   SAVE_BUTTON_Y_POS);
 
             // NAME EDIT button
             nameEditButtonPosition = tft.getCursorX() + MARGIN;
-            bmpDraw(tft, "edit48.bmp", nameEditButtonPosition, 0);
+            bmpDraw(tft, EDIT_ICON_PATH, nameEditButtonPosition, 0);
             editNameArea.setArea(nameEditButtonPosition, nameEditButtonPosition+ICON_SIZE, 0, ICON_SIZE);
 
             // Draw the Controls with their type and names.
@@ -140,10 +140,10 @@ void DrawPresetConfig(ILI9341_t3 &tft, Controls &controls, Preset &preset)
                     JsonObject& root = jsonBuffer.createObject();
                     presetToJson(preset, root);
 
-                    char presetFilename[] = "PRESETX.JSN";
-                    constexpr unsigned PRESET_ID_INDEX = 6;
-                    presetFilename[PRESET_ID_INDEX] = preset.index + 0x30;
-                    writePresetToFile(presetFilename, root); // Write to the SD card
+//                    char presetFilename[] = "PRESETX.JSN";
+//                    constexpr unsigned PRESET_ID_INDEX = 6;
+//                    presetFilename[PRESET_ID_INDEX] = preset.index + 0x30;
+                    writePresetToFile(preset.index, root); // Write to storage
                 }
                 redrawScreen = true;
             }

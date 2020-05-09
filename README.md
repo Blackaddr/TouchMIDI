@@ -4,7 +4,7 @@ Touchscreen MIDI Controller for Arduino Teensy
 This project is an active work in progress:
 
 May 2020
-- add "playlist icon" to nav screen
+- add set list selecting to SETLIST screen
 - have different configs for 'shows' using show_* directories
 - move data files to 'data' directory and presets to 'presets' directory.
 - add copy presets to/from flash/sd rather than whole flash contents.

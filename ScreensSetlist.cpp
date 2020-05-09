@@ -6,6 +6,7 @@
  */
 
 #include "VectorSupport.h"
+#include "filePaths.h"
 #include "FileAccess.h"
 #include "Screens.h"
 
@@ -49,7 +50,7 @@ Screens DrawSetlist(ILI9341_t3 &tft, Controls &controls, PresetArray& presetArra
             printCenteredJustified(tft, "PLAYLIST CONTROL", tft.width()/2, MARGIN);
 
             // Draw the icons
-            bmpDraw(tft, "back48.bmp", BACK_BUTTON_X_POS, BACK_BUTTON_Y_POS); // shifting more than 255 pixels seems to wrap the screen
+            bmpDraw(tft, BACK_ICON_PATH, BACK_BUTTON_X_POS, BACK_BUTTON_Y_POS); // shifting more than 255 pixels seems to wrap the screen
 
             // Draw the menu entries
             tft.setCursor(MARGIN, MARGIN + 2*DEFAULT_TEXT_HEIGHT);

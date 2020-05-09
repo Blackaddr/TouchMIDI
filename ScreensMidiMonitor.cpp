@@ -8,6 +8,7 @@
  */
 #include <array>
 #include <MIDI.h>
+#include "filePaths.h"
 #include "Screens.h"
 #include "MidiProc.h"
 
@@ -47,7 +48,7 @@ Screens DrawMidiMonitor(ILI9341_t3 &tft, Controls &controls, Preset &preset, Mid
             tft.println("MIDI MONITOR\n");
 
             // Draw the icons
-            bmpDraw(tft, "back48.bmp", BACK_BUTTON_X_POS,0); // shifting more than 255 pixels seems to wrap the screen
+            bmpDraw(tft, BACK_ICON_PATH, BACK_BUTTON_X_POS,0); // shifting more than 255 pixels seems to wrap the screen
             redrawScreen = false;
         }
 

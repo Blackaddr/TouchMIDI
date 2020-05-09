@@ -11,6 +11,7 @@
 #include <memory>
 #include <queue>
 #include <MIDI.h>
+#include "filePaths.h"
 #include "Screens.h"
 #include "MidiProc.h"
 
@@ -96,8 +97,8 @@ Screens DrawPresetControl(ILI9341_t3 &tft, Controls &controls, Preset &preset, M
             tft.print(const_cast<char*>(presetName));
 
             // Draw the icons
-            bmpDraw(tft, "back48.bmp", BACK_BUTTON_X_POS,0); // shifting more than 255 pixels seems to wrap the screen
-            bmpDraw(tft, "seting48.bmp", SETTINGS_BUTTON_X_POS, 0);
+            bmpDraw(tft, BACK_ICON_PATH,     BACK_BUTTON_X_POS,0); // shifting more than 255 pixels seems to wrap the screen
+            bmpDraw(tft, SETTINGS_ICON_PATH, SETTINGS_BUTTON_X_POS, 0);
             redrawScreen = false;
 
             // flag all controls to update display
