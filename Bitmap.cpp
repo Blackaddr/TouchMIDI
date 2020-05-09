@@ -13,7 +13,7 @@ void bmpDraw(ILI9341_t3 &tft, const char *filename, uint8_t x, uint16_t y)
     StorageType storageType = getStorageType();
 
     if (storageType == StorageType::SD_CARD) { bmpDrawSd   (tft, filename, x, y); }
-    if (storageType == StorageType::FLASH)    { bmpDrawFlash(tft, filename, x, y); }
+    if (storageType == StorageType::FLASH)   { bmpDrawFlash(tft, filename, x, y); }
 }
 
 // These read 16- and 32-bit types from the SD card file.
@@ -76,7 +76,7 @@ void bmpDrawFlash(ILI9341_t3 &tft, const char *filename, uint8_t x, uint16_t y) 
         char upperFilename[MAX_FILENAME];
         strncpy(upperFilename, filename, MAX_FILENAME);
         if ((bmpFile = SerialFlash.open(strupr(upperFilename))) == false) {
-            Serial.printf("SD file not found: %s\n", filename);
+            Serial.printf("FLASH file not found: %s\n", filename);
             return;
         }
     }

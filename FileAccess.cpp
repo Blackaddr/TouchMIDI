@@ -19,7 +19,8 @@ static StorageType g_storageType = StorageType::SD_CARD;
 constexpr size_t MAX_FILENAME_CHARS = 32;
 constexpr size_t   MIN_PRESET_SIZE  = 2048;
 constexpr unsigned PRESET_ID_INDEX  = 6;
-const char calibFilename[]          = "TCALIB.BIN";
+const char calibFilename[]          = "/data/TCALIB.BIN";
+const char PRESETS_DIR[]            = "presets/";
 
 static int g_sdCardChipSelect       = -1;
 static int g_serialFlashChipSelect  = -1;
@@ -88,7 +89,9 @@ bool readCalibFromSd(Controls& controls)
       //controls.setCalib(touchCalib);
       controls.setCalib(410,3900,300,3800);
       status = true;
-      Serial.println("Calibration data loaded");
+      Serial.printf("Calibration data loaded from %s\n", calibFilename);
+    } else {
+        Serial.printf("Failed to load calibration data from SD at %s\n", calibFilename);
     }
     return status;
 }
@@ -104,7 +107,9 @@ bool readCalibFromFlash(Controls& controls)
       //controls.setCalib(touchCalib);
       controls.setCalib(410,3900,300,3800);
       status = true;
-      Serial.println("Calibration data loaded");
+      Serial.printf("Calibration data loaded from %s\n", calibFilename);
+    } else {
+        Serial.printf("Failed to load calibration data from FLASH at %s\n", calibFilename);
     }
     return status;
 }
@@ -117,7 +122,7 @@ bool writeCalibToSd(Controls& controls)
     if (file) {
         file.write(reinterpret_cast<uint8_t*>(&touchCalib), sizeof(touchCalib));
         file.close();
-        Serial.println("Calibration data saved");
+        Serial.printf("Calibration data saved to %s\n", calibFilename);
     } else {
         status = false;
         Serial.println("Failed to save calib data");
@@ -133,7 +138,7 @@ bool writeCalibToFlash(Controls& controls)
     if (file) {
         file.write(reinterpret_cast<uint8_t*>(&touchCalib), sizeof(touchCalib));
         file.close();
-        Serial.println("Calibration data saved");
+        Serial.printf("Calibration data saved to %s\n", calibFilename);
     } else {
         status = false;
         Serial.println("Failed to save calib data");
@@ -212,7 +217,7 @@ bool readPresetFromSd(PresetArray* presetArray)
         createPresetFilename(i, presetFilename);
         file = SD.open(presetFilename);
         if (!file) {
-          //Serial.println(String("Can't open ") + presetFilename);
+          Serial.println(String("Can't open ") + presetFilename);
         } else {
           // Read the file contents
           Serial.println(String("Processing ") + presetFilename);
@@ -397,7 +402,7 @@ void copyFileIfDifferentToSd(SerialFlashFile ff, const char* filename)
 void copySdToFlash(void) {
 
     char presetFilename[MAX_FILENAME_CHARS] = "";
-    File sdRootdir = SD.open("/"); // Open the SD card
+    File sdRootdir = SD.open("/data/"); // Open the SD card
     File file;
 
     // Copy all BMP files
@@ -408,7 +413,10 @@ void copySdToFlash(void) {
         const char* ext = getFilenameExt(filename);
 
         if ((strcmp(ext,"BMP") == 0) || (strcmp(ext,"bmp") == 0)) {
-            copyFileIfDifferentToFlash(file, filename);
+            char fullPathName[MAX_FILENAME_CHARS] = "";
+            strncat(fullPathName, "/data/", 7);
+            strncat(fullPathName, filename, strlen(filename));
+            copyFileIfDifferentToFlash(file, fullPathName);
         }
     }
 
@@ -416,7 +424,7 @@ void copySdToFlash(void) {
     {
         file = SD.open(calibFilename);
         if (file) {
-            copyFileIfDifferentToFlash(file, file.name());
+            copyFileIfDifferentToFlash(file, calibFilename);
         } else {
             Serial.printf("%s not found on SD card\n", file.name());
         }
@@ -505,4 +513,14 @@ bool compareFiles(File &sdFile, SerialFlashFile &flashFile) {
     count = count - n;
   }
   return true;  // all data identical
+}
+
+void createPresetFilename(unsigned presetNumber, char* filenameString)
+{
+    strncpy(filenameString, PRESETS_DIR, strlen(PRESETS_DIR)+1);
+    strncat(filenameString, "PRESET", 7);
+    char presetNum[3] = "";
+    itoa(presetNumber, presetNum, 10);
+    strncat(filenameString, presetNum, 3);
+    strncat(filenameString, ".JSN", 4);
 }

@@ -118,6 +118,5 @@ void createDefaultPresets(PresetArray *presetArray, unsigned numPresets, unsigne
 Preset* getActivePreset(void);
 void    setActivePreset(Preset* activePreset);
 void    setActivePreset(unsigned activePresetIndex);
-void    createPresetFilename(unsigned presetNumber, char* filenameString);
 
 #endif

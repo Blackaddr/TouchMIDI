@@ -43,5 +43,7 @@ void writePresetToFile (const char *filename, JsonObject &jsonObject);
 void copySdToFlash(void);
 void copyFlashToSd(void);
 
+void createPresetFilename(unsigned presetNumber, char* filenameString);
+
 
 #endif /* FILEACCESS_H_ */

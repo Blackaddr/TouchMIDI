@@ -128,9 +128,4 @@ void setActivePreset(Preset* activePreset)
     }
 }
 
-void createPresetFilename(unsigned presetNumber, char* filenameString)
-{
-    strncpy(filenameString, "PRESET", 7);
-    itoa(presetNumber, filenameString+6, 10);
-    strncat(filenameString, ".JSN", 4);
-}
+

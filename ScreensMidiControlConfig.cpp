@@ -36,11 +36,11 @@ void DrawMidiControlConfig(ILI9341_t3 &tft, Controls &controls, MidiControl &mid
             // 2) Draw the icons
 
             // BACK
-            bmpDraw(tft, "back48.bmp", BACK_BUTTON_X_POS,0); // shifting more than 255 pixels seems to wrap the screen
+            bmpDraw(tft, "/data/back48.bmp", BACK_BUTTON_X_POS,0); // shifting more than 255 pixels seems to wrap the screen
 
             // NAME EDIT button
             nameEditButtonPosition = tft.getCursorX() + MARGIN;
-            bmpDraw(tft, "edit48.bmp", nameEditButtonPosition, 0);
+            bmpDraw(tft, "/data/edit48.bmp", nameEditButtonPosition, 0);
             redrawScreen = false;
             editNameArea.setArea(nameEditButtonPosition, nameEditButtonPosition+ICON_SIZE, 0, ICON_SIZE);
 

@@ -53,7 +53,7 @@ Screens DrawUtilities(ILI9341_t3 &tft, Controls &controls, PresetArray& presetAr
             printCenteredJustified(tft, "UTILITIES", tft.width()/2, MARGIN);
 
             // Draw the icons
-            bmpDraw(tft, "back48.bmp", BACK_BUTTON_X_POS, BACK_BUTTON_Y_POS); // shifting more than 255 pixels seems to wrap the screen
+            bmpDraw(tft, "/data/back48.bmp", BACK_BUTTON_X_POS, BACK_BUTTON_Y_POS); // shifting more than 255 pixels seems to wrap the screen
 
             // Draw the menu entries
             tft.setCursor(MARGIN, MARGIN + 2*DEFAULT_TEXT_HEIGHT);

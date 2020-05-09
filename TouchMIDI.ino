@@ -49,16 +49,8 @@ ILI9341_t3 tft = ILI9341_t3(TFT_CS, TFT_DC);
 Controls controls(1,1);
 Screens nextScreen;
 
-//constexpr size_t JSON_BUFFER_SIZE = 1024;
-//char jsonTextBuffer[JSON_BUFFER_SIZE];
-//StaticJsonBuffer<JSON_BUFFER_SIZE> jsonBuffer;
-//JsonObject *jsonObj;
 midi::MidiInterface<HardwareSerial> *midiPortPtr = nullptr;
 
-
-//constexpr unsigned PRESET_ID_INDEX = 6;
-//char presetFilename[] = "PRESET0.JSN";
-//char calibFilename[] = "TCALIB.BIN";
 PresetArray *presetArray = nullptr;
 unsigned activePreset = 0;
 unsigned selectedPreset = 0;

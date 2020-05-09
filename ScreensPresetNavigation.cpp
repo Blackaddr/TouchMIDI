@@ -122,14 +122,14 @@ Screens DrawPresetNavigation(ILI9341_t3 &tft, Controls &controls, PresetArray &p
             tft.println("");
 
             // Draw the icons
-            bmpDraw(tft, "save48.bmp",   SAVE_BUTTON_X_POS,     SAVE_BUTTON_Y_POS);
-            bmpDraw(tft, "add48.bmp",    ADD_BUTTON_X_POS,      ADD_BUTTON_Y_POS);
-            bmpDraw(tft, "remove48.bmp", REMOVE_BUTTON_X_POS,   REMOVE_BUTTON_Y_POS);
-            bmpDraw(tft, "moveup48.bmp", MOVEUP_BUTTON_X_POS,   MOVEUP_BUTTON_Y_POS);
-            bmpDraw(tft, "movedn48.bmp", MOVEDN_BUTTON_X_POS,   MOVEDN_BUTTON_Y_POS);
-            bmpDraw(tft, "extra48.bmp",  EXTRA_BUTTON_X_POS,    EXTRA_BUTTON_Y_POS);
-            bmpDraw(tft, "utils48.bmp",  UTILS_BUTTON_X_POS,    UTILS_BUTTON_Y_POS);
-            bmpDraw(tft, "setlist.bmp", SETLIST_BUTTON_X_POS, SETLIST_BUTTON_Y_POS);
+            bmpDraw(tft, SAVE_ICON_PATH,   SAVE_BUTTON_X_POS,     SAVE_BUTTON_Y_POS);
+            bmpDraw(tft, ADD_ICON_PATH,    ADD_BUTTON_X_POS,      ADD_BUTTON_Y_POS);
+            bmpDraw(tft, REMOVE_ICON_PATH, REMOVE_BUTTON_X_POS,   REMOVE_BUTTON_Y_POS);
+            bmpDraw(tft, MOVEUP_ICON_PATH, MOVEUP_BUTTON_X_POS,   MOVEUP_BUTTON_Y_POS);
+            bmpDraw(tft, MOVEDN_ICON_PATH, MOVEDN_BUTTON_X_POS,   MOVEDN_BUTTON_Y_POS);
+            bmpDraw(tft, EXTRA_ICON_PATH,  EXTRA_BUTTON_X_POS,    EXTRA_BUTTON_Y_POS);
+            bmpDraw(tft, UTILS_ICON_PATH,  UTILS_BUTTON_X_POS,    UTILS_BUTTON_Y_POS);
+            bmpDraw(tft, SETLIST_ICON_PATH, SETLIST_BUTTON_X_POS, SETLIST_BUTTON_Y_POS);
 
 
             updateAllPresetDrawLines();
