@@ -167,11 +167,11 @@ bool readPresetFromFlash(PresetArray* presetArray)
     char jsonTextBuffer[JSON_BUFFER_SIZE];
     StaticJsonBuffer<JSON_BUFFER_SIZE> jsonBuffer;
     JsonObject *jsonObj;
-    char presetFilename[] = "PRESET0.JSN";
+    char presetFilename[] = "";
     SerialFlashFile file;
 
     for (unsigned i=0; i<MAX_PRESETS; i++) {
-        presetFilename[PRESET_ID_INDEX] = i + 0x30;
+        createPresetFilename(i, presetFilename);
         file = SerialFlash.open(presetFilename);
         if (!file) {
           //Serial.println(String("Can't open ") + presetFilename);
@@ -204,11 +204,11 @@ bool readPresetFromSd(PresetArray* presetArray)
     char jsonTextBuffer[JSON_BUFFER_SIZE];
     StaticJsonBuffer<JSON_BUFFER_SIZE> jsonBuffer;
     JsonObject *jsonObj;
-    char presetFilename[] = "PRESET0.JSN";
+    char presetFilename[] = "";
     File file;
 
     for (unsigned i=0; i<MAX_PRESETS; i++) {
-        presetFilename[PRESET_ID_INDEX] = i + 0x30;
+        createPresetFilename(i, presetFilename);
         file = SD.open(presetFilename);
         if (!file) {
           //Serial.println(String("Can't open ") + presetFilename);
@@ -394,7 +394,7 @@ void copyFileIfDifferentToSd(SerialFlashFile ff, const char* filename)
 
 void copySdToFlash(void) {
 
-    char presetFilename[] = "PRESET0.JSN";
+    char presetFilename[] = "";
     File sdRootdir = SD.open("/"); // Open the SD card
     File file;
 
@@ -422,7 +422,7 @@ void copySdToFlash(void) {
 
     // Copy the preset files
     for (unsigned i=0; i<MAX_PRESETS; i++) {
-        presetFilename[PRESET_ID_INDEX] = i + 0x30;
+        createPresetFilename(i, presetFilename);
         Serial.printf("Checking for %s\n", presetFilename);
         File f = SD.open(presetFilename);
 
@@ -439,7 +439,7 @@ void copyFlashToSd(void) {
         return;
     }
 
-    char presetFilename[] = "PRESET0.JSN";
+    char presetFilename[] = "";
     char filename[32];
     uint32_t fileSize = 0;
     SerialFlash.opendir();
@@ -472,7 +472,7 @@ void copyFlashToSd(void) {
 
     // Copy the preset files
     for (unsigned i=0; i<MAX_PRESETS; i++) {
-        presetFilename[PRESET_ID_INDEX] = i + 0x30;
+        createPresetFilename(i, presetFilename);
         Serial.printf("Checking for %s\n", presetFilename);
         file = SerialFlash.open(presetFilename);
 

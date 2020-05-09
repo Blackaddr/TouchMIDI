@@ -4,9 +4,10 @@ Touchscreen MIDI Controller for Arduino Teensy
 This project is an active work in progress:
 
 May 2020
+- fix screen scrolling when greater than 8 presets
 - add copy presets to/from flash/sd rather than whole flash contents.
-- fix preset filenames past number 9
 - speed up flash saving (doesn't seem possible???)
+- (DONE) fix preset filenames past number 9
 - (DONE) refactor control drawing on presetConfig
 - (DONE) update PresetEdit screens to only update when necessary
 
