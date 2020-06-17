@@ -7,6 +7,7 @@
 #include "Preset.h"
 
 //#define DEBUG
+char g_activeSetlist[MAX_SETLIST_NAME_SIZE] = "DEFAULT";
 Preset* g_activePreset = nullptr;
 
 // Create and reserve memory for MAX_PRESETS vector of presets
@@ -128,4 +129,18 @@ void setActivePreset(Preset* activePreset)
     }
 }
 
+void setActiveSetlist(char* setlistName)
+{
+    strncpy(g_activeSetlist, setlistName, MAX_SETLIST_NAME_SIZE);
+}
+
+void getActiveSetlist(char* setlistName)
+{
+    strncpy(setlistName, g_activeSetlist, MAX_SETLIST_NAME_SIZE);
+}
+
+const char* getActiveSetlist(void)
+{
+    return (const char*)g_activeSetlist;
+}
 

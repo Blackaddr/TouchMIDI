@@ -60,7 +60,7 @@ bool sdCardPresent = false;
 void setup(void) {
 
   delay(1000);
-  Serial.begin(115200);
+  Serial.begin(9600);
   if (!Serial) { delay(100); yield(); }
   delay(1000);
   pinMode(23,INPUT);
@@ -122,7 +122,7 @@ void setup(void) {
     setStorageType(StorageType::FLASH);
     Serial.println("Reading presets from flash"); 
   }
-  readPresetFromFile(presetArray);
+  readPresetFromFile(presetArray, getActiveSetlist());
   disableSdCardChipSelect(); // Disable the SDCard
   
   Serial.println("FINISHED: setup()");

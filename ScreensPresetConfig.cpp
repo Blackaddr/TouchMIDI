@@ -143,7 +143,7 @@ void DrawPresetConfig(ILI9341_t3 &tft, Controls &controls, Preset &preset)
 //                    char presetFilename[] = "PRESETX.JSN";
 //                    constexpr unsigned PRESET_ID_INDEX = 6;
 //                    presetFilename[PRESET_ID_INDEX] = preset.index + 0x30;
-                    writePresetToFile(preset.index, root); // Write to storage
+                    writePresetToFile(preset.index, getActiveSetlist(), root); // Write to storage
                 }
                 redrawScreen = true;
             }

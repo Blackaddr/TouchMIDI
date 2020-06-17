@@ -50,7 +50,7 @@ Screens DrawUtilities(ILI9341_t3 &tft, Controls &controls, PresetArray& presetAr
             clearScreen(tft);
 
             // print the title centered
-            printCenteredJustified(tft, "UTILITIES", tft.width()/2, MARGIN);
+            printCenteredJustified(tft, "UTILITIES", (tft.width()-ICON_SIZE)/2, MARGIN);
 
             // Draw the icons
             bmpDraw(tft, BACK_ICON_PATH, BACK_BUTTON_X_POS, BACK_BUTTON_Y_POS); // shifting more than 255 pixels seems to wrap the screen

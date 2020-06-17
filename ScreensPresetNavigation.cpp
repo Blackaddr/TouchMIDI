@@ -161,7 +161,7 @@ Screens DrawPresetNavigation(ILI9341_t3 &tft, Controls &controls, PresetArray &p
 
                         snprintf(infoText, MAX_INFO_SIZE, "Saving %s", presetFilename);
                         infoScreen(tft, infoText);
-                        writePresetToFile((*it).index, root); // Write to storage
+                        writePresetToFile((*it).index, getActiveSetlist(), root); // Write to storage
                     }
                 }
                 redrawScreen = true;

@@ -9,10 +9,11 @@
 #include "Controls.h"
 using std::vector;
 
-constexpr int      MAX_NUM_CONTROLS    = 6;
-constexpr unsigned MAX_PRESETS         = 32;
-constexpr unsigned MAX_NAME_SIZE       = 32;
-constexpr unsigned MAX_SHORT_NAME_SIZE = 4;
+constexpr int      MAX_NUM_CONTROLS      = 6;
+constexpr unsigned MAX_PRESETS           = 32;
+constexpr unsigned MAX_NAME_SIZE         = 32;
+constexpr unsigned MAX_SHORT_NAME_SIZE   = 4;
+constexpr unsigned MAX_SETLIST_NAME_SIZE = 32;
 
 enum class InputControl : unsigned {
     NOT_CONFIGURED = 0,
@@ -109,6 +110,7 @@ struct Preset {
 
 using PresetArray = std::vector<Preset>;
 
+
 PresetArray *createPresetArray(void);
 void destroyPresetArray(PresetArray *presetArray);
 void jsonToPreset(JsonObject &jsonObj, Preset &preset);
@@ -118,5 +120,8 @@ void createDefaultPresets(PresetArray *presetArray, unsigned numPresets, unsigne
 Preset* getActivePreset(void);
 void    setActivePreset(Preset* activePreset);
 void    setActivePreset(unsigned activePresetIndex);
+void    setActiveSetlist(char* setlistName);
+const char* getActiveSetlist(void);
+void    getActiveSetlist(char* setlinstName);
 
 #endif

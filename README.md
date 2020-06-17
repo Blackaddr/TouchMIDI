@@ -3,12 +3,14 @@ Touchscreen MIDI Controller for Arduino Teensy
 
 This project is an active work in progress:
 
-May 2020
-- add set list selecting to SETLIST screen
-- have different configs for 'shows' using show_* directories
-- move data files to 'data' directory and presets to 'presets' directory.
-- add copy presets to/from flash/sd rather than whole flash contents.
+June 2020
+- support created and deletion of setlists on setlist screen
+- add options to copy presets to/from flash/sd rather than whole flash contents.
 - speed up flash saving (doesn't seem possible???)
+- (DONE) support multiple setlists
+- (DONE) move data files to 'data' directory and presets to 'presets' directory.
+
+May 2020
 - (DONE)fix string edit when touch button selections to clear previous letter
 - (DONE)fix screen scrolling before first preset doesn't update
 - (DONE) add touch to string edit letters

@@ -43,9 +43,7 @@ Screens DrawMidiMonitor(ILI9341_t3 &tft, Controls &controls, Preset &preset, Mid
             clearScreen(tft);
             tft.setCursor(0,MARGIN);
 
-            // print the preset number in the top left
-            tft.setCursor(tft.width()/10,MARGIN);
-            tft.println("MIDI MONITOR\n");
+            printCenteredJustified(tft, "MIDI MONITOR", (tft.width()-ICON_SIZE)/2, MARGIN);
 
             // Draw the icons
             bmpDraw(tft, BACK_ICON_PATH, BACK_BUTTON_X_POS,0); // shifting more than 255 pixels seems to wrap the screen

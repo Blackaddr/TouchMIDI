@@ -21,10 +21,13 @@ static StorageType g_storageType = StorageType::SD_CARD;
 constexpr size_t   MIN_PRESET_SIZE  = 2048;
 constexpr unsigned PRESET_ID_INDEX  = 6;
 
-static int g_sdCardChipSelect       = -1;
-static int g_serialFlashChipSelect  = -1;
-static int g_tftChipSelect          = -1;
-static int g_touchChipSelect        = -1;
+static bool g_isSdCardInit          = false;
+static int  g_sdCardChipSelect      = -1;
+static int  g_serialFlashChipSelect = -1;
+static int  g_tftChipSelect         = -1;
+static int  g_touchChipSelect       = -1;
+
+SetlistArray g_setlistArray;
 
 void setStorageType(StorageType storageType)
 {
@@ -51,11 +54,16 @@ bool compareFiles(File &sdFile, SerialFlashFile &flashFile);
 const char* getFilenameExt(const char *filename);
 
 bool initSdCard(unsigned chipSelect) {
-    bool status =  SD.begin(chipSelect);
-    g_sdCardChipSelect = chipSelect;
-    disableSdCardChipSelect();
-    return status;
+    if (!g_isSdCardInit) {
+        bool status =  SD.begin(chipSelect);
+        g_sdCardChipSelect = chipSelect;
+        disableSdCardChipSelect();
+        g_isSdCardInit = status;
+        return status;
+    } else { return g_isSdCardInit; }
 }
+
+bool isSdCardnit() { return g_isSdCardInit; }
 
 void disableSdCardChipSelect(void) {
     digitalWrite(g_sdCardChipSelect, 1); // disable the chip select
@@ -166,7 +174,7 @@ bool writeCalib(Controls& controls) {
 ////////////////////////////////////////////////////////////////////////////////
 // PRESET DATA
 ////////////////////////////////////////////////////////////////////////////////
-bool readPresetFromFlash(PresetArray* presetArray)
+bool readPresetFromFlash(PresetArray* presetArray, const char* setlistName)
 {
     constexpr size_t JSON_BUFFER_SIZE = 1024;
     char jsonTextBuffer[JSON_BUFFER_SIZE];
@@ -176,7 +184,7 @@ bool readPresetFromFlash(PresetArray* presetArray)
     SerialFlashFile file;
 
     for (unsigned i=0; i<MAX_PRESETS; i++) {
-        createPresetFilename(i, presetFilename);
+        createPresetFilename(i, setlistName, presetFilename);
         file = SerialFlash.open(presetFilename);
         if (!file) {
           //Serial.println(String("Can't open ") + presetFilename);
@@ -203,7 +211,7 @@ bool readPresetFromFlash(PresetArray* presetArray)
     return true;
 }
 
-bool readPresetFromSd(PresetArray* presetArray)
+bool readPresetFromSd(PresetArray* presetArray, const char* setlistName)
 {
     constexpr size_t JSON_BUFFER_SIZE = 1024;
     char jsonTextBuffer[JSON_BUFFER_SIZE];
@@ -213,10 +221,10 @@ bool readPresetFromSd(PresetArray* presetArray)
     File file;
 
     for (unsigned i=0; i<MAX_PRESETS; i++) {
-        createPresetFilename(i, presetFilename);
+        createPresetFilename(i, setlistName, presetFilename);
         file = SD.open(presetFilename);
         if (!file) {
-          //Serial.println(String("Can't open ") + presetFilename);
+          Serial.println(String("Can't open ") + presetFilename);
         } else {
           // Read the file contents
           Serial.println(String("Processing ") + presetFilename);
@@ -240,11 +248,11 @@ bool readPresetFromSd(PresetArray* presetArray)
     return true;
 }
 
-bool readPresetFromFile(PresetArray* presetArray) {
+bool readPresetFromFile(PresetArray* presetArray, const char* setlistName) {
     if (getStorageType() == StorageType::SD_CARD) {
-        return readPresetFromSd(presetArray);
+        return readPresetFromSd(presetArray, setlistName);
     } else if (getStorageType() == StorageType::FLASH) {
-        return readPresetFromFlash(presetArray);
+        return readPresetFromFlash(presetArray, setlistName);
     }
     return false;
 }
@@ -300,10 +308,10 @@ void writePresetToFlash(const char *filename, JsonObject &jsonObject)
     file.close();
 }
 
-void writePresetToFile(unsigned presetIndex, JsonObject &jsonObject) {
+void writePresetToFile(unsigned presetIndex, const char* setlistName, JsonObject &jsonObject) {
 
     char presetFilename[MAX_FILENAME_CHARS] = "";
-    createPresetFilename(presetIndex, presetFilename);
+    createPresetFilename(presetIndex, setlistName, presetFilename);
 
     if (getStorageType() == StorageType::SD_CARD) {
         return writePresetToSd(presetFilename, jsonObject);
@@ -317,31 +325,37 @@ void copyFileIfDifferentToFlash(File f, const char* filename)
 {
     Serial.printf("copyFileIfDifferentToFlash(): processing %s\n", filename);
     if (f) {
+        size_t sdFileLength = f.size();
+        Serial.printf("File size is %d\n", sdFileLength);
+
         // Check if this file already exists on the flash
         if (SerialFlash.exists(filename)) { // exists on flash
+            Serial.printf("File exists on flash\n", sdFileLength);
             SerialFlashFile ff = SerialFlash.open(filename);
-            if (ff && ff.size() == f.size()) { // same size
-                if (compareFiles(f, ff) == true) {
-                    // files are identical
-                    Serial.printf("Skipping %s\n", filename);
-                    f.close();
-                    ff.close();
-                    return;
+            if (ff) {
+                if (ff.size() == sdFileLength) { // same size
+                    if (compareFiles(f, ff) == true) {
+                        // files are identical
+                        Serial.printf("Skipping %s\n", filename);
+                        f.close();
+                        ff.close();
+                        return;
+                    }
                 }
             }
+            // File is not same size or not identical
+            SerialFlash.remove(filename); // remove the old file
         }
-        // File is not same size or not identical
-        SerialFlash.remove(filename); // remove the old file
-        size_t length = f.size();
+        Serial.printf("Creating the new file\n");
 
         // create the file on the Flash chip and copy data
-        if (SerialFlash.create(filename, length)) {
+        if (SerialFlash.create(filename, sdFileLength)) {
             SerialFlashFile ff = SerialFlash.open(filename);
             if (ff) {
                 // copy data loop
                 Serial.printf("Copying %s\n", filename);
                 size_t count = 0;
-                while (count < length) {
+                while (count < sdFileLength) {
                     char buf[256];
                     unsigned int n;
                     n = f.read(buf, 256);
@@ -407,6 +421,11 @@ void copyFileIfDifferentToSd(SerialFlashFile ff, const char* filename)
 // a directory structure, but there isn't one really.
 void copySdToFlash(void) {
 
+    if (!initSdCard(SDCARD_CS)) {
+        Serial.println("Cannot initialize SD");
+        return;
+    }
+
     char presetFilename[MAX_FILENAME_CHARS] = "";
     File sdRootdir = SD.open(DATA_PATH); // Open the SD card
     File file;
@@ -428,22 +447,31 @@ void copySdToFlash(void) {
 
     // Copy the calibration file if exits
     {
-        file = SD.open(calibFilename);
-        if (file) {
-            copyFileIfDifferentToFlash(file, calibFilename);
+        if (SD.exists(calibFilename)) {
+            file = SD.open(calibFilename);
+            if (file) {
+                copyFileIfDifferentToFlash(file, calibFilename);
+            }
         } else {
             Serial.printf("%s not found on SD card\n", file.name());
         }
+
     }
 
     // Copy the preset files
     for (unsigned i=0; i<MAX_PRESETS; i++) {
-        createPresetFilename(i, presetFilename);
-        Serial.printf("Checking for %s\n", presetFilename);
-        File f = SD.open(presetFilename);
+        //createPresetFilename(i, getActiveSetlist(), presetFilename); // TODO, this needs to step through ALL setlists
+        SetlistArray& setListList = getSetlistList();
 
-        if (f) {
-            copyFileIfDifferentToFlash(file, presetFilename);
+        for (auto it = setListList.begin(); it != setListList.end(); ++it) {
+            createPresetFilename(i, (*it).c_str(), presetFilename);
+            Serial.printf("Checking for %s\n", presetFilename);
+            if (SD.exists(presetFilename)) {
+                File f = SD.open(presetFilename);
+                if (f) {
+                    copyFileIfDifferentToFlash(f, presetFilename);
+                }
+            }
         }
     } // end for loop
     sdRootdir.close();
@@ -499,7 +527,7 @@ void copyFlashToSd(void) {
 
     // Copy the preset files
     for (unsigned i=0; i<MAX_PRESETS; i++) {
-        createPresetFilename(i, presetFilename);
+        createPresetFilename(i, getActiveSetlist(), presetFilename); // TODO this needs to copy ALL active setlists
         file = SerialFlash.open(presetFilename);
 
         if (file) {
@@ -531,12 +559,133 @@ bool compareFiles(File &sdFile, SerialFlashFile &flashFile) {
   return true;  // all data identical
 }
 
-void createPresetFilename(unsigned presetNumber, char* filenameString)
+void createPresetFilename(unsigned presetNumber, const char* setlistName, char* filenameString)
 {
-    strncpy(filenameString, PRESETS_DIR, strlen(PRESETS_DIR)+1);
-    strncat(filenameString, "PRESET", 7);
+    strncpy(filenameString, PRESETS_DIR, strlen(PRESETS_DIR)+1); // copy the preset dir name
+    if (setlistName) {
+        strncat(filenameString, setlistName, strlen(setlistName)+1); // copy in the setlist name (a subdir)
+        strncat(filenameString, "/", 2);
+    }
+    strncat(filenameString, "PRESET", 7); // copy int the filename
     char presetNum[3] = "";
     itoa(presetNumber, presetNum, 10);
     strncat(filenameString, presetNum, 3);
-    strncat(filenameString, ".JSN", 4);
+    strncat(filenameString, ".JSN", 4); // add the extension
 }
+
+void getSetlistNameFromFullPath(char* fullPathName, char* setlistName)
+{
+
+    setlistName[0] = '\0';
+    char* token = strtok(fullPathName, "/");
+    //Serial.printf("The first token is %s\n", token);
+    // Check if the first directory is "PRESET"
+    if (strncmp(token, "PRESETS", 7) == 0) {
+        token = strtok(NULL, "/");
+        if (strlen(token) > 0 ) {
+            //Serial.printf("getSetlistNameFromPath(): The second token is %s\n", token);
+            strncpy(setlistName, token, MAX_FILENAME_CHARS);
+        }
+    }
+}
+
+SetlistArray& getSetlistListFromSd()
+{
+    File presetDir = SD.open(PRESETS_DIR); // Open the SD card
+    File file;
+
+    // First empty the array
+    while(!g_setlistArray.empty()) {
+        g_setlistArray.pop_back();
+    }
+
+    // Read all directory names
+    while(true) {
+        file = presetDir.openNextFile();
+        if (!file) { break; }
+        const char* filename = file.name();
+
+        if (file.isDirectory()) {
+            //Serial.printf("Found setlist %s\n", filename);
+            g_setlistArray.emplace_back(String(filename));
+        }
+    }
+    return g_setlistArray;
+}
+
+SetlistArray& getSetlistListFromFlash()
+{
+    char fullPathName[MAX_FILENAME_CHARS] = "";
+    char setlistName[MAX_FILENAME_CHARS] = "";
+    uint32_t fileSize = 0;
+    SerialFlash.opendir(); // resets back to the first entry
+
+    // First empty the array
+    while(!g_setlistArray.empty()) {
+        g_setlistArray.pop_back();
+    }
+
+    while(true) {
+        bool fileFound = SerialFlash.readdir(fullPathName, sizeof(fullPathName), fileSize);
+        getSetlistNameFromFullPath(fullPathName, setlistName);
+        if(strlen(setlistName) > 0) {
+            // check if it already exists in the setlist array
+            bool foundName = false;
+            for (auto it = g_setlistArray.begin(); it != g_setlistArray.end(); ++it) {
+                if (strncmp((*it).c_str(), setlistName, MAX_FILENAME_CHARS) == 0) {
+                    foundName = true;
+                    break;
+                }
+            }
+            if (!foundName) {
+                g_setlistArray.emplace_back(String(setlistName));
+            }
+        }
+        if (!fileFound) { break; }
+    }
+
+    return g_setlistArray;
+}
+
+SetlistArray& getSetlistList()
+{
+    if (getStorageType() == StorageType::SD_CARD) {
+        return getSetlistListFromSd();
+    } else if (getStorageType() == StorageType::FLASH) {
+        return getSetlistListFromFlash();
+    } else { SetlistArray setlistArray; return g_setlistArray; } // return empty array
+}
+
+// NOT TESTED
+void createNewPresetSd(const char* presetName) {
+    if (!initSdCard(SDCARD_CS)) {
+        Serial.println("createNewPresetSd(): Cannot initialize SD");
+        return;
+    }
+
+    // Ensure the directory does not exist.
+    char fullPathName[MAX_FILENAME_CHARS] = "";
+    strncpy(fullPathName, PRESETS_DIR, MAX_FILENAME_CHARS);
+    strncat(fullPathName, presetName, MAX_FILENAME_CHARS);
+
+    if (!SD.exists(fullPathName)) {
+        Serial.printf("Creating dir %s\n", fullPathName);
+        SD.mkdir(fullPathName);
+    }
+
+}
+
+// NOT TESTED
+void createNewPresetFlash(const char* presetName) {
+
+}
+
+void createNewPreset(const char* presetName)
+{
+    if (getStorageType() == StorageType::SD_CARD) {
+        return createNewPresetSd(presetName);
+    } else if (getStorageType() == StorageType::FLASH) {
+        return createNewPresetFlash(presetName);
+    }
+}
+
