@@ -49,9 +49,9 @@ void copySdToFlash(void);
 void copyFlashToSd(void);
 
 void createPresetFilename(unsigned presetNumber, const char* setlistName, char* filenameString);
-SetlistArray& getSetlistList();
+SetlistArray& updateSetlistList();
 
-void createNewPreset(const char* presetName);
+void createNewSetlist(const char* presetName);
 
 
 #endif /* FILEACCESS_H_ */

@@ -15,9 +15,7 @@
 const TouchArea BACK_BUTTON_AREA(BACK_BUTTON_X_POS, BACK_BUTTON_X_POS+ICON_SIZE, 0, ICON_SIZE);
 
 constexpr unsigned NUM_LINES_DRAW = 8;
-//unsigned firstLine = 0;
 unsigned activeIndex = 0;
-//unsigned selectedLine = 0;
 bool     updateLine[NUM_LINES_DRAW];
 
 constexpr int TEXT_START_XPOS = MARGIN;
@@ -58,7 +56,7 @@ Screens DrawSetlist(ILI9341_t3 &tft, Controls &controls, PresetArray& presetArra
     bool redrawScreen = true;
     bool updateScreen = false;
 
-    SetlistArray& setlistArray = getSetlistList(); // gets a list of presets
+    SetlistArray& setlistArray = updateSetlistList(); // gets a list of presets
     listDisplay.setSize(setlistArray.size());
     //Serial.printf("DrawSetlist(): size is %d\n", setlistArray.size());
 
@@ -117,7 +115,12 @@ Screens DrawSetlist(ILI9341_t3 &tft, Controls &controls, PresetArray& presetArra
                 while (controls.isTouched()) {} // wait for release
 
                 if (confirmationScreen(tft, controls, "Confirm ADD?\n")) {
-
+                    String setlistName;
+                    StringEdit(tft, setlistName, controls);
+                    createNewSetlist(setlistName.c_str());
+                    updateSetlistList();
+                    listDisplay.setSize(setlistArray.size());
+                    redrawScreen = true;
                 }
                 redrawScreen = true;
             }
@@ -162,6 +165,9 @@ Screens DrawSetlist(ILI9341_t3 &tft, Controls &controls, PresetArray& presetArra
             listDisplay.setUpdate(activeIndex);
             activeIndex = listDisplay.getSelected();
             listDisplay.setUpdate(activeIndex);
+            const char* setlist = setlistArray[activeIndex].c_str();
+            setActiveSetlist(setlist);
+            readPresetFromFile(&presetArray, setlist);
             updateScreen = true;
         }
 

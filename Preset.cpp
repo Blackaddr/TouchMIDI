@@ -129,7 +129,7 @@ void setActivePreset(Preset* activePreset)
     }
 }
 
-void setActiveSetlist(char* setlistName)
+void setActiveSetlist(const char* setlistName)
 {
     strncpy(g_activeSetlist, setlistName, MAX_SETLIST_NAME_SIZE);
 }

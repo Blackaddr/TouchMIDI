@@ -120,8 +120,8 @@ void createDefaultPresets(PresetArray *presetArray, unsigned numPresets, unsigne
 Preset* getActivePreset(void);
 void    setActivePreset(Preset* activePreset);
 void    setActivePreset(unsigned activePresetIndex);
-void    setActiveSetlist(char* setlistName);
+void    setActiveSetlist(const char* setlistName);
 const char* getActiveSetlist(void);
-void    getActiveSetlist(char* setlinstName);
+void    getActiveSetlist(char* setlistName);
 
 #endif

@@ -139,10 +139,6 @@ void DrawPresetConfig(ILI9341_t3 &tft, Controls &controls, Preset &preset)
                     StaticJsonBuffer<1024> jsonBuffer; // stack buffer
                     JsonObject& root = jsonBuffer.createObject();
                     presetToJson(preset, root);
-
-//                    char presetFilename[] = "PRESETX.JSN";
-//                    constexpr unsigned PRESET_ID_INDEX = 6;
-//                    presetFilename[PRESET_ID_INDEX] = preset.index + 0x30;
                     writePresetToFile(preset.index, getActiveSetlist(), root); // Write to storage
                 }
                 redrawScreen = true;
