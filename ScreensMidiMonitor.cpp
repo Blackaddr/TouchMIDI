@@ -30,7 +30,7 @@ using namespace midi;
 constexpr unsigned MAX_LINES = 12;
 
 // This screen presents a given presets controls for real-time use.
-Screens DrawMidiMonitor(ILI9341_t3 &tft, Controls &controls, Preset &preset, MidiInterface<HardwareSerial> &midiPort)
+Screens DrawMidiMonitor(ILI9341_t3 &tft, Controls &controls, MidiInterface<HardwareSerial> &midiPort)
 {
     bool redrawScreen = true;
     unsigned wordCount = 0;

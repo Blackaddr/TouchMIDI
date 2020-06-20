@@ -57,7 +57,7 @@ void processMidi(void *rawMidiPortPtr)
             } else {
                 // Not on the Nav screen.
                 //Serial.println(String("MidiProc(): MIDI Received: ") + midiWord.type + String(" ") + midiWord.data1 + String(" ") + midiWord.data2);
-                remapMidiSend(midiWord, *getActivePreset() );
+                remapMidiSend(midiWord, getActivePreset() );
                 {
                     std::lock_guard<std::mutex> lock(midiInQueueMutex);
                     if (midiInQueue->size() >= MIDI_QUEUE_MAX_SIZE) {

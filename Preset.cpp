@@ -118,10 +118,16 @@ void createDefaultPresets(PresetArray *presetArray, unsigned numPresets, unsigne
   }
 }
 
-Preset* getActivePreset(void)
+Preset& getActivePreset(void)
 {
-    return g_activePreset;
+    return *g_activePreset;
 }
+
+unsigned getActivePresetIndex(void)
+{
+    return g_activePreset->index;
+}
+
 void setActivePreset(Preset* activePreset)
 {
     if (activePreset) {

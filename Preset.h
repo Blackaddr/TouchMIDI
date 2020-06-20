@@ -110,16 +110,17 @@ struct Preset {
 
 using PresetArray = std::vector<Preset>;
 
-
 PresetArray *createPresetArray(void);
 void destroyPresetArray(PresetArray *presetArray);
 void jsonToPreset(JsonObject &jsonObj, Preset &preset);
 void presetToJson(Preset &preset, JsonObject &root);
 Preset createDefaultPreset(unsigned index, unsigned numControls);
 void createDefaultPresets(PresetArray *presetArray, unsigned numPresets, unsigned numControls);
-Preset* getActivePreset(void);
+
+Preset& getActivePreset(void);
+unsigned getActivePresetIndex(void);
 void    setActivePreset(Preset* activePreset);
-void    setActivePreset(unsigned activePresetIndex);
+
 void    setActiveSetlist(const char* setlistName);
 const char* getActiveSetlist(void);
 void    getActiveSetlist(char* setlistName);

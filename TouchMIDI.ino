@@ -52,8 +52,8 @@ Screens nextScreen;
 midi::MidiInterface<HardwareSerial> *midiPortPtr = nullptr;
 
 PresetArray *presetArray = nullptr;
-unsigned activePreset = 0;
-unsigned selectedPreset = 0;
+//unsigned activePreset = 0;
+//unsigned selectedPreset = 0;
 bool serialFlashPresent = false;
 bool sdCardPresent = false;
 
@@ -81,7 +81,7 @@ void setup(void) {
 
   Serial.println("Creating Preset Array");
   presetArray = createPresetArray();
-  setActivePreset(&((*presetArray)[activePreset]));
+  setActivePreset(&((*presetArray)[0]));
 
   // Setup the other chip selects
   setOtherChipSelects(TFT_CS, STMPE_CS);
@@ -171,11 +171,11 @@ void loop()
     switch(nextScreen) {
       case Screens::PRESET_NAVIGATION :
         g_currentScreen = nextScreen;
-        nextScreen = DrawPresetNavigation(tft, controls, (*presetArray), *midiPortPtr, activePreset, selectedPreset);
+        nextScreen = DrawPresetNavigation(tft, controls, (*presetArray), *midiPortPtr);
         break;
       case Screens::PRESET_CONTROL :
         g_currentScreen = nextScreen;
-        nextScreen = DrawPresetControl(tft, controls, (*presetArray)[activePreset], *midiPortPtr);
+        nextScreen = DrawPresetControl(tft, controls, getActivePreset(), *midiPortPtr);
         break;
       case Screens::TOUCH_CALIBRATE :
         g_currentScreen = nextScreen;
@@ -186,7 +186,7 @@ void loop()
         break;
       case Screens::MIDI_MONITOR :
         g_currentScreen = nextScreen;
-        nextScreen = DrawMidiMonitor(tft, controls, (*presetArray)[activePreset], *midiPortPtr);
+        nextScreen = DrawMidiMonitor(tft, controls, *midiPortPtr);
         break;
       case Screens::UTILITIES :
         g_currentScreen = nextScreen;
@@ -198,7 +198,7 @@ void loop()
         break;
       default:
         g_currentScreen = nextScreen;
-        nextScreen = DrawPresetNavigation(tft, controls, (*presetArray), *midiPortPtr, activePreset, selectedPreset);
+        nextScreen = DrawPresetNavigation(tft, controls, (*presetArray), *midiPortPtr);
     }
       
   }     

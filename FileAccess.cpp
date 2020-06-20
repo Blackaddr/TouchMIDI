@@ -690,3 +690,46 @@ void createNewSetlist(const char* presetName)
     }
 }
 
+bool removeDirSd(const char* directoryName) {
+
+    Serial.printf("removeDirSd(): Attempting to remove directory %s\n", directoryName);
+    if (!initSdCard(SDCARD_CS)) {
+        Serial.println("Cannot initialize SD");
+        return false;
+    }
+
+    if (!SD.exists(directoryName)) { Serial.printf("removeDirSd(): %s does not exist\n", directoryName); return false; }
+    File sdDirectory = SD.open(directoryName); // Open the SD card
+    if (!sdDirectory.isDirectory()) { Serial.printf("removeDirSd(): %s is not a directory\n", directoryName); return false; }
+
+    // Delete the directory
+
+    // Delete all BMP files
+    while(true) {
+        File file = sdDirectory.openNextFile();
+        if (!file) { break; }
+
+        const char* filename = file.name();
+        String fullFilenameStr = String(directoryName + String("/") + filename);
+        file.close();
+        Serial.printf("removeDirSD(): deleting file %s\n", fullFilenameStr.c_str());
+        if (!SD.remove(fullFilenameStr.c_str())) { Serial.printf("removeDirSd(): error deleting %s\n", fullFilenameStr.c_str()); }
+    }
+    return SD.rmdir(directoryName);
+}
+
+// TODO
+bool removeDirFlash(const char* directoryName) {
+    return false;
+}
+
+bool removeDir(const char* directoryName)
+{
+    if (getStorageType() == StorageType::SD_CARD) {
+        return removeDirSd(directoryName);
+    } else if (getStorageType() == StorageType::FLASH) {
+        return removeDirFlash(directoryName);
+    }
+    return false;
+}
+

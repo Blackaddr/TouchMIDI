@@ -10,18 +10,19 @@
 #include "FileAccess.h"
 #include "ListDisplay.h"
 #include "Screens.h"
+#include "Preset.h"
 
 // This screen provides a way for editing a preset.
 const TouchArea BACK_BUTTON_AREA(BACK_BUTTON_X_POS, BACK_BUTTON_X_POS+ICON_SIZE, 0, ICON_SIZE);
 
 constexpr unsigned NUM_LINES_DRAW = 8;
 unsigned activeIndex = 0;
-bool     updateLine[NUM_LINES_DRAW];
+//bool     updateLine[NUM_LINES_DRAW];
 
 constexpr int TEXT_START_XPOS = MARGIN;
 constexpr int TEXT_START_YPOS = MARGIN + 2*DEFAULT_TEXT_HEIGHT;
 
-ListDisplay listDisplay(NUM_LINES_DRAW);
+static ListDisplay listDisplay(NUM_LINES_DRAW);
 
 void drawLines(ILI9341_t3 &tft, SetlistArray &setlistArray)
 {
@@ -129,7 +130,16 @@ Screens DrawSetlist(ILI9341_t3 &tft, Controls &controls, PresetArray& presetArra
             if (REMOVE_BUTTON_AREA.checkArea(touchPoint)) {
                 while (controls.isTouched()) {} // wait for release
                 if (confirmationScreen(tft, controls, "Confirm REMOVE?\n")) {
+                    // Delete the old directory
+                    char setlistDirectory[MAX_FILENAME_CHARS];
+                    strncpy(setlistDirectory, PRESETS_DIR, MAX_FILENAME_CHARS);
+                    strncat(setlistDirectory, setlistArray[listDisplay.getSelected()].c_str(), MAX_FILENAME_CHARS);
 
+                    if (!removeDir(setlistDirectory)) { Serial.printf("Error deleting %s\n", setlistDirectory); }
+
+                    updateSetlistList();
+                    listDisplay.setSize(setlistArray.size());
+                    redrawScreen = true;
                 }
                 redrawScreen = true;
             }
@@ -168,6 +178,7 @@ Screens DrawSetlist(ILI9341_t3 &tft, Controls &controls, PresetArray& presetArra
             const char* setlist = setlistArray[activeIndex].c_str();
             setActiveSetlist(setlist);
             readPresetFromFile(&presetArray, setlist);
+            setActivePreset(&presetArray[0]);
             updateScreen = true;
         }
 

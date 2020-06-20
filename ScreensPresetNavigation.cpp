@@ -10,20 +10,23 @@
 #include "Preset.h"
 #include "MidiProc.h"
 #include "MidiDefs.h"
+#include "ListDisplay.h"
 
 using namespace midi;
 
-constexpr unsigned NUM_PRESET_LINES_DRAW = 8;
-static    unsigned firstPresetLine = 0;
-static    bool     updatePresetLine[NUM_PRESET_LINES_DRAW];
+constexpr unsigned NUM_LINES_DRAW = 8;
+//static    unsigned firstPresetLine = 0;
+//static    bool     updatePresetLine[NUM_LINES_DRAW];
 
 constexpr int PRESET_TEXT_START_XPOS = MARGIN;
 constexpr int PRESET_TEXT_START_YPOS = MARGIN + 2*DEFAULT_TEXT_HEIGHT;
 
 Screens g_currentScreen = Screens::PRESET_NAVIGATION;
 
-void moveUp  (PresetArray &presetArray, unsigned &activePreset, unsigned &selectedPreset, bool &redrawScreen);
-void moveDown(PresetArray &presetArray, unsigned &activePreset, unsigned &selectedPreset, bool &redrawScreen);
+static ListDisplay listDisplay(NUM_LINES_DRAW);
+
+void moveUp  (PresetArray &presetArray, bool &redrawScreen, ListDisplay& listDisplay);
+void moveDown(PresetArray &presetArray, bool &redrawScreen, ListDisplay& listDisplay);
 
 void updatePresetArrayIndices(PresetArray &presetArray)
 {
@@ -34,50 +37,69 @@ void updatePresetArrayIndices(PresetArray &presetArray)
     }
 }
 
-void updateAllPresetDrawLines() {
-    for (unsigned i=0; i < NUM_PRESET_LINES_DRAW; i++) {
-        updatePresetLine[i] = true;
-    }
-}
+//void updateAllPresetDrawLines() {
+//    for (unsigned i=0; i < NUM_PRESET_LINES_DRAW; i++) {
+//        updatePresetLine[i] = true;
+//    }
+//}
+//
+//void updatePresetDrawByIndex(unsigned presetIndex) {
+//    int presetLineIndex = presetIndex - firstPresetLine;
+//    if ((presetLineIndex >= 0) && (presetLineIndex < (int)NUM_PRESET_LINES_DRAW)) {
+//        updatePresetLine[presetLineIndex] = true;
+//    }
+//}
 
-void updatePresetDrawByIndex(unsigned presetIndex) {
-    int presetLineIndex = presetIndex - firstPresetLine;
-    if ((presetLineIndex >= 0) && (presetLineIndex < (int)NUM_PRESET_LINES_DRAW)) {
-        updatePresetLine[presetLineIndex] = true;
-    }
-}
 
-void drawPresetLines(ILI9341_t3 &tft, PresetArray &presetArray, unsigned activePreset, unsigned selectedPreset)
+void drawPresetLines(ILI9341_t3 &tft, PresetArray &presetArray)
 {
     int16_t x,y;
     tft.setCursor(PRESET_TEXT_START_XPOS, PRESET_TEXT_START_YPOS);
 
-    for (unsigned i=0; i < min(NUM_PRESET_LINES_DRAW,presetArray.size()) ; i++) {
+    for (unsigned i=0; i < min(NUM_LINES_DRAW,presetArray.size()) ; i++) {
 
-        if (updatePresetLine[i]) {
-            unsigned presetToUpdate = (firstPresetLine + i) % presetArray.size(); // wraps around
-            Preset& preset = presetArray[presetToUpdate];
+        if (listDisplay.getUpdate(i)) {
+            unsigned listIndex = listDisplay.getIndex(i);
+            Preset& preset = presetArray[listIndex];
+            //const char* setlist = presetArray[listIndex].c_str();
             tft.setCursor(PRESET_TEXT_START_XPOS, PRESET_TEXT_START_YPOS + i*DEFAULT_TEXT_HEIGHT);
 
-            uint16_t color = (selectedPreset == preset.index) ? ILI9341_DARKCYAN : ILI9341_BLACK;
+            uint16_t color = (listDisplay.getSelected() == listIndex) ? ILI9341_DARKCYAN : ILI9341_BLACK;
             tft.getCursor(&x,&y);
             tft.fillRect(x,y,SELECTED_TEXT_WIDTH,DEFAULT_TEXT_HEIGHT, color);
 
-            if (activePreset == preset.index) {
+            if (getActivePresetIndex() == listIndex) {
                 tft.setTextColor(ILI9341_RED);
                 tft.println(String("*") + preset.index + String("* ") + preset.name);
                 tft.setTextColor(ILI9341_WHITE);
             } else {
-               tft.println(String(" ") + preset.index + String(" ") + preset.name);
+                tft.println(String(" ") + preset.index + String(" ") + preset.name);
             }
+        }
 
-            updatePresetLine[i] = false;
-        } // end updatePresetLine
+//        if (updatePresetLine[i]) {
+//            unsigned presetToUpdate = (firstPresetLine + i) % presetArray.size(); // wraps around
+//            Preset& preset = presetArray[presetToUpdate];
+//            tft.setCursor(PRESET_TEXT_START_XPOS, PRESET_TEXT_START_YPOS + i*DEFAULT_TEXT_HEIGHT);
+//
+//            uint16_t color = (selectedPreset == preset.index) ? ILI9341_DARKCYAN : ILI9341_BLACK;
+//            tft.getCursor(&x,&y);
+//            tft.fillRect(x,y,SELECTED_TEXT_WIDTH,DEFAULT_TEXT_HEIGHT, color);
+//
+//            if (activePreset == preset.index) {
+//                tft.setTextColor(ILI9341_RED);
+//                tft.println(String("*") + preset.index + String("* ") + preset.name);
+//                tft.setTextColor(ILI9341_WHITE);
+//            } else {
+//               tft.println(String(" ") + preset.index + String(" ") + preset.name);
+//            }
+//
+//            updatePresetLine[i] = false;
+//        } // end updatePresetLine
     }
 }
 
-Screens DrawPresetNavigation(ILI9341_t3 &tft, Controls &controls, PresetArray &presetArray, midi::MidiInterface<HardwareSerial> &midiPort,
-        unsigned &activePreset, unsigned &selectedPreset)
+Screens DrawPresetNavigation(ILI9341_t3 &tft, Controls &controls, PresetArray &presetArray, midi::MidiInterface<HardwareSerial> &midiPort)
 {
     bool redrawScreen = true;
     bool selectTriggeredMidi = false;
@@ -112,6 +134,9 @@ Screens DrawPresetNavigation(ILI9341_t3 &tft, Controls &controls, PresetArray &p
     const TouchArea UTILS_BUTTON_AREA(UTILS_BUTTON_X_POS, UTILS_BUTTON_X_POS+ICON_SIZE, UTILS_BUTTON_Y_POS, UTILS_BUTTON_Y_POS+ICON_SIZE);
     const TouchArea SETLIST_BUTTON_AREA(SETLIST_BUTTON_X_POS, SETLIST_BUTTON_X_POS+ICON_SIZE, SETLIST_BUTTON_Y_POS, SETLIST_BUTTON_Y_POS+ICON_SIZE);
 
+    listDisplay.reset();
+    listDisplay.setSize(presetArray.size());
+
     while(true) {
         if (redrawScreen) {
             // Draw the Screen title
@@ -132,12 +157,14 @@ Screens DrawPresetNavigation(ILI9341_t3 &tft, Controls &controls, PresetArray &p
             bmpDraw(tft, SETLIST_ICON_PATH, SETLIST_BUTTON_X_POS, SETLIST_BUTTON_Y_POS);
 
 
-            updateAllPresetDrawLines();
-            drawPresetLines(tft, presetArray, activePreset, selectedPreset);
+            //updateAllPresetDrawLines();
+            listDisplay.setUpdateAll();
+            //drawPresetLines(tft, presetArray, activePreset, selectedPreset);
+            drawPresetLines(tft, presetArray);
             redrawScreen = false;
         } // end redraw screen
 
-        drawPresetLines(tft, presetArray, activePreset, selectedPreset);
+        drawPresetLines(tft, presetArray);
 
         // Check for touch activity
         if (controls.isTouched()) {
@@ -173,11 +200,18 @@ Screens DrawPresetNavigation(ILI9341_t3 &tft, Controls &controls, PresetArray &p
 
                 if (confirmationScreen(tft, controls, "Confirm ADD?\n")) {
                     // insert a new preset before index selectedPreset
-                    auto presetToInsertBefore = presetArray.begin() + selectedPreset;
+                    //auto presetToInsertBefore = presetArray.begin() + selectedPreset;
+                    auto presetToInsertBefore = presetArray.begin() + listDisplay.getSelected();
                     presetArray.insert(presetToInsertBefore, Preset());
                     updatePresetArrayIndices(presetArray);
 
-                    if (activePreset >= selectedPreset) { activePreset++; setActivePreset(&presetArray[activePreset]); }
+                    listDisplay.setSize(presetArray.size());
+
+                    //if (activePreset >= selectedPreset) { activePreset++; setActivePreset(&presetArray[activePreset]); }
+                    if (getActivePresetIndex() >= listDisplay.getSelected()) {
+                        //activePreset++;
+                        setActivePreset(&presetArray[getActivePresetIndex()+1]);
+                    }
                 }
                 redrawScreen = true;
             }
@@ -186,11 +220,17 @@ Screens DrawPresetNavigation(ILI9341_t3 &tft, Controls &controls, PresetArray &p
             if (REMOVE_BUTTON_AREA.checkArea(touchPoint)) {
                 while (controls.isTouched()) {} // wait for release
                 if (confirmationScreen(tft, controls, "Confirm REMOVE?\n")) {
-                    auto presetToErase = presetArray.begin() + selectedPreset;
+                    //auto presetToErase = presetArray.begin() + selectedPreset;
+                    auto presetToErase = presetArray.begin() + listDisplay.getSelected();
                     presetArray.erase(presetToErase);
                     updatePresetArrayIndices(presetArray);
+                    listDisplay.setSize(presetArray.size());
 
-                    if (activePreset >= selectedPreset) { activePreset--; setActivePreset(&presetArray[activePreset]); }
+                    //if (activePreset >= selectedPreset) { activePreset--; setActivePreset(&presetArray[activePreset]); }
+                    if (getActivePresetIndex() >= listDisplay.getSelected()) {
+                        //activePreset--;
+                        setActivePreset(&presetArray[getActivePresetIndex()+1]);
+                    }
                 }
                 redrawScreen = true;
             }
@@ -198,13 +238,13 @@ Screens DrawPresetNavigation(ILI9341_t3 &tft, Controls &controls, PresetArray &p
             // Check the MOVEUP button
             if (MOVEUP_BUTTON_AREA.checkArea(touchPoint)) {
                 while (controls.isTouched()) {} // wait for release
-                moveUp(presetArray, activePreset, selectedPreset, redrawScreen);
+                moveUp(presetArray, redrawScreen, listDisplay);
             }
 
             // Check the MOVEUDN button
             if (MOVEDN_BUTTON_AREA.checkArea(touchPoint)) {
                 while (controls.isTouched()) {} // wait for release
-                moveDown(presetArray, activePreset, selectedPreset, redrawScreen);
+                moveDown(presetArray, redrawScreen, listDisplay);
             }
 
             // Check the EXTRA button
@@ -255,50 +295,32 @@ Screens DrawPresetNavigation(ILI9341_t3 &tft, Controls &controls, PresetArray &p
             }
         }
 
-
+        // Check for encoder activity
         if (knobAdjust != 0) {
-            knobAdjust =  adjustAsUnit(knobAdjust); // clamp from -1 to +1
-            // set the previous selected preset to update
-            unsigned prevSelectedPreset = selectedPreset;
-            // update the new selected preset;
-            selectedPreset = adjustWithWrap(selectedPreset, knobAdjust, presetArray.size()-1);
-            if (prevSelectedPreset != selectedPreset) {
-                updatePresetDrawByIndex(prevSelectedPreset);
-                updatePresetDrawByIndex(selectedPreset);
-            }
-
-            if ((selectedPreset == 0) && (firstPresetLine != 0)) {
-                // whenever the first preset is zero, reset the first drawline to zero and update all lines
-                firstPresetLine = 0;
-                updateAllPresetDrawLines();
-            } else if ( (firstPresetLine == 0) && selectedPreset == presetArray.size()-1 ) {
-                // we rolled up past the first preset we have to jump to the bottom preset
-                firstPresetLine = presetArray.size()-NUM_PRESET_LINES_DRAW;
-                updateAllPresetDrawLines();
-            } else if (selectedPreset == (firstPresetLine + NUM_PRESET_LINES_DRAW)) {
-                // advanced past last to next or back to zero
-                // the drawing window is going to shift down one
-                firstPresetLine = (firstPresetLine + 1) % presetArray.size();
-                updateAllPresetDrawLines();
-            } else if ( (selectedPreset == firstPresetLine-1) ) {
-                // shift the drawing window up by one
-                firstPresetLine = (firstPresetLine - 1) % presetArray.size();
+            if (knobAdjust > 0) {
+                listDisplay.next();
+            } else if (knobAdjust < 0) {
+                listDisplay.previous();
             }
             midiAdjust = 0;
         }
 
         if (switchToggled || selectTriggeredMidi) {
-            Serial.println(String("Setting activePreset to ") + selectedPreset);
-            if (activePreset == selectedPreset) {
-              // goto to edit screen
-              return Screens::PRESET_CONTROL;
+
+            Serial.println(String("Setting activePreset to ") + listDisplay.getSelected());
+            listDisplay.setUpdate(getActivePresetIndex());
+
+
+            if (getActivePresetIndex() == listDisplay.getSelected()) {
+                // goto to edit screen
+                return Screens::PRESET_CONTROL;
             } else {
-              updatePresetDrawByIndex(activePreset); // update the previously active
-              activePreset = selectedPreset;
-              updatePresetDrawByIndex(activePreset); // update tne new active
-              setActivePreset(&presetArray[activePreset]);
-              midiProgramSend(activePreset, MIDI_PROGRAM_CHANNEL);
-              selectTriggeredMidi = false;
+                unsigned activePresetIndex = listDisplay.getSelected();
+                listDisplay.setUpdate(activePresetIndex);
+
+                setActivePreset(&presetArray[activePresetIndex]);
+                midiProgramSend(activePresetIndex, MIDI_PROGRAM_CHANNEL);
+                selectTriggeredMidi = false;
             }
         }
 
@@ -307,58 +329,61 @@ Screens DrawPresetNavigation(ILI9341_t3 &tft, Controls &controls, PresetArray &p
 
 }
 
-void moveUp(PresetArray &presetArray, unsigned &activePreset, unsigned &selectedPreset, bool &redrawScreen)
+void moveUp(PresetArray &presetArray, bool &redrawScreen, ListDisplay& listDisplay)
 {
-    if (selectedPreset > 0) { // can't go above the top one
+    unsigned activeIndex = getActivePresetIndex();
+
+    if (listDisplay.getSelected() > 0) { // can't go above the top one
 
         // make sure the previous active and selected will be reprinted
-        updatePresetDrawByIndex(selectedPreset);
-        updatePresetDrawByIndex(activePreset);
+        listDisplay.setUpdate(activeIndex);
+
 
         // swap the preset with the previous by inserting a copy of the selected
         // preset before the previous, then delete the old one.
-        auto presetToInsertBefore = presetArray.begin() + selectedPreset-1;
-        presetArray.insert(presetToInsertBefore, presetArray[selectedPreset]);
+        auto presetToInsertBefore = presetArray.begin() + listDisplay.getSelected()-1;
+        presetArray.insert(presetToInsertBefore, presetArray[listDisplay.getSelected()]);
 
-        auto presetToErase = presetArray.begin() + selectedPreset+1;
+        auto presetToErase = presetArray.begin() + listDisplay.getSelected()+1;
         presetArray.erase(presetToErase);
 
-        if      (activePreset == selectedPreset-1) { activePreset++; setActivePreset(&presetArray[activePreset]);}
-        else if (activePreset == selectedPreset)   { activePreset--; setActivePreset(&presetArray[activePreset]);}
-        selectedPreset--;
-        updatePresetArrayIndices(presetArray);
-        midiProgramSend(activePreset, MIDI_PROGRAM_CHANNEL);
+        if      (activeIndex == listDisplay.getSelected()-1) { activeIndex++; setActivePreset(&presetArray[activeIndex]);}
+        else if (activeIndex == listDisplay.getSelected())   { activeIndex--; setActivePreset(&presetArray[activeIndex]);}
+        listDisplay.previous();
 
-        updatePresetDrawByIndex(selectedPreset);
-        updatePresetDrawByIndex(activePreset);
+        updatePresetArrayIndices(presetArray);
+        midiProgramSend(activeIndex, MIDI_PROGRAM_CHANNEL);
+
+        listDisplay.setUpdate(listDisplay.getSelected());
+        listDisplay.setUpdate(activeIndex);
     }
 
 }
 
-void moveDown(PresetArray &presetArray, unsigned &activePreset, unsigned &selectedPreset, bool &redrawScreen)
+void moveDown(PresetArray &presetArray, bool &redrawScreen, ListDisplay& listDisplay)
 {
-    if (selectedPreset < (*presetArray.end()).index ) { // can't go below the last
+    unsigned selectedIndex = listDisplay.getSelected();
+    unsigned activeIndex = getActivePresetIndex();
 
-        // make sure the previous active and selected will be reprinted
-        updatePresetDrawByIndex(selectedPreset);
-        updatePresetDrawByIndex(activePreset);
+    if (selectedIndex < (*presetArray.end()).index ) { // can't go below the last
 
-        // swap the preset with the next by inserting a copy of the selected
-        // preset after the next, then delete the old one.
-        auto presetToInsertBefore = presetArray.begin() + selectedPreset+2;
-        presetArray.insert(presetToInsertBefore, presetArray[selectedPreset]);
+        listDisplay.setUpdate(activeIndex);
 
-        auto presetToErase = presetArray.begin() + selectedPreset;
+        auto presetToInsertBefore = presetArray.begin() + listDisplay.getSelected()+2;
+        presetArray.insert(presetToInsertBefore, presetArray[listDisplay.getSelected()]);
+
+        auto presetToErase = presetArray.begin() + listDisplay.getSelected();
         presetArray.erase(presetToErase);
 
-        if      (activePreset == selectedPreset+1) { activePreset--; setActivePreset(&presetArray[activePreset]);}
-        else if (activePreset == selectedPreset) { activePreset++; setActivePreset(&presetArray[activePreset]);}
-        selectedPreset++;
-        updatePresetArrayIndices(presetArray);
-        midiProgramSend(activePreset, MIDI_PROGRAM_CHANNEL);
+        if      (activeIndex == listDisplay.getSelected()+1) { activeIndex--; setActivePreset(&presetArray[activeIndex]);}
+        else if (activeIndex == listDisplay.getSelected())   { activeIndex++; setActivePreset(&presetArray[activeIndex]);}
+        listDisplay.next();
 
-        updatePresetDrawByIndex(selectedPreset);
-        updatePresetDrawByIndex(activePreset);
+        updatePresetArrayIndices(presetArray);
+        midiProgramSend(activeIndex, MIDI_PROGRAM_CHANNEL);
+
+        listDisplay.setUpdate(listDisplay.getSelected());
+        listDisplay.setUpdate(activeIndex);
     }
 }
 
