@@ -53,7 +53,10 @@ SetlistArray& updateSetlistList();
 
 void createNewSetlist(const char* presetName);
 
-bool removeDir(const char* directoryName);
+unsigned removeDir(const char* directoryName);
+
+bool loadConfig(void);
+bool saveConfig(void);
 
 
 #endif /* FILEACCESS_H_ */

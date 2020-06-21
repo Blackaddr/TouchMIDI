@@ -5,9 +5,11 @@ This project is an active work in progress:
 
 June 2020
 
-- support created and deletion of setlists on setlist screen (deletion remaining)
+- automatic storing and recall of last active setlist and preset (flash remaining)
 - add options to copy presets to/from flash/sd rather than whole flash contents.
+- move file operations to a different thread than the GUI
 - speed up flash saving (doesn't seem possible???)
+- (DONE) support created and deletion of setlists on setlist screen
 - (DONE) switch the nav screen over to the listDisplay class
 - (DONE) support multiple setlists
 - (DONE) move data files to 'data' directory and presets to 'presets' directory.

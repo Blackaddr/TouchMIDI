@@ -52,6 +52,21 @@ void drawLines(ILI9341_t3 &tft, SetlistArray &setlistArray)
     }
 }
 
+unsigned getActiveIndex(SetlistArray &setlistArray)
+{
+    const char* activeSetlist = getActiveSetlist();
+
+    for (auto it = setlistArray.begin(); it != setlistArray.end(); ++it) {
+        //Serial.printf("Checking it: %s, activeSetlist %s\n", (*it).c_str(), activeSetlist);
+        if (strncmp((*it).c_str(), activeSetlist, MAX_FILENAME_CHARS) == 0) {
+            unsigned index =  std::distance(setlistArray.begin(), it);
+            //Serial.printf("Found at index %id\n", index);
+            return index;
+        }
+    }
+    return 0;
+}
+
 Screens DrawSetlist(ILI9341_t3 &tft, Controls &controls, PresetArray& presetArray)
 {
     bool redrawScreen = true;
@@ -60,15 +75,20 @@ Screens DrawSetlist(ILI9341_t3 &tft, Controls &controls, PresetArray& presetArra
     SetlistArray& setlistArray = updateSetlistList(); // gets a list of presets
     listDisplay.setSize(setlistArray.size());
     //Serial.printf("DrawSetlist(): size is %d\n", setlistArray.size());
+    activeIndex = getActiveIndex(setlistArray);
+
 
     const unsigned BOTTOM_ICON_ROW_Y_POS = tft.height() - ICON_SIZE;
     const unsigned ADD_BUTTON_X_POS      = BACK_BUTTON_X_POS;
     const unsigned ADD_BUTTON_Y_POS      = BOTTOM_ICON_ROW_Y_POS;
     const unsigned REMOVE_BUTTON_X_POS   = ADD_BUTTON_X_POS - ICON_SIZE - ICON_SPACING;
     const unsigned REMOVE_BUTTON_Y_POS   = BOTTOM_ICON_ROW_Y_POS;
+    const unsigned SAVE_BUTTON_X_POS     = REMOVE_BUTTON_X_POS-ICON_SIZE-ICON_SPACING;
+    const unsigned SAVE_BUTTON_Y_POS     = BOTTOM_ICON_ROW_Y_POS;
 
     const TouchArea ADD_BUTTON_AREA   (ADD_BUTTON_X_POS, ADD_BUTTON_X_POS+ICON_SIZE, ADD_BUTTON_Y_POS, ADD_BUTTON_Y_POS+ICON_SIZE);
     const TouchArea REMOVE_BUTTON_AREA(REMOVE_BUTTON_X_POS, REMOVE_BUTTON_X_POS+ICON_SIZE, REMOVE_BUTTON_Y_POS, REMOVE_BUTTON_Y_POS+ICON_SIZE);
+    const TouchArea SAVE_BUTTON_AREA  (SAVE_BUTTON_X_POS, SAVE_BUTTON_X_POS+ICON_SIZE, SAVE_BUTTON_Y_POS, SAVE_BUTTON_Y_POS+ICON_SIZE);
 
     // Calculate button locations
     while (true) {
@@ -80,6 +100,7 @@ Screens DrawSetlist(ILI9341_t3 &tft, Controls &controls, PresetArray& presetArra
 
             bmpDraw(tft, ADD_ICON_PATH,    ADD_BUTTON_X_POS,      ADD_BUTTON_Y_POS);
             bmpDraw(tft, REMOVE_ICON_PATH, REMOVE_BUTTON_X_POS,   REMOVE_BUTTON_Y_POS);
+            bmpDraw(tft, SAVE_ICON_PATH,   SAVE_BUTTON_X_POS,     SAVE_BUTTON_Y_POS);
 
             // print the title centered
             printCenteredJustified(tft, "PLAYLIST CONTROL", (tft.width()-ICON_SIZE)/2, MARGIN);
@@ -135,11 +156,26 @@ Screens DrawSetlist(ILI9341_t3 &tft, Controls &controls, PresetArray& presetArra
                     strncpy(setlistDirectory, PRESETS_DIR, MAX_FILENAME_CHARS);
                     strncat(setlistDirectory, setlistArray[listDisplay.getSelected()].c_str(), MAX_FILENAME_CHARS);
 
+                    bool deletedActive = (listDisplay.getSelected() == activeIndex);
+
                     if (!removeDir(setlistDirectory)) { Serial.printf("Error deleting %s\n", setlistDirectory); }
 
                     updateSetlistList();
+                    listDisplay.reset();
                     listDisplay.setSize(setlistArray.size());
+                    if (deletedActive) {
+                        activeIndex = 0; // if we deleted the active setlist, set the active to the first in the list
+                    }
                     redrawScreen = true;
+                }
+                redrawScreen = true;
+            }
+
+            // Check the save button
+            if (SAVE_BUTTON_AREA.checkArea(touchPoint)) {
+                while (controls.isTouched()) {} // wait for release
+                if (confirmationScreen(tft, controls, "Confirm SAVE config?\n")) {
+                    saveConfig();
                 }
                 redrawScreen = true;
             }

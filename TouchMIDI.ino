@@ -122,6 +122,7 @@ void setup(void) {
     setStorageType(StorageType::FLASH);
     Serial.println("Reading presets from flash"); 
   }
+  loadConfig();
   readPresetFromFile(presetArray, getActiveSetlist());
   disableSdCardChipSelect(); // Disable the SDCard
   

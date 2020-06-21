@@ -26,6 +26,7 @@ const char EDIT_ICON_PATH[]     = "/data/EDIT48.BMP";
 const char SETTINGS_ICON_PATH[] = "/data/SETING48.BMP";
 
 const char calibFilename[]     = "/DATA/TCALIB.BIN";
+const char CONFIG_FILENAME[]   = "/DATA/CONFIG.JSN";
 const char PRESETS_DIR[]       = "/PRESETS/";
 
 

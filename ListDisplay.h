@@ -124,6 +124,11 @@ public:
         }
     }
 
+    void setSelected(unsigned index) {
+        selectedIndex = 0;
+        setUpdateAll();
+    }
+
 private:
     const unsigned NUM_LINES;
     bool*    updateLinePtr = nullptr;

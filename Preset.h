@@ -15,6 +15,8 @@ constexpr unsigned MAX_NAME_SIZE         = 32;
 constexpr unsigned MAX_SHORT_NAME_SIZE   = 4;
 constexpr unsigned MAX_SETLIST_NAME_SIZE = 32;
 
+const char DEFAULT_SETLIST[]   = "DEFAULT";
+
 enum class InputControl : unsigned {
     NOT_CONFIGURED = 0,
     SW1,
