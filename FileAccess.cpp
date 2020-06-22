@@ -794,7 +794,7 @@ bool saveConfigSd(void)
         // file already exists
         SD.remove(CONFIG_FILENAME);
     }
-    File file = SD.open(CONFIG_FILENAME, O_WRITE | O_CREAT); // was FILE_WRITE
+    File file = SD.open(CONFIG_FILENAME, O_WRITE | O_CREAT);
     if (!file) {
         Serial.println(String("saveConfigSd(): ERROR cannot create ") + CONFIG_FILENAME);
         return false;
@@ -806,7 +806,36 @@ bool saveConfigSd(void)
 
 bool saveConfigFlash(void)
 {
-    return false;
+    StaticJsonBuffer<1024> jsonBuffer; // stack buffer
+    JsonObject& root = jsonBuffer.createObject();
+
+    root["setlistName"] = getActiveSetlist();
+
+    // create  buffer to hold the contexts
+    constexpr int BUFFER_SIZE = MAX_CONFIG_SIZE;
+    char buffer[BUFFER_SIZE];
+    memset(buffer, 0, BUFFER_SIZE);
+
+    root.prettyPrintTo(buffer);
+    unsigned length = strlen(buffer);
+
+    if ((length < 1) || (length > BUFFER_SIZE) ) { return false; }
+
+    // Check if file exists
+    if (SerialFlash.exists(CONFIG_FILENAME)) {
+        // file already exists
+        SerialFlash.remove(CONFIG_FILENAME);
+    }
+    SerialFlash.create(CONFIG_FILENAME, length);
+    SerialFlashFile file = SerialFlash.open(CONFIG_FILENAME);
+    if (!file) {
+        Serial.printf("saveConfigFlash(): ERROR cannot create %s\n", CONFIG_FILENAME);
+        return false;
+    }
+    file.write(buffer, length);
+    file.close();
+    Serial.printf("saveConfigFlash(): done writing %s\n", CONFIG_FILENAME);
+    return true;
 }
 
 bool loadConfigSd(void)
@@ -853,7 +882,40 @@ bool loadConfigSd(void)
 
 bool loadConfigFlash(void)
 {
-    return false;
+    constexpr size_t JSON_BUFFER_SIZE = MAX_CONFIG_SIZE;
+    char jsonTextBuffer[JSON_BUFFER_SIZE];
+    StaticJsonBuffer<JSON_BUFFER_SIZE> jsonBuffer;
+    JsonObject *jsonObj;
+
+    // Check if file exists
+    if (SerialFlash.exists(CONFIG_FILENAME)) {
+        SerialFlashFile file = SerialFlash.open(CONFIG_FILENAME);
+        if (!file) {
+            Serial.println(String("loadConfigFlash(): ERROR cannot open ") + CONFIG_FILENAME);
+            return false;
+        }
+
+        size_t availableBytes = file.available();
+        if (availableBytes > 0) {
+            file.read(jsonTextBuffer, availableBytes);
+            jsonObj = &jsonBuffer.parseObject(jsonTextBuffer);
+            if (!jsonObj->success()) {
+              Serial.println("loadConfigFlash(): Parsing JSON object failed");
+            } else {
+                // extract the setlistname
+                JsonObject& jsonObject = *jsonObj;
+                const char* setlistName = static_cast<const char *>(jsonObject["setlistName"]);
+                Serial.printf("loadConfigFlash(): Setting setlist to %s\n", setlistName);
+                setActiveSetlist(setlistName);
+            }
+            jsonBuffer.clear();
+        }
+        file.close();
+    } else {
+        Serial.printf("loadConfigFlash(): cannot find config file %s\n", CONFIG_FILENAME);
+        setActiveSetlist(DEFAULT_SETLIST);
+    }
+    return true;
 }
 
 bool loadConfig(void)
@@ -869,6 +931,7 @@ bool loadConfig(void)
 
 bool saveConfig(void)
 {
+    Serial.printf("saveConfig(): saving configuration...\n");
     bool ret = false;
     if (getStorageType() == StorageType::SD_CARD) {
         ret = saveConfigSd();
