@@ -21,7 +21,7 @@ public:
     ~ListDisplay() { free(updateLinePtr); }
 
     void next() {
-        Serial.printf("next() selectedIndex: %d, selectedLine: %d, firstLine: %d, lastLine: %d lastIndex: %d\n", selectedIndex, selectedLine, firstLine, lastLine, lastIndex);
+        //Serial.printf("next() selectedIndex: %d, selectedLine: %d, firstLine: %d, lastLine: %d lastIndex: %d\n", selectedIndex, selectedLine, firstLine, lastLine, lastIndex);
           if ((selectedLine == lastLine) || (selectedLine == NUM_LINES-1)) {
               // it's the last line in the display, check if it's also the last line
               // in the list
@@ -50,7 +50,7 @@ public:
 
     void previous()
     {
-        Serial.printf("previous() selectedIndex: %d, selectedLine: %d, firstLine: %d, lastLine: %d lastIndex: %d\n", selectedIndex, selectedLine, firstLine, lastLine, lastIndex);
+        //Serial.printf("previous() selectedIndex: %d, selectedLine: %d, firstLine: %d, lastLine: %d lastIndex: %d\n", selectedIndex, selectedLine, firstLine, lastLine, lastIndex);
         if (selectedLine == 0) {
             // it's the first line in the display
             setUpdateAll();

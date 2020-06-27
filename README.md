@@ -5,6 +5,7 @@ This project is an active work in progress:
 
 June 2020
 
+- speed up MIDI transmit for expression pedal
 - add options to copy presets to/from flash/sd rather than whole flash contents.
 - move file operations to a different thread than the GUI
 - speed up flash saving (doesn't seem possible???)
