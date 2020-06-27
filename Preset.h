@@ -92,6 +92,7 @@ static unsigned GetInputControlMappedCC(InputControl type) {
           default:
               return 0;
       }
+
 }
 
 

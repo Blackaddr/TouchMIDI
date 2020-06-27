@@ -27,9 +27,10 @@ void processMidi(void *rawMidiPortPtr)
         // Check for MIDI IN activity
         if (midiPort.read()) {
             MidiWord midiWord;
-            midiWord.type  = midiPort.getType();
-            midiWord.data1 = midiPort.getData1();
-            midiWord.data2 = midiPort.getData2();
+            midiWord.type    = midiPort.getType();
+            midiWord.data1   = midiPort.getData1();
+            midiWord.data2   = midiPort.getData2();
+            midiWord.channel = midiPort.getChannel();
 
             // We have a special hook here if we're on the NAV screen. In this case we
             // trap on certain CCs to convert them custom CC that is not sent out over MIDI
@@ -58,6 +59,7 @@ void processMidi(void *rawMidiPortPtr)
                 // Not on the Nav screen.
                 //Serial.println(String("MidiProc(): MIDI Received: ") + midiWord.type + String(" ") + midiWord.data1 + String(" ") + midiWord.data2);
                 remapMidiSend(midiWord, getActivePreset() );
+                //Serial.println(String("MidiProc(): MIDI Remapped: ") + midiWord.type + String(" ") + midiWord.data1 + String(" ") + midiWord.data2);
                 {
                     std::lock_guard<std::mutex> lock(midiInQueueMutex);
                     if (midiInQueue->size() >= MIDI_QUEUE_MAX_SIZE) {
@@ -78,6 +80,7 @@ void processMidi(void *rawMidiPortPtr)
                 midiOutQueue->pop();
             }
 
+            Serial.printf("MidiProc(): MIDI send: type:%d data1:%d data2:%d ch:%d\n", midiWord.type, midiWord.data1, midiWord.data2, midiWord.channel);
             midiPort.send(midiWord.type, midiWord.data1, midiWord.data2, midiWord.channel);
 
         }
@@ -93,9 +96,10 @@ void remapMidiSend(MidiWord &midiWord, volatile Preset &activePresetIn)
         for (auto it = activePreset.controls.begin(); it != activePreset.controls.end(); ++it) {
 
             unsigned inputControl = MidiControl::GetInputControlMappedCC((*it).inputControl);
+            Serial.printf("inputControl: %d, midi CC: %d\n", inputControl, midiWord.data1);
             if ( midiWord.data1 == inputControl) {
 
-                //Serial.printf("Remap %d to %d with %d\n", midiWord.data1, (*it).cc, midiWord.data2);
+                Serial.printf("Remap %d to %d with %d\n", midiWord.data1, (*it).cc, midiWord.data2);
                 midiWord.data1 = (*it).cc; // remap to the assigned CC
 
                 if ((*it).type == ControlType::SWITCH_LATCHING) {
@@ -117,7 +121,6 @@ void remapMidiSend(MidiWord &midiWord, volatile Preset &activePresetIn)
     } // end if CC
 
     // Transmit the midi word
-
     if (!midiDropMessage) { midiSendWord(midiWord); }
 }
 
@@ -137,6 +140,7 @@ bool getNextMidiWord(MidiWord &midiWord)
 
 void midiSendWord(MidiWord midiWord)
 {
+    Serial.printf("midiSendWord(): type: %d data1: %d data2: %d\n", midiWord.type, midiWord.data1, midiWord.data2);
     {
         std::lock_guard<std::mutex> lock(midiOutQueueMutex);
         if (midiOutQueue->size() >= MIDI_QUEUE_MAX_SIZE) {

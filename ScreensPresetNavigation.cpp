@@ -15,8 +15,6 @@
 using namespace midi;
 
 constexpr unsigned NUM_LINES_DRAW = 8;
-//static    unsigned firstPresetLine = 0;
-//static    bool     updatePresetLine[NUM_LINES_DRAW];
 
 constexpr int PRESET_TEXT_START_XPOS = MARGIN;
 constexpr int PRESET_TEXT_START_YPOS = MARGIN + 2*DEFAULT_TEXT_HEIGHT;
@@ -36,19 +34,6 @@ void updatePresetArrayIndices(PresetArray &presetArray)
         i++;
     }
 }
-
-//void updateAllPresetDrawLines() {
-//    for (unsigned i=0; i < NUM_PRESET_LINES_DRAW; i++) {
-//        updatePresetLine[i] = true;
-//    }
-//}
-//
-//void updatePresetDrawByIndex(unsigned presetIndex) {
-//    int presetLineIndex = presetIndex - firstPresetLine;
-//    if ((presetLineIndex >= 0) && (presetLineIndex < (int)NUM_PRESET_LINES_DRAW)) {
-//        updatePresetLine[presetLineIndex] = true;
-//    }
-//}
 
 
 void drawPresetLines(ILI9341_t3 &tft, PresetArray &presetArray)

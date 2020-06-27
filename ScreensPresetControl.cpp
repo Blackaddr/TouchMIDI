@@ -165,7 +165,7 @@ Screens DrawPresetControl(ILI9341_t3 &tft, Controls &controls, Preset &preset, M
                 if (type == midi::ControlChange) {
                     for (auto it = preset.controls.begin(); it != preset.controls.end(); ++it) {
 
-                        /// check if the CC matches this control and it's been update
+                        /// check if the CC matches this control and it's been updated
                         if ( ccId == (*it).cc && (*it).updated) {
                             redrawControls = true;
                         }
